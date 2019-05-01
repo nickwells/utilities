@@ -1,7 +1,7 @@
 github.com/nickwells/check.mod v1.3.1 h1:w8eAdNTlkjT9ojXsgo537CVuUAHwblMSMZVAAlEfFe8=
 github.com/nickwells/check.mod v1.3.1/go.mod h1:2utZ06Ey8/ZUGl9J7NuSo8P6Pevo83N453Bj3msrZx0=
-github.com/nickwells/col.mod v1.0.0 h1:VC1HGmeWrjl8amBV6P/7r6nDbLbiM2ZXilcbTlr7Etg=
-github.com/nickwells/col.mod v1.0.0/go.mod h1:4THC2fFReTDIjokgHadWVHYCOK06YQGhLTQw68U+h64=
+github.com/nickwells/col.mod v1.1.0 h1:Z65DTRnffT+GahDfDoneQTmifYm8NMHBmZyxJUL9IUc=
+github.com/nickwells/col.mod v1.1.0/go.mod h1:4THC2fFReTDIjokgHadWVHYCOK06YQGhLTQw68U+h64=
 github.com/nickwells/filecheck.mod v1.0.5 h1:DQPMS5VmSkwa21vyreo38f9XH9xIOMUMhH3xFyuZccs=
 github.com/nickwells/filecheck.mod v1.0.5/go.mod h1:CpfZ+yPhZnd/ThlNlYvhFBNbPK4sZ0TkL0a5EmJnYVs=
 github.com/nickwells/fileparse.mod v1.1.5 h1:iXzFk6CpMEOddsWng6koZfn/Dvqt4K+4D1NFrhXSkNM=
@@ -22,5 +22,5 @@ github.com/nickwells/units.mod v1.0.2 h1:qzdJjkTBFCBIZy6b2OpqQukr7O6tydPhpLXUH2N
 github.com/nickwells/units.mod v1.0.2/go.mod h1:OmidXxgXNXs8U1Vti+QNWvKYET2QIIhDZ7qQ8Fetc8k=
 github.com/nickwells/unitsetter.mod v1.1.3 h1:nvLxRUywgCWgTQNyA3IHFSdGbqZkhcJUyFIagGmRhrQ=
 github.com/nickwells/unitsetter.mod v1.1.3/go.mod h1:/3ViJHXEnX4e2c7zII4zUegSqQxVSfDtz1FMY2T4JB4=
-golang.org/x/sys v0.0.0-20190424175732-18eb32c0e2f0 h1:V+O002es++Mnym06Rj/S6Fl7VCsgRBgVDGb/NoZVHUg=
-golang.org/x/sys v0.0.0-20190424175732-18eb32c0e2f0/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20190429190828-d89cdac9e872 h1:cGjJzUd8RgBw428LXP65YXni0aiGNA4Bl+ls8SmLOm8=
+golang.org/x/sys v0.0.0-20190429190828-d89cdac9e872/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=

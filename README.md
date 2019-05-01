@@ -18,4 +18,11 @@ you want to happen when it wakes up. This can be useful if you want something
 to happen, for instance, every hour, on the hour.
 
 ## timeconv
-This provides a way of simply converting the time from one locale to another.
+This provides a way of simply converting the time from one locale to
+another. This can be useful when you are working with colleagues in other
+timezones with different daylight-saving rules.
+
+## retirement
+This will perform a very basic financial analysis of a retirement
+portfolio. It does a very simple modelling of the performance of a retirement
+portfolio over a number of years and allows you to model different scenarios
