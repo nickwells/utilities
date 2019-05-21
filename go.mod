@@ -6,7 +6,6 @@ require (
 	github.com/nickwells/check.mod v1.4.0
 	github.com/nickwells/col.mod/v2 v2.0.0
 	github.com/nickwells/location.mod v1.2.1
-	github.com/nickwells/param.mod/v2 v2.3.0
 	github.com/nickwells/param.mod/v3 v3.0.0
 	github.com/nickwells/units.mod v1.0.2
 	github.com/nickwells/unitsetter.mod/v2 v2.0.0
