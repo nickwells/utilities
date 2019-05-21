@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v2/param"
-	"github.com/nickwells/param.mod/v2/param/paction"
-	"github.com/nickwells/param.mod/v2/param/psetter"
+	"github.com/nickwells/param.mod/v3/param"
+	"github.com/nickwells/param.mod/v3/param/paction"
+	"github.com/nickwells/param.mod/v3/param/psetter"
 )
 
 const baseGroupName = param.DfltGroupName
@@ -26,17 +26,17 @@ const timestampFormat = "20060102.150405"
 const iso8601Format = "2006-01-02T15:04:05"
 const httpFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
 
-func setFormatToTimestamp(_ string, _ location.L, _ *param.ByName, _ []string) error {
+func setFormatToTimestamp(_ location.L, _ *param.ByName, _ []string) error {
 	outFormat = timestampFormat
 	return nil
 }
 
-func setFormatToISO8601(_ string, _ location.L, _ *param.ByName, _ []string) error {
+func setFormatToISO8601(_ location.L, _ *param.ByName, _ []string) error {
 	outFormat = iso8601Format
 	return nil
 }
 
-func setFormatToHTTP(_ string, _ location.L, _ *param.ByName, _ []string) error {
+func setFormatToHTTP(_ location.L, _ *param.ByName, _ []string) error {
 	outFormat = httpFormat
 	toZone = time.UTC
 	return nil

@@ -7,13 +7,13 @@ import (
 	"os"
 
 	"github.com/nickwells/check.mod/check"
-	"github.com/nickwells/col.mod/col"
-	"github.com/nickwells/col.mod/col/colfmt"
-	"github.com/nickwells/param.mod/v2/param"
-	"github.com/nickwells/param.mod/v2/param/paramset"
-	"github.com/nickwells/param.mod/v2/param/psetter"
+	"github.com/nickwells/col.mod/v2/col"
+	"github.com/nickwells/col.mod/v2/col/colfmt"
+	"github.com/nickwells/param.mod/v3/param"
+	"github.com/nickwells/param.mod/v3/param/paramset"
+	"github.com/nickwells/param.mod/v3/param/psetter"
 	"github.com/nickwells/units.mod/units"
-	"github.com/nickwells/unitsetter.mod/unitsetter"
+	"github.com/nickwells/unitsetter.mod/v2/unitsetter"
 
 	"golang.org/x/sys/unix"
 )
@@ -85,8 +85,7 @@ var fiMap = map[string]fieldInfo{
 		shortFmt: func() string { return "%.0f" },
 		col: func(_ int) *col.Col {
 			units := "Units: " + mult.Name
-			return col.New(colfmt.Float{W: 15},
-				units, "space", "free")
+			return col.New(&colfmt.Float{W: 15}, units, "space", "free")
 		},
 	},
 	avSpStr: {
@@ -103,8 +102,7 @@ var fiMap = map[string]fieldInfo{
 		shortFmt: func() string { return "%.0f" },
 		col: func(_ int) *col.Col {
 			units := "Units: " + mult.Name
-			return col.New(colfmt.Float{W: 15},
-				units, "space", "available")
+			return col.New(&colfmt.Float{W: 15}, units, "space", "available")
 		},
 	},
 	totSpStr: {
@@ -121,8 +119,7 @@ var fiMap = map[string]fieldInfo{
 		shortFmt: func() string { return "%.0f" },
 		col: func(_ int) *col.Col {
 			units := "Units: " + mult.Name
-			return col.New(colfmt.Float{W: 15},
-				units, "space", "total")
+			return col.New(&colfmt.Float{W: 15}, units, "space", "total")
 		},
 	},
 	usedSpStr: {
@@ -139,8 +136,7 @@ var fiMap = map[string]fieldInfo{
 		shortFmt: func() string { return "%.0f" },
 		col: func(_ int) *col.Col {
 			units := "Units: " + mult.Name
-			return col.New(colfmt.Float{W: 15},
-				units, "space", "used")
+			return col.New(&colfmt.Float{W: 15}, units, "space", "used")
 		},
 	},
 	fileCntStr: {
@@ -150,8 +146,7 @@ var fiMap = map[string]fieldInfo{
 		format:   func() string { return "%d" },
 		shortFmt: func() string { return "%d" },
 		col: func(_ int) *col.Col {
-			return col.New(colfmt.Int{W: 12},
-				"files", "available")
+			return col.New(&colfmt.Int{W: 12}, "files", "available")
 		},
 	},
 	freeFCntStr: {
@@ -161,8 +156,7 @@ var fiMap = map[string]fieldInfo{
 		format:   func() string { return "%d" },
 		shortFmt: func() string { return "%d" },
 		col: func(_ int) *col.Col {
-			return col.New(colfmt.Int{W: 12},
-				"files", "remaining")
+			return col.New(&colfmt.Int{W: 12}, "files", "remaining")
 		},
 	},
 	maxNameStr: {
@@ -172,8 +166,7 @@ var fiMap = map[string]fieldInfo{
 		format:   func() string { return "%d" },
 		shortFmt: func() string { return "%d" },
 		col: func(_ int) *col.Col {
-			return col.New(colfmt.Int{W: 4},
-				"max file", "name length")
+			return col.New(&colfmt.Int{W: 4}, "max file", "name length")
 		},
 	},
 	flagsStr: {
@@ -191,13 +184,12 @@ var fiMap = map[string]fieldInfo{
 		format:   func() string { return "%s" },
 		shortFmt: func() string { return "%s" },
 		col: func(_ int) *col.Col {
-			return col.New(colfmt.String{W: maxFlagsLen},
-				"FS", "flags")
+			return col.New(colfmt.String{W: maxFlagsLen}, "FS", "flags")
 		},
 	},
 }
 
-var allowedFields = psetter.AValMap{
+var allowedFields = param.AValMap{
 	nameStr:     "the name of the directory",
 	fSpStr:      "the total free space available",
 	avSpStr:     "the space available to you",
@@ -243,8 +235,10 @@ func addParams(ps *param.PSet) error {
 
 	ps.Add("show",
 		psetter.EnumList{
-			Value:       &fields,
-			AllowedVals: allowedFields,
+			Value: &fields,
+			AVM: param.AVM{
+				AllowedVals: allowedFields,
+			},
 			Checks: []check.StringSlice{
 				check.StringSliceNoDups,
 				check.StringSliceLenGT(0),
@@ -340,15 +334,14 @@ func getFieldInfo(f string) fieldInfo {
 }
 
 func main() {
-	ps, err := paramset.New(addParams)
-	ps.SetProgramDescription(`Report on the status of file systems.
-
-By default the file system to be reported will be that of the current directory '.' but you can specify a list of alternative directories by passing them after the terminating parameter ('` + ps.TerminalParam() + `'). The value reported will be the available space.`)
-
-	if err != nil {
-		log.Fatal("couldn't initialise the parameters: ", err)
-	}
-	_ = ps.Parse()
+	ps := paramset.NewOrDie(addParams)
+	ps.SetProgramDescription("Report on the status of file systems.\n\n" +
+		"By default the file system to be reported will be that of the" +
+		" current directory '.' but you can specify a list of alternative" +
+		" directories by passing them after the terminating parameter" +
+		" ('" + ps.TerminalParam() + "'). The value reported will be" +
+		" the available space.")
+	ps.Parse()
 
 	dirs := ps.Remainder()
 	if len(dirs) == 0 {

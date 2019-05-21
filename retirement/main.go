@@ -8,10 +8,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/nickwells/col.mod/col"
-	"github.com/nickwells/col.mod/col/colfmt"
-	"github.com/nickwells/param.mod/v2/param"
-	"github.com/nickwells/param.mod/v2/param/paramset"
+	"github.com/nickwells/col.mod/v2/col"
+	"github.com/nickwells/col.mod/v2/col/colfmt"
+	"github.com/nickwells/param.mod/v3/param"
+	"github.com/nickwells/param.mod/v3/param/paramset"
 )
 
 var randomRange float64
@@ -57,7 +57,7 @@ func addNote(note, s string) string {
 }
 
 func main() {
-	ps, _ := paramset.New(addParams,
+	ps := paramset.NewOrDie(addParams,
 		param.SetProgramDescription(
 			"this will simulate various scenarios for retirement"+
 				" allowing you to explore the effect of changes"+
@@ -77,13 +77,13 @@ func main() {
 		os.Exit(1)
 	}
 	rpt, err := col.NewReport(h, os.Stdout,
-		col.New(colfmt.Int{}, "Year"),
-		col.New(colfmt.Float{W: 6}, "Savings"),
-		col.New(colfmt.Float{W: 6}, "Drawing"),
-		col.New(colfmt.Float{W: 6, Prec: 1}, "%age", "of Savings"),
-		col.New(colfmt.Float{W: 6}, "inflation adjusted", "Savings"),
-		col.New(colfmt.Float{W: 6}, "inflation adjusted", "Drawing"),
-		col.New(colfmt.Float{W: 6, Prec: 2}, "this year's", "return"),
+		col.New(&colfmt.Int{}, "Year"),
+		col.New(&colfmt.Float{W: 6}, "Savings"),
+		col.New(&colfmt.Float{W: 6}, "Drawing"),
+		col.New(&colfmt.Float{W: 6, Prec: 1}, "%age", "of Savings"),
+		col.New(&colfmt.Float{W: 6}, "inflation adjusted", "Savings"),
+		col.New(&colfmt.Float{W: 6}, "inflation adjusted", "Drawing"),
+		col.New(&colfmt.Float{W: 6, Prec: 2}, "this year's", "return"),
 		col.New(colfmt.String{W: 10}, "notes"))
 	if err != nil {
 		fmt.Println("Error found while constructing the report:", err)
@@ -145,8 +145,8 @@ func reportParams() {
 	initVals, err := col.NewReport(h, os.Stdout,
 		col.New(colfmt.String{W: 20, StrJust: col.Right}, "parameter").
 			SetSep(": "),
-		col.New(colfmt.Float{W: 6, Prec: 1}, "value"),
-		col.New(colfmt.Percent{W: 5, Prec: 1, IgnoreNil: true}))
+		col.New(&colfmt.Float{W: 6, Prec: 1}, "value"),
+		col.New(&colfmt.Percent{W: 5, Prec: 1, IgnoreNil: true}))
 	if err != nil {
 		fmt.Println("Error found while constructing the initial values table:",
 			err)

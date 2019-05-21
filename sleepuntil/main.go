@@ -10,10 +10,10 @@ import (
 	//"golem.orig/verbose"
 
 	"github.com/nickwells/check.mod/check"
-	"github.com/nickwells/param.mod/v2/param"
-	"github.com/nickwells/param.mod/v2/param/paction"
-	"github.com/nickwells/param.mod/v2/param/paramset"
-	"github.com/nickwells/param.mod/v2/param/psetter"
+	"github.com/nickwells/param.mod/v3/param"
+	"github.com/nickwells/param.mod/v3/param/paction"
+	"github.com/nickwells/param.mod/v3/param/paramset"
+	"github.com/nickwells/param.mod/v3/param/psetter"
 )
 
 var showTime bool
@@ -298,7 +298,7 @@ func durationSecs(ps *param.PSet) int64 {
 }
 
 func main() {
-	ps, err := paramset.New(addParams,
+	ps := paramset.NewOrDie(addParams,
 		addTimeSpecParams,
 		addWakeupActionParams,
 		// verbose.AddParams,
@@ -309,11 +309,7 @@ func main() {
 				" the next round interval."+
 				" So for instance you could choose to sleep until the next"+
 				" hour and it will wake up at minute 00 rather than"+
-				" 60 minutes later"),
-	)
-	if err != nil {
-		fmt.Println("could not create the parameter set: ", err)
-	}
+				" 60 minutes later"))
 	ps.Parse()
 
 	if timeSpecParamCounter.Count() > 1 {
