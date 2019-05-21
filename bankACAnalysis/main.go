@@ -324,41 +324,53 @@ func main() {
 			fmt.Println(err)
 			continue
 		}
-		if xa.xaType == "CHQ" {
-			err = summaries.addParent(catCheque, xa.desc)
-			if err != nil {
-				fmt.Printf(
-					"%s:%d: Can't add the cheque to the %s: %s\n",
-					acFileName, lineNum, xactnMapDesc, err)
-			}
-		} else if xa.xaType == "CPT" {
-			err = summaries.addParent(catCash, xa.desc)
-			if err != nil {
-				fmt.Printf(
-					"%s:%d: Can't add the cashpoint withdrawal to the %s: %s\n",
-					acFileName, lineNum, xactnMapDesc, err)
-			}
-		} else {
-			if _, ok := summaries.parentOf[xa.desc]; !ok {
-				xa.desc = summaries.normalise(xa.desc)
-				if _, ok := summaries.parentOf[xa.desc]; !ok {
-					err = summaries.addParent(catUnknown, xa.desc)
-					if err != nil {
-						fmt.Printf(
-							"%s:%d: Can't add the unknown entry to the %s: %s\n",
-							acFileName, lineNum, xactnMapDesc, err)
-					}
-				}
-			}
-		}
+		summaries.createNewMapEntries(acFileName, lineNum, xa)
 		summaries.summarise(xa)
 	}
 
 	summaries.report(style)
 }
 
+// createNewMapEntries will create new parent/child map entries for the
+// transaction if it is not already known or if it is a cheque or cashpoint
+// withdrawal
+func (s *Summaries) createNewMapEntries(fileName string, lineNum int, xa Xactn) {
+	if xa.xaType == "CHQ" {
+		err := s.addParent(catCheque, xa.desc)
+		if err != nil {
+			fmt.Printf(
+				"%s:%d: Can't add the cheque to the %s: %s\n",
+				fileName, lineNum, xactnMapDesc, err)
+		}
+	} else if xa.xaType == "CPT" {
+		err := s.addParent(catCash, xa.desc)
+		if err != nil {
+			fmt.Printf(
+				"%s:%d: Can't add the cashpoint withdrawal to the %s: %s\n",
+				fileName, lineNum, xactnMapDesc, err)
+		}
+	} else {
+		if _, ok := s.parentOf[xa.desc]; ok {
+			return
+		}
+
+		xa.desc = s.normalise(xa.desc)
+		if _, ok := s.parentOf[xa.desc]; ok {
+			return
+		}
+
+		err := s.addParent(catUnknown, xa.desc)
+		if err != nil {
+			fmt.Printf(
+				"%s:%d: Can't add the unknown entry to the %s: %s\n",
+				fileName, lineNum, xactnMapDesc, err)
+		}
+	}
+}
+
 // normalise converts the string into a 'normal' form - this involves editing
-// it to replace multiple alternative spellings into a single variant
+// it to replace multiple alternative spellings into a single variant. It
+// returns after the first edit which changes the string
 func (s *Summaries) normalise(str string) string {
 	for _, ed := range s.edits {
 		newS := ed.searchRE.ReplaceAllLiteralString(str, ed.replacement)
