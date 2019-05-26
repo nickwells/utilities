@@ -15,7 +15,8 @@ func addParams(ps *param.PSet) error {
 			},
 		},
 		"set the starting size of your retirement portfolio",
-		param.AltName("p"))
+		param.AltName("p"),
+		param.Attrs(param.MustBeSet))
 
 	ps.Add("income",
 		psetter.Float64{
@@ -25,7 +26,8 @@ func addParams(ps *param.PSet) error {
 			},
 		},
 		"set your desired retirement income",
-		param.AltName("i"))
+		param.AltName("i"),
+		param.Attrs(param.MustBeSet))
 
 	ps.Add("inflation",
 		psetter.Float64{

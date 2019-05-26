@@ -286,7 +286,8 @@ var editFileName string
 // categories
 var xactMapFileName string
 
-// don't suppress printing of summary records for which there are no transactions
+// don't suppress printing of summary records for which there are no
+// transactions
 var showZeros bool
 
 var style = showLeafEntries

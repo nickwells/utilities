@@ -15,10 +15,10 @@ import (
 )
 
 var randomRange float64
-var portfolio float64 = 1.0e3
-var income float64 = 0.1e3
-var inflation float64 = 3.0
-var portfolioReturn float64 = 7.0
+var portfolio float64
+var income float64
+var inflation float64 = 2.5
+var portfolioReturn float64 = 7.5
 var crashProp float64 = 40.0
 var years int64 = 30
 var yearsDefered int64
