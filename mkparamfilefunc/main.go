@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/nickwells/check.mod/check"
+	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v3/param"
 	"github.com/nickwells/param.mod/v3/param/paramset"
 	"github.com/nickwells/param.mod/v3/param/psetter"
@@ -16,14 +17,142 @@ import (
 
 // Created: Sat May 25 16:13:02 2019
 
-var outputFileName = "setConfigFile.go"
+const (
+	name_SetConfigFile            = "SetConfigFile"
+	name_SetGlobalConfigFile      = "SetGlobalConfigFile"
+	name_SetGroupConfigFile       = "SetGroupConfigFile"
+	name_SetGroupGlobalConfigFile = "SetGroupGlobalConfigFile"
+
+	dfltFileName      = "setConfigFile.go"
+	groupFileNameBase = "setConfigFileForGroup_"
+)
+
+var mustExist bool
+var dontMakeFile bool
+var outputFileName = dfltFileName
+var groupName string
 
 func main() {
 	ps := paramset.NewOrDie(addParams,
-		param.SetProgramDescription(`This creates a file defining functions which set the default parameter file for the package or program. These can be passed as another argument to the call where you create the parameter set. The paths of the files are derived from the XDG config directories and from the import path of the package.`),
+		param.SetProgramDescription(`This creates a file defining functions which set the default parameter file for the package or program. These can be passed as another argument to the call where you create the parameter set or called directly, passing the parameter set and checking for errors. The paths of the files are derived from the XDG config directories and from the import path of the package.
+
+If a group name is given the output filename and the function names will be derived from the group name.
+
+It may be called multiple times in the same package directory with different group names and with none and each time it will generate the appropriate files, overwriting any previous files with the same name`),
 	)
 
 	ps.Parse()
+
+	importPath, pkgName := goList()
+	paramFileParts := strings.Split(importPath, "/")
+	var goFile = openGoFile(outputFileName, dontMakeFile)
+
+	printPreamble(goFile, pkgName, ps)
+
+	if groupName == "" {
+		printFuncPersonal(goFile, name_SetConfigFile)
+		printAddCF(goFile, paramFileParts, "ps.AddConfigFile(", "common.cfg")
+		printFuncEnd(goFile)
+
+		printFuncGlobal(goFile, name_SetGlobalConfigFile)
+		printAddCF(goFile, paramFileParts, "ps.AddConfigFile(", "common.cfg")
+		printFuncEnd(goFile)
+	} else {
+		groupSuffix := "_" + groupName
+		groupSuffix = strings.ReplaceAll(groupSuffix, ".", "_")
+		groupSuffix = strings.ReplaceAll(groupSuffix, "-", "_")
+
+		printFuncPersonal(goFile, name_SetGroupConfigFile+groupSuffix)
+		printAddCF(goFile, paramFileParts,
+			fmt.Sprintf("ps.AddGroupConfigFile(%q,", groupName),
+			"group-"+groupName+".cfg")
+		printFuncEnd(goFile)
+
+		printFuncGlobal(goFile, name_SetGroupGlobalConfigFile+groupSuffix)
+		printAddCF(goFile, paramFileParts,
+			fmt.Sprintf("ps.AddGroupConfigFile(%q,", groupName),
+			"group-"+groupName+".cfg")
+		printFuncEnd(goFile)
+	}
+
+	goFile.Close()
+}
+
+// openGoFile creates the file, truncating it if it already exists and
+// returning the open file. If an error is detected, it is reported and the
+// program aborts.
+func openGoFile(filename string, dontMakeFile bool) *os.File {
+	if dontMakeFile {
+		return os.Stdout
+	}
+
+	f, err := os.Create(filename)
+	if err != nil {
+		fmt.Fprint(os.Stderr, err)
+		os.Exit(1)
+	}
+	return f
+}
+
+// printFunc prints the func name and signature
+func printFunc(f *os.File, name string) {
+	fmt.Fprint(f, "func "+name+"(ps *param.PSet) error {")
+}
+
+// printFuncPersonal prints the func name and signature and sets the base
+// directory for a personal config file
+func printFuncPersonal(f *os.File, name string) {
+	printFunc(f, name)
+	fmt.Fprint(f, `
+	baseDir := xdg.ConfigHome()
+`)
+}
+
+// printFuncGlobal prints the func name and signature and sets the base
+// directory for a shared, global config file
+func printFuncGlobal(f *os.File, name string) {
+	printFunc(f, name)
+	fmt.Fprint(f, `
+	dirs := xdg.ConfigDirs()
+	if len(dirs) == 0 {
+		return nil
+	}
+	baseDir := dirs[0]
+`)
+}
+
+// printAddCF prints the lines of code that will call filepath.Join(...)
+// with the base directory name and the the strings from paramFileParts
+func printAddCF(f *os.File, dirs []string, funcName, cfgFName string) {
+	fmt.Fprint(f, `
+	`+funcName+`
+		filepath.Join(baseDir`)
+	const sep = ",\n\t\t\t"
+	for _, p := range dirs {
+		fmt.Fprintf(f, "%s%q", sep, p)
+	}
+	fmt.Fprintf(f, "%s%q),", sep, cfgFName)
+
+	if mustExist {
+		fmt.Fprint(f, `
+		filecheck.MustExist)`)
+	} else {
+		fmt.Fprint(f, `
+		filecheck.Optional)`)
+	}
+}
+
+// printFuncEnd prints the common last lines of the function
+func printFuncEnd(f *os.File) {
+	fmt.Fprint(f, `
+	return nil
+}
+
+`)
+}
+
+// goList runs the go list command to discover the ImportPath and Name
+func goList() (importPath, pkgName string) {
 
 	cmd := exec.Command("go", "list", "-f", "{{.ImportPath}}\n{{.Name}}")
 	stdout, err := cmd.StdoutPipe()
@@ -36,39 +165,45 @@ func main() {
 		os.Exit(1)
 	}
 	scanner := bufio.NewScanner(stdout)
-	var importPath string
-	var pkgName string
+
 	if scanner.Scan() {
 		importPath = scanner.Text()
 	} else {
 		fmt.Fprint(os.Stderr, "can't read the package import path")
 		os.Exit(1)
 	}
+
 	if scanner.Scan() {
 		pkgName = scanner.Text()
 	} else {
 		fmt.Fprint(os.Stderr, "can't read the package name")
 		os.Exit(1)
 	}
+
 	if err := cmd.Wait(); err != nil {
 		fmt.Fprint(os.Stderr, err)
 		os.Exit(1)
 	}
+	return importPath, pkgName
+}
 
-	goFile, err := os.Create(outputFileName)
-	if err != nil {
-		fmt.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	paramFileParts := strings.Split(importPath, "/")
-	lastIdx := len(paramFileParts) - 1
-	paramFileParts[lastIdx] = paramFileParts[lastIdx] + ".config"
-
-	fmt.Fprintln(goFile, "package", pkgName)
-	fmt.Fprint(goFile, `
+// printPreamble prints the package and import declarations for the file
+func printPreamble(f *os.File, pkgName string, ps *param.PSet) {
+	fmt.Fprintln(f, "package", pkgName)
+	fmt.Fprint(f, `
 /*
 This code was generated by mkparamfilefunc
+with parameters:
+`)
+	for _, pg := range ps.GetGroups() {
+		for _, p := range pg.Params {
+			whereSet := p.WhereSet()
+			if len(whereSet) > 0 {
+				fmt.Fprintln(f, whereSet[len(whereSet)-1])
+			}
+		}
+	}
+	fmt.Fprint(f, `
 
 DO NOT EDIT
 */
@@ -81,40 +216,7 @@ import (
 	"github.com/nickwells/xdg.mod/xdg"
 )
 
-func SetConfigFile(ps *param.PSet) error {
-	ps.AddConfigFile(
-		filepath.Join(xdg.ConfigHome(),
-			`)
-	sep := ""
-	for _, p := range paramFileParts {
-		fmt.Fprintf(goFile, "%s%q", sep, p)
-		sep = ",\n\t\t\t"
-	}
-	fmt.Fprint(goFile, `),
-		filecheck.Optional)
-	return nil
-}
 `)
-	fmt.Fprint(goFile, `
-func SetGlobalConfigFile(ps *param.PSet) error {
-	dirs := xdg.ConfigDirs()
-	if len(dirs) > 0 {
-		ps.AddConfigFile(
-			filepath.Join(dirs[0],
-				`)
-	sep = ""
-	for _, p := range paramFileParts {
-		fmt.Fprintf(goFile, "%s%q", sep, p)
-		sep = ",\n\t\t\t\t"
-	}
-	fmt.Fprint(goFile, `),
-			filecheck.Optional)
-	}
-	return nil
-}
-`)
-
-	goFile.Close()
 }
 
 // addParams will add parameters to the passed ParamSet
@@ -130,5 +232,43 @@ func addParams(ps *param.PSet) error {
 		param.AltName("o"),
 	)
 
+	ps.Add("group", psetter.String{
+		Value:  &groupName,
+		Checks: []check.String{param.GroupNameCheck},
+	},
+		"sets the name of the group of parameters for which we are"+
+			" building the functions. If this is not given then only"+
+			" common config file functions will be generated. If a"+
+			" group name is given then only the group-specific config"+
+			" file functions will be generated. Additionally, unless"+
+			" the output file name has been changed from the default,"+
+			" the output file name will be adjusted to reflect the"+
+			" group name.",
+		param.AltName("g"),
+		param.PostAction(setFileNameForGroup),
+	)
+
+	ps.Add("must-exist", psetter.Bool{Value: &mustExist},
+		"the config file will be checked to ensure that it does exist and"+
+			" it will be an error if it doesn't ",
+		param.Attrs(param.DontShowInStdUsage),
+	)
+
+	ps.Add("no-file", psetter.Bool{Value: &dontMakeFile},
+		"don't create the go file, instead just print the content to"+
+			" standard out. This is useful for debugging or just to "+
+			"see what would have been produced",
+		param.Attrs(param.DontShowInStdUsage),
+	)
+
+	return nil
+}
+
+// setFileNameForGroup sets the outputFileName to the group variant unless it
+// is already set to some non-default value
+func setFileNameForGroup(_loc location.L, _ *param.ByName, _ []string) error {
+	if outputFileName == dfltFileName {
+		outputFileName = groupFileNameBase + groupName + ".go"
+	}
 	return nil
 }
