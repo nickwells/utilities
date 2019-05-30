@@ -28,9 +28,14 @@ const (
 )
 
 var mustExist bool
+var mustExistPersonal bool
+var mustExistGlobal bool
+
 var dontMakeFile bool
 var outputFileName = dfltFileName
 var groupName string
+var baseDirPersonal string
+var baseDirGlobal string
 
 func main() {
 	ps := paramset.NewOrDie(addParams,
@@ -50,28 +55,33 @@ It may be called multiple times in the same package directory with different gro
 	printPreamble(goFile, pkgName, ps)
 
 	if groupName == "" {
+		addCFName := "ps.AddConfigFile("
+		if pkgName == "main" {
+			addCFName = "ps.AddConfigFileStrict("
+		}
 		printFuncPersonal(goFile, name_SetConfigFile)
-		printAddCF(goFile, paramFileParts, "ps.AddConfigFile(", "common.cfg")
+		printAddCF(goFile, paramFileParts, addCFName, "common.cfg",
+			mustExist || mustExistPersonal)
 		printFuncEnd(goFile)
 
 		printFuncGlobal(goFile, name_SetGlobalConfigFile)
-		printAddCF(goFile, paramFileParts, "ps.AddConfigFile(", "common.cfg")
+		printAddCF(goFile, paramFileParts, addCFName, "common.cfg",
+			mustExist || mustExistGlobal)
 		printFuncEnd(goFile)
 	} else {
+		addCFName := fmt.Sprintf("ps.AddGroupConfigFile(%q,", groupName)
 		groupSuffix := "_" + groupName
 		groupSuffix = strings.ReplaceAll(groupSuffix, ".", "_")
 		groupSuffix = strings.ReplaceAll(groupSuffix, "-", "_")
 
 		printFuncPersonal(goFile, name_SetGroupConfigFile+groupSuffix)
-		printAddCF(goFile, paramFileParts,
-			fmt.Sprintf("ps.AddGroupConfigFile(%q,", groupName),
-			"group-"+groupName+".cfg")
+		printAddCF(goFile, paramFileParts, addCFName, "group-"+groupName+".cfg",
+			mustExist || mustExistPersonal)
 		printFuncEnd(goFile)
 
 		printFuncGlobal(goFile, name_SetGroupGlobalConfigFile+groupSuffix)
-		printAddCF(goFile, paramFileParts,
-			fmt.Sprintf("ps.AddGroupConfigFile(%q,", groupName),
-			"group-"+groupName+".cfg")
+		printAddCF(goFile, paramFileParts, addCFName, "group-"+groupName+".cfg",
+			mustExist || mustExistGlobal)
 		printFuncEnd(goFile)
 	}
 
@@ -96,6 +106,17 @@ func openGoFile(filename string, dontMakeFile bool) *os.File {
 
 // printFunc prints the func name and signature
 func printFunc(f *os.File, name string) {
+	fmt.Fprintln(f, "//", name)
+	fmt.Fprintln(f, "// will add a config file to the set which the param")
+	fmt.Fprintln(f, "// parser will process before checking the command line")
+	fmt.Fprintln(f, "// parameters. This function is one of a pair which will")
+	fmt.Fprintln(f, "// define the global and personal config files. It is")
+	fmt.Fprintln(f, "// generally best practice to add the global config file")
+	fmt.Fprintln(f, "// before adding the personal one. This is so that any")
+	fmt.Fprintln(f, "// system-wide defaults can be overriden by personal")
+	fmt.Fprintln(f, "// choice. This order also allows any parameters which")
+	fmt.Fprintln(f, "// can only be set once to be set in the global config")
+	fmt.Fprintln(f, "// file.")
 	fmt.Fprint(f, "func "+name+"(ps *param.PSet) error {")
 }
 
@@ -103,27 +124,39 @@ func printFunc(f *os.File, name string) {
 // directory for a personal config file
 func printFuncPersonal(f *os.File, name string) {
 	printFunc(f, name)
-	fmt.Fprint(f, `
+	if baseDirPersonal != "" {
+		fmt.Fprintf(f, `
+	baseDir := %q
+`, baseDirPersonal)
+	} else {
+		fmt.Fprint(f, `
 	baseDir := xdg.ConfigHome()
 `)
+	}
 }
 
 // printFuncGlobal prints the func name and signature and sets the base
 // directory for a shared, global config file
 func printFuncGlobal(f *os.File, name string) {
 	printFunc(f, name)
-	fmt.Fprint(f, `
+	if baseDirGlobal != "" {
+		fmt.Fprintf(f, `
+	baseDir := %q
+`, baseDirGlobal)
+	} else {
+		fmt.Fprint(f, `
 	dirs := xdg.ConfigDirs()
 	if len(dirs) == 0 {
 		return nil
 	}
 	baseDir := dirs[0]
 `)
+	}
 }
 
 // printAddCF prints the lines of code that will call filepath.Join(...)
 // with the base directory name and the the strings from paramFileParts
-func printAddCF(f *os.File, dirs []string, funcName, cfgFName string) {
+func printAddCF(f *os.File, dirs []string, funcName, cfgFName string, mustExist bool) {
 	fmt.Fprint(f, `
 	`+funcName+`
 		filepath.Join(baseDir`)
@@ -230,6 +263,7 @@ func addParams(ps *param.PSet) error {
 		},
 		"set the name of the output file",
 		param.AltName("o"),
+		param.Attrs(param.DontShowInStdUsage),
 	)
 
 	ps.Add("group", psetter.String{
@@ -250,7 +284,19 @@ func addParams(ps *param.PSet) error {
 
 	ps.Add("must-exist", psetter.Bool{Value: &mustExist},
 		"the config file will be checked to ensure that it does exist and"+
-			" it will be an error if it doesn't ",
+			" it will be an error if it doesn't",
+		param.Attrs(param.DontShowInStdUsage),
+	)
+
+	ps.Add("must-exist-personal", psetter.Bool{Value: &mustExistPersonal},
+		"the personal config file will be checked to ensure that it"+
+			" does exist and it will be an error if it doesn't",
+		param.Attrs(param.DontShowInStdUsage),
+	)
+
+	ps.Add("must-exist-global", psetter.Bool{Value: &mustExistGlobal},
+		"the global config file will be checked to ensure that it"+
+			" does exist and it will be an error if it doesn't",
 		param.Attrs(param.DontShowInStdUsage),
 	)
 
@@ -258,6 +304,32 @@ func addParams(ps *param.PSet) error {
 		"don't create the go file, instead just print the content to"+
 			" standard out. This is useful for debugging or just to "+
 			"see what would have been produced",
+		param.Attrs(param.DontShowInStdUsage),
+	)
+
+	ps.Add("base-dir-personal",
+		psetter.String{
+			Value:  &baseDirPersonal,
+			Checks: []check.String{check.StringLenGT(0)},
+		},
+		"set the base directory in which the parameter file will be found."+
+			" This value will be used in place of the XDG config directory"+
+			" for personal config files."+
+			" The sub-directories (derived from the import path) will still"+
+			" be used",
+		param.Attrs(param.DontShowInStdUsage),
+	)
+
+	ps.Add("base-dir-global",
+		psetter.String{
+			Value:  &baseDirGlobal,
+			Checks: []check.String{check.StringLenGT(0)},
+		},
+		"set the base directory in which the parameter file will be found."+
+			" This value will be used in place of the XDG config directory"+
+			" for global config files."+
+			" The sub-directories (derived from the import path) will still"+
+			" be used",
 		param.Attrs(param.DontShowInStdUsage),
 	)
 
