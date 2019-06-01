@@ -15,6 +15,7 @@ import (
 
 	"github.com/nickwells/col.mod/v2/col"
 	"github.com/nickwells/col.mod/v2/col/colfmt"
+	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v3/param"
 	"github.com/nickwells/param.mod/v3/param/paramset"
@@ -52,6 +53,9 @@ const (
 	catUnknown = "unknown"
 	catCash    = "cash"
 	catCheque  = "cheque"
+
+	editTypeSearch  = "search"
+	editTypeReplace = "replace"
 )
 
 const xactnMapDesc = "map of transaction types"
@@ -126,7 +130,7 @@ func (s *Summaries) populateParents() {
 		parts := strings.SplitN(line, " ", 2)
 		err = s.addParent(parts[0], parts[1])
 		if err != nil {
-			fmt.Printf("%s:%d: Bad entry in the %s: %s",
+			fmt.Printf("%s:%d: Bad entry in the %s: %s\n",
 				xactMapFileName, lineNum, xactnMapDesc, err)
 		}
 	}
@@ -162,11 +166,11 @@ func (s *Summaries) populateEdits() {
 		}
 		entryType := parts[0]
 		switch entryType {
-		case "search":
-			if prevType == "search" {
+		case editTypeSearch:
+			if prevType == editTypeSearch {
 				fmt.Printf(
-					"%s:%d: %s: Replace entry missing for previous search\n",
-					editFileName, lineNum, errIntro)
+					"%s:%d: %s: %q entry missing for previous search\n",
+					editFileName, lineNum, errIntro, editTypeReplace)
 			}
 			errFound = false
 			searchStr = parts[1]
@@ -176,7 +180,7 @@ func (s *Summaries) populateEdits() {
 					editFileName, lineNum, errIntro, err)
 				errFound = true
 			}
-		case "replace":
+		case editTypeReplace:
 			if !errFound {
 				s.edits = append(s.edits, Edit{
 					search:      searchStr,
@@ -215,19 +219,24 @@ func initSummaries() *Summaries {
 // find its parent. It is an error if the parent does not already exist.
 func (s *Summaries) addParent(parent, child string) error {
 	if _, ok := s.parentOf[parent]; !ok {
-		return fmt.Errorf("the parent %q of child %q does not exist",
+		return fmt.Errorf("%q (parent of %q) doesn't exist",
 			parent, child)
 	}
 
 	if oldParent, ok := s.parentOf[child]; ok {
 		if oldParent != parent {
-			return fmt.Errorf("child %q already has a parent: %q != %q",
+			return fmt.Errorf("%q already has a parent: %q != %q",
 				child, parent, oldParent)
 		}
 		return nil
 	}
 
-	pSum := s.summaries[parent]
+	pSum, ok := s.summaries[parent]
+	if !ok {
+		return fmt.Errorf("%q (parent of %q) has no summary record"+
+			" - check the transaction map file",
+			parent, child)
+	}
 	cSum := &Summary{
 		name:       child,
 		parent:     pSum,
@@ -250,7 +259,11 @@ func (s *Summaries) addParent(parent, child string) error {
 // summarise will summarise the transaction working its way up to the top of
 // the tree of Summary records
 func (s *Summaries) summarise(xa Xactn) {
-	summ := s.summaries[xa.desc]
+	summ, ok := s.summaries[xa.desc]
+	if !ok {
+		fmt.Println("Couldn't find the summary record for :", xa)
+		return
+	}
 	summ.add(xa)
 }
 
@@ -290,6 +303,10 @@ var xactMapFileName string
 // transactions
 var showZeros bool
 
+// Skip the first line in the file of transactions. The assumption is that
+// the first line is a set of headings
+var skipFirstLine = true
+
 var style = showLeafEntries
 
 var minimalAmount float64
@@ -317,10 +334,10 @@ func main() {
 		}
 
 		lineNum++
-		if lineNum == 1 {
+		if skipFirstLine && lineNum == 1 {
 			continue // ignore the first line of headings
 		}
-		xa, err := mkXactn(lineNum, parts)
+		xa, err := summaries.mkXactn(lineNum, parts)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -351,11 +368,6 @@ func (s *Summaries) createNewMapEntries(fileName string, lineNum int, xa Xactn) 
 				fileName, lineNum, xactnMapDesc, err)
 		}
 	} else {
-		if _, ok := s.parentOf[xa.desc]; ok {
-			return
-		}
-
-		xa.desc = s.normalise(xa.desc)
 		if _, ok := s.parentOf[xa.desc]; ok {
 			return
 		}
@@ -430,6 +442,15 @@ func (s *Summaries) report(style reportStyle) {
 	summ.report(rpt, summ.debitAmt, summ.creditAmt, 0, style)
 }
 
+// calcPct calculates the amount as a proportion of the total, if the total
+// is zero, the proportion is zero regardless of the amount
+func calcPct(amt, tot float64) float64 {
+	if tot == 0 {
+		return 0
+	}
+	return amt / tot
+}
+
 func (s *Summary) report(rpt *col.Report, totDebit, totCredit float64, indent int, style reportStyle) {
 	if style == summaryReport && len(s.components) == 0 {
 		return
@@ -445,8 +466,8 @@ func (s *Summary) report(rpt *col.Report, totDebit, totCredit float64, indent in
 		strings.Repeat(" ", tabWidth*indent)+s.name,
 		s.count,
 		s.firstDate, s.lastDate,
-		s.debitAmt, s.debitAmt/totDebit,
-		s.creditAmt, s.creditAmt/totCredit,
+		s.debitAmt, calcPct(s.debitAmt, totDebit),
+		s.creditAmt, calcPct(s.creditAmt, totCredit),
 		s.creditAmt-s.debitAmt)
 	if err != nil {
 		fmt.Println("Couldn't print the row:", err)
@@ -467,20 +488,73 @@ func (s *Summary) report(rpt *col.Report, totDebit, totCredit float64, indent in
 
 // addParams will add parameters to the passed ParamSet
 func addParams(ps *param.PSet) error {
-	ps.Add("ac-file", psetter.Pathname{Value: &acFileName},
-		"the name of the file containing the bank account transactions",
+	ps.Add("ac-file",
+		psetter.Pathname{
+			Value:       &acFileName,
+			Expectation: filecheck.Provisos{Existence: filecheck.MustExist},
+		},
+		"the name of the file containing the bank account transactions."+
+			" The file is expected to contain lines of comma-separated"+
+			" values with the values as follows:\n\n"+
+			"transaction date in the form DD/MM/YYYY\n"+
+			"transaction type\n"+
+			"sort-code\n"+
+			"account number\n"+
+			"transaction description\n"+
+			"debit amount\n"+
+			"credit amount\n"+
+			"balance",
 		param.Attrs(param.MustBeSet))
 
-	ps.Add("map-file", psetter.Pathname{Value: &xactMapFileName},
-		"the name of the file containing the transaction name map",
+	ps.Add("map-file",
+		psetter.Pathname{
+			Value:       &xactMapFileName,
+			Expectation: filecheck.Provisos{Existence: filecheck.MustExist},
+		},
+		"the name of the file containing the transaction name map.\n\n"+
+			"Each non-blank line in the file should contain a word"+
+			" representing the 'parent' group of transactions"+
+			" followed by a space and the rest of the line which"+
+			" represents the 'child' group of transactions.\n\n"+
+			"There is an initial group called '"+catAll+"' with a child,"+
+			" called '"+catUnknown+"' and the entries in this file are"+
+			" intended"+
+			" to construct the tree of transaction groups. Any"+
+			" transaction description which is not found in this map"+
+			" will automatically be placed in the 'unknown' group so you"+
+			" can find the transactions you haven't classified by"+
+			" looking in that group. In"+
+			" order to create a new group you make an entry in this"+
+			" file with parent set to 'all' and child set to the new"+
+			" group name. Then each transaction that you want to put in"+
+			" that group should have an entry with parent set to the"+
+			" group name and the child set to the transaction"+
+			" description. Groups can be nested to an arbitrary depth.",
 		param.Attrs(param.MustBeSet))
 
-	ps.Add("edit-file", psetter.Pathname{Value: &editFileName},
-		"the name of the file containing the transaction name replacements",
+	ps.Add("edit-file",
+		psetter.Pathname{
+			Value:       &editFileName,
+			Expectation: filecheck.Provisos{Existence: filecheck.MustExist},
+		},
+		"the name of the file containing the transaction name"+
+			" replacements. Transaction descriptions that are not mapped"+
+			" will be edited according to the rules in this file.\n\n"+
+			"Each editing rule is given by a pair of lines,"+
+			" the first must start with '"+editTypeSearch+"='"+
+			" and the second must start with '"+editTypeReplace+"='."+
+			" The first line value should be a valid regular expression",
 		param.Attrs(param.MustBeSet))
 
 	ps.Add("show-zeroes", psetter.Bool{Value: &showZeros},
 		"don't suppress entries which have no transactions")
+
+	ps.Add("dont-skip-line1",
+		psetter.Bool{
+			Value:  &skipFirstLine,
+			Invert: true,
+		},
+		"don't ignore the first line of the transactions file")
 
 	ps.Add("summary", psetter.Nil{},
 		"show a summary report with no leaf transactions",
@@ -511,7 +585,7 @@ func parseNum(s, name string) (float64, error) {
 }
 
 // mkXactn converts the slice of strings into an transaction record
-func mkXactn(lineNum int, parts []string) (Xactn, error) {
+func (s *Summaries) mkXactn(lineNum int, parts []string) (Xactn, error) {
 	date, err := time.Parse("02/01/2006", parts[0])
 	if err != nil {
 		return Xactn{}, fmt.Errorf("Couldn't parse the date: %s", err)
@@ -532,11 +606,16 @@ func mkXactn(lineNum int, parts []string) (Xactn, error) {
 		return Xactn{}, err
 	}
 
+	desc := parts[4]
+	if _, ok := s.parentOf[desc]; !ok {
+		desc = s.normalise(desc)
+	}
+
 	return Xactn{
 		lineNum:   lineNum,
 		date:      date,
 		xaType:    parts[1],
-		desc:      parts[4],
+		desc:      desc,
 		debitAmt:  da,
 		creditAmt: ca,
 		balance:   bal,

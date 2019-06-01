@@ -22,5 +22,5 @@ github.com/nickwells/units.mod v1.0.2 h1:qzdJjkTBFCBIZy6b2OpqQukr7O6tydPhpLXUH2N
 github.com/nickwells/units.mod v1.0.2/go.mod h1:OmidXxgXNXs8U1Vti+QNWvKYET2QIIhDZ7qQ8Fetc8k=
 github.com/nickwells/unitsetter.mod/v2 v2.0.1 h1:pl7lqAaqrOekVifPF/0VN9JhMOZynL9CAC7g8HyP+aA=
 github.com/nickwells/unitsetter.mod/v2 v2.0.1/go.mod h1:Q96Q5MuSm2Tvnkxxqj3PIc6Dwkwo27Hx+6CH1ZXipRI=
-golang.org/x/sys v0.0.0-20190530182044-ad28b68e88f1 h1:R4dVlxdmKenVdMRS/tTspEpSTRWINYrHD8ySIU9yCIU=
-golang.org/x/sys v0.0.0-20190530182044-ad28b68e88f1/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20190531175056-4c3a928424d2 h1:T5DasATyLQfmbTpfEXx/IOL9vfjzW6up+ZDkmHvIf2s=
+golang.org/x/sys v0.0.0-20190531175056-4c3a928424d2/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
