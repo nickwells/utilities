@@ -113,7 +113,7 @@ func printFunc(f *os.File, name string) {
 	fmt.Fprintln(f, "// define the global and personal config files. It is")
 	fmt.Fprintln(f, "// generally best practice to add the global config file")
 	fmt.Fprintln(f, "// before adding the personal one. This is so that any")
-	fmt.Fprintln(f, "// system-wide defaults can be overriden by personal")
+	fmt.Fprintln(f, "// system-wide defaults can be overridden by personal")
 	fmt.Fprintln(f, "// choice. This order also allows any parameters which")
 	fmt.Fprintln(f, "// can only be set once to be set in the global config")
 	fmt.Fprintln(f, "// file.")

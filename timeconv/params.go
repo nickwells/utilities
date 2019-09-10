@@ -194,7 +194,7 @@ func addTimeFormattingParams(ps *param.PSet) error {
 
 	ps.Add("format-http",
 		psetter.Nil{},
-		`set the output format to the prefered HTTP format:
+		`set the output format to the preferred HTTP format:
 
 `+httpFormat+`
 
