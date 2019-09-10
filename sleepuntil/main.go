@@ -7,8 +7,6 @@ import (
 	"os/exec"
 	"time"
 
-	//"golem.orig/verbose"
-
 	"github.com/nickwells/check.mod/check"
 	"github.com/nickwells/param.mod/v3/param"
 	"github.com/nickwells/param.mod/v3/param/paction"
