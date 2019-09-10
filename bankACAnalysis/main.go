@@ -313,6 +313,7 @@ var minimalAmount float64
 
 func main() {
 	ps := paramset.NewOrDie(addParams,
+		SetConfigFile,
 		param.SetProgramDescription(`analyse the bank account`))
 	ps.Parse()
 
