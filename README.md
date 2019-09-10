@@ -32,7 +32,7 @@ This will perform a very basic financial analysis of a retirement
 portfolio. It does a very simple modelling of the performance of a retirement
 portfolio over a number of years and allows you to model different scenarios.
 
-## bankAcAnalysis
+## bankACAnalysis
 This will read a csv-file holding bank transactions and will try to group
 them according to various rules you have supplied. This is still very much a
 work in progress but is of some use which is why it is here.
@@ -40,3 +40,10 @@ work in progress but is of some use which is why it is here.
 ## mkparamfilefunc
 this is intended to be used with go generate to construct functions that can
 be used to set the parameter files for packages and commands.
+
+## gosh
+This is a tool for running very short go programs from the command line in a
+similar way that perl programs can be run from the command line. The
+resulting programs can be preserved for subsequent editing. The tool can also
+wrap the supplied code in a loop which reads lines from stdin and can also
+split these lines around spaces.
