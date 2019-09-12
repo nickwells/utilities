@@ -5,6 +5,17 @@ All these tools use the standard param package to handle command-line flags
 and so they support the standard '-help' parameter which will print out a
 comprehensive usage message.
 
+## gosh
+This is a tool for running very short Go programs from the command line in a
+similar way that perl programs can be run from the command line. The
+resulting programs can be preserved for subsequent editing. The tool can also
+wrap the supplied code in a loop which reads lines from stdin and can also
+split these lines around spaces.
+
+There are some similar alternatives available:
+- [goexec](https://github.com/shurcooL/goexec/) - a command-line tool for executing Go code.
+- [gommand](https://github.com/sno6/gommand) - a command-line tool for executing Go code, similar to python -c.
+
 ## statfs
 This provides an equivalent to the `df` command but in a form that is easier
 to use in a shell script. The default output is easy for a human to
@@ -40,10 +51,3 @@ work in progress but is of some use which is why it is here.
 ## mkparamfilefunc
 this is intended to be used with go generate to construct functions that can
 be used to set the parameter files for packages and commands.
-
-## gosh
-This is a tool for running very short go programs from the command line in a
-similar way that perl programs can be run from the command line. The
-resulting programs can be preserved for subsequent editing. The tool can also
-wrap the supplied code in a loop which reads lines from stdin and can also
-split these lines around spaces.
