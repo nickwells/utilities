@@ -12,5 +12,5 @@ require (
 	github.com/nickwells/units.mod v1.0.3
 	github.com/nickwells/unitsetter.mod/v2 v2.0.4
 	github.com/nickwells/xdg.mod v1.0.2
-	golang.org/x/sys v0.0.0-20190910064555-bbd175535a8b
+	golang.org/x/sys v0.0.0-20190911201528-7ad0cfa0b7b5
 )
