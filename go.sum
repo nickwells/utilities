@@ -1,7 +1,5 @@
 github.com/nickwells/check.mod v1.4.5 h1:35e+wI2svHN5N55VT+asnpRfrOtkbdy+Uqn4EWe2JtY=
 github.com/nickwells/check.mod v1.4.5/go.mod h1:lVD9O5vtdfqx3uZKuHm/+DrBCcZlWuDfwziGTETiOvA=
-github.com/nickwells/col.mod v1.1.0 h1:Z65DTRnffT+GahDfDoneQTmifYm8NMHBmZyxJUL9IUc=
-github.com/nickwells/col.mod v1.1.0/go.mod h1:4THC2fFReTDIjokgHadWVHYCOK06YQGhLTQw68U+h64=
 github.com/nickwells/col.mod/v2 v2.1.0 h1:MI5qBZ96tHQ7gvMIvqMD/6qO6dTB0Vi5+TCofOuZ+fw=
 github.com/nickwells/col.mod/v2 v2.1.0/go.mod h1:FhVVHpQzlGgcL+i+yCBWNg6dVGyLeGYBA4cEkOJGt/o=
 github.com/nickwells/filecheck.mod v1.0.10 h1:Df4Ty8t2G14hPmtIvf2s2uN6uw0UUx55FwFgagp72AI=
@@ -14,9 +12,10 @@ github.com/nickwells/mathutil.mod v1.0.6 h1:ZzzamM+h5AF2lSQhfSfFftPtMtj3rte2Zu3F
 github.com/nickwells/mathutil.mod v1.0.6/go.mod h1:VJFj64pzuQxBrMtE0t0oTnTqKik1xE4Fa2Ar8oao3lA=
 github.com/nickwells/param.mod/v3 v3.1.7 h1:orq7jSHoIYg6FdHX18pVvR8ZQwMXSNmwhv4m5tprYaE=
 github.com/nickwells/param.mod/v3 v3.1.7/go.mod h1:D30z+oU4bERHY351xRbQ4osecCWh4K5y+ap05b7AyCg=
+github.com/nickwells/param.mod/v3 v3.2.0 h1:YsZJvyJMIp/e+NM6KjQlpGvUXfxK9SaqlE+diSjWrZI=
+github.com/nickwells/param.mod/v3 v3.2.0/go.mod h1:D30z+oU4bERHY351xRbQ4osecCWh4K5y+ap05b7AyCg=
 github.com/nickwells/strdist.mod v1.0.9 h1:3xH0YxG+gUiqwh9Uo5FhmiCGG8W3v1CfyXXL1PYg2Ks=
 github.com/nickwells/strdist.mod v1.0.9/go.mod h1:4Hx4gwjjrikUa0r8v4ifowUE4URsl4dUJwAdncFZPmI=
-github.com/nickwells/testhelper.mod v1.3.0/go.mod h1:Ct/U2PjL0n9hGc+US6uR/s4NxSRI33NM+0ZkrDkG0XI=
 github.com/nickwells/testhelper.mod v1.3.6 h1:O2J4tJ5Nmj8B00MdTkhh7ejCMJndUjgOaIeNEJlJsOs=
 github.com/nickwells/testhelper.mod v1.3.6/go.mod h1:Ct/U2PjL0n9hGc+US6uR/s4NxSRI33NM+0ZkrDkG0XI=
 github.com/nickwells/twrap.mod v1.1.4 h1:7OV2iD4AHeNMBYJBxJAXrOn5qHzqi7WnPqI2190W2Yk=
@@ -27,5 +26,5 @@ github.com/nickwells/unitsetter.mod/v2 v2.0.4 h1:faLC/2XgXeSZiFmLWIvBUWiabwv8K74
 github.com/nickwells/unitsetter.mod/v2 v2.0.4/go.mod h1:j33HOqAbvnokXwIicZZ4BTy8L7i2zNbvvNW7k/5iM+c=
 github.com/nickwells/xdg.mod v1.0.2 h1:rmQPX4dTfxTtUeoRQfkMbPCzUDwN2zP6eNwTYyBcn8w=
 github.com/nickwells/xdg.mod v1.0.2/go.mod h1:h8lRJMpY6oXdD6E3jJuolpO9QJE5FcTvUe8eyRzgyQo=
-golang.org/x/sys v0.0.0-20190911201528-7ad0cfa0b7b5 h1:SW/0nsKCUaozCUtZTakri5laocGx/5bkDSSLrFUsa5s=
-golang.org/x/sys v0.0.0-20190911201528-7ad0cfa0b7b5/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20190927073244-c990c680b611 h1:q9u40nxWT5zRClI/uU9dHCiYGottAg6Nzz4YUQyHxdA=
+golang.org/x/sys v0.0.0-20190927073244-c990c680b611/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
