@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/nickwells/col.mod/col"
-	"github.com/nickwells/col.mod/col/colfmt"
+	"github.com/nickwells/col.mod/v2/col"
+	"github.com/nickwells/col.mod/v2/col/colfmt"
 )
 
 // makeRpt creates the report object
@@ -106,17 +106,17 @@ func (m M) reportModelParams() {
 	}
 
 	rpt, err := col.NewReport(h, os.Stdout,
-		col.New(colfmt.Percent{W: 6, Prec: 2}, "Inflation"),
-		col.New(colfmt.Float{W: 6}, "Initial", "Portfolio"),
-		col.New(colfmt.Percent{W: 6, Prec: 2}, "Growth", "", "Mean"),
-		col.New(colfmt.Percent{W: 6, Prec: 2}, "Growth", "", "SD"),
-		col.New(colfmt.Percent{W: 6, Prec: 2}, "Growth", "Target", "Min"),
-		col.New(colfmt.Float{W: 6}, "Income", "", "Target"),
-		col.New(colfmt.Float{W: 6}, "Income", "", "Min"),
+		col.New(&colfmt.Percent{W: 6, Prec: 2}, "Inflation"),
+		col.New(&colfmt.Float{W: 6}, "Initial", "Portfolio"),
+		col.New(&colfmt.Percent{W: 6, Prec: 2}, "Growth", "", "Mean"),
+		col.New(&colfmt.Percent{W: 6, Prec: 2}, "Growth", "", "SD"),
+		col.New(&colfmt.Percent{W: 6, Prec: 2}, "Growth", "Target", "Min"),
+		col.New(&colfmt.Float{W: 6}, "Income", "", "Target"),
+		col.New(&colfmt.Float{W: 6}, "Income", "", "Min"),
 		col.New(colfmt.Int{W: 6}, "Income", "drawings", "per yr"),
 		col.New(colfmt.Int{W: 6}, "Income", "years", "defered"),
 		col.New(colfmt.Int{W: 6}, "Crash", "interval"),
-		col.New(colfmt.Percent{W: 6, Prec: 2}, "Crash", "%age"),
+		col.New(&colfmt.Percent{W: 6, Prec: 2}, "Crash", "%age"),
 		col.New(colfmt.Int{W: 6}, "Model", "years"),
 		col.New(colfmt.Int{W: 7}, "Model", "trials p/a"),
 		col.New(colfmt.Int{W: 6}, "Model", "yrs shown"),
