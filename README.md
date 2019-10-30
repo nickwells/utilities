@@ -77,5 +77,19 @@ them according to various rules you have supplied. This is still very much a
 work in progress but is of some use which is why it is here.
 
 ## mkparamfilefunc
-this is intended to be used with go generate to construct functions that can
-be used to set the parameter files for packages and commands.
+This is intended to be used with go generate to construct functions that can
+be used to set the parameter files for packages and commands. It will write a
+Go file with functions that can be passed to a call to paramset.NewOrDie to
+set the per-command config files. This will allow the user of a program to
+set parameters that they want to use every time the program is run.
+
+## findCmpRm
+This finds all files in a given directory with a given extension and compares
+them against corresponding files without the extension. Then the user is
+prompted to delete the file with the extension. The command name echoes this:
+find, compare, remove.
+
+It is most useful in conjunction with the testhelper package. The testhelper
+package will retain the original contents of a golden file in a file of the
+same name with an extension of '.orig'. This command will help you to review
+the changes and tidy up afterwards.

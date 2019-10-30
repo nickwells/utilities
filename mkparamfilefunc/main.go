@@ -38,12 +38,25 @@ var baseDirPersonal string
 var baseDirGlobal string
 
 func main() {
-	ps := paramset.NewOrDie(addParams,
-		param.SetProgramDescription(`This creates a file defining functions which set the default parameter file for the package or program. These can be passed as another argument to the call where you create the parameter set or called directly, passing the parameter set and checking for errors. The paths of the files are derived from the XDG config directories and from the import path of the package.
-
-If a group name is given the output filename and the function names will be derived from the group name.
-
-It may be called multiple times in the same package directory with different group names and with none and each time it will generate the appropriate files, overwriting any previous files with the same name`),
+	ps := paramset.NewOrDie(
+		addParams,
+		param.SetProgramDescription(
+			"This creates a file defining functions which set the"+
+				" default parameter files for the package or program."+
+				" These can be passed as another argument to the call"+
+				" where you create the parameter set or called"+
+				" directly, passing the parameter set and checking for"+
+				" errors. The paths of the files are derived from the"+
+				" XDG config directories and from the import path of"+
+				" the package."+
+				"\n\nIf a group name is given the output filename and"+
+				" the function names will be derived from the group"+
+				" name."+
+				"\n\nIt may be called multiple times in the same"+
+				" package directory with different group names and"+
+				" with none and each time it will generate the"+
+				" appropriate files, overwriting any previous files"+
+				" with the same name"),
 	)
 
 	ps.Parse()
@@ -259,6 +272,9 @@ func addParams(ps *param.PSet) error {
 			Value: &outputFileName,
 			Checks: []check.String{
 				check.StringHasSuffix(".go"),
+				check.StringNot(
+					check.StringHasSuffix("_test.go"),
+					"the file must not be a test file"),
 			},
 		},
 		"set the name of the output file",
