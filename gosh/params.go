@@ -22,6 +22,7 @@ var clearFileOnSuccess = true
 var runInReadLoop bool
 var runAsWebserver bool
 var splitLine bool
+var splitPattern = `\s+`
 var dontRun bool
 
 const defaultHTTPPort = 8080
@@ -144,6 +145,16 @@ func addParams(ps *param.PSet) error {
 			" the script to be run in the loop reading from stdin",
 		param.AltName("s"),
 		param.PostAction(paction.SetBool(&runInReadLoop, true)),
+	)
+
+	ps.Add("split-pattern", psetter.String{Value: &splitPattern},
+		"change the behaviour when splitting the line into fields."+
+			" The provided string must compile into a regular expression"+
+			" Setting this will also force the script to be run in the"+
+			" loop reading from stdin and for each line to be split",
+		param.AltName("sp"),
+		param.PostAction(paction.SetBool(&runInReadLoop, true)),
+		param.PostAction(paction.SetBool(&splitLine, true)),
 	)
 
 	ps.Add("dont-exec", psetter.Bool{Value: &dontRun},

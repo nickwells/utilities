@@ -17,10 +17,12 @@ func main() {
 	ps := paramset.NewOrDie(addParams,
 		param.SetProgramDescription(
 			"this will run go code in an implicit main function."+
-				" Note that it is also possible to run the code in a"+
+				" It is also possible to run the code in a"+
 				" loop that will read lines from the standard input"+
-				" and to split these lines into fields on whitespace"+
-				" boundaries. It is also possible to preserve the"+
+				" and, optionally, to split these lines into fields"+
+				" on chosen boundaries. Alternatively you can run"+
+				" the code as a simple webserver."+
+				"\n\nIt is also possible to preserve the"+
 				" temporary file created for subsequent editing."),
 	)
 
@@ -171,8 +173,8 @@ func populateGoFileReadLoopOpen(f *os.File) {
 	}
 
 	if splitLine {
-		fmt.Fprintln(f, "\tlineSplitter := regexp.MustCompile(`\\s+`)"+
-			comment("splitLine"))
+		fmt.Fprintf(f, "\tlineSplitter := regexp.MustCompile(%q)%s\n",
+			splitPattern, comment("splitLine"))
 	}
 	fmt.Fprintln(f, "\tline := bufio.NewScanner(os.Stdin)"+comment("readLoop"))
 	fmt.Fprintln(f, "\tfor line.Scan() {"+comment("readLoop"))
