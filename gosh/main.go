@@ -14,7 +14,9 @@ import (
 // Created: Wed Sep  4 09:58:54 2019
 
 func main() {
-	ps := paramset.NewOrDie(addParams,
+	ps := paramset.NewOrDie(
+		addParams,
+		addExamples,
 		param.SetProgramDescription(
 			"this will run go code in an implicit main function."+
 				" It is also possible to run the code in a"+

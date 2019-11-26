@@ -203,3 +203,17 @@ func addParams(ps *param.PSet) error {
 
 	return nil
 }
+
+// addExamples adds some examples of how gosh might be used to the standard
+// help message
+func addExamples(ps *param.PSet) error {
+	ps.AddExample("gosh -e 'fmt.Println(\"Hello, World!\")'",
+		`This will print Hello, World! and exit`)
+	ps.AddExample(
+		"gosh -run-in-readloop -b 'count := 0'"+
+			" -e 'count++' -a 'fmt.Println(count)'",
+		"This will read from the standard input and print"+
+			" the number of lines read")
+
+	return nil
+}
