@@ -53,6 +53,7 @@ type M struct {
 
 	yearsToShow int64
 
+	showIntroText   bool
 	showModelParams bool
 
 	showModelMetrics bool
@@ -94,6 +95,7 @@ func (m M) mergeResults(results []*AggResults, rc <-chan []*AggResults, dc chan<
 			val := results[i]
 
 			val.crash += r.crash
+			val.bust += r.bust
 			val.surplusAvailable += r.surplusAvailable
 			val.minimalIncome += r.minimalIncome
 			val.portfolioDown += r.portfolioDown
@@ -122,6 +124,14 @@ func (m *M) trialRunner(trials int64, rc chan<- []*AggResults, tc chan bool) {
 			s.calcCurrentRtn(r)
 			s.calcCurrentIncome(r)
 			s.calcNewPortfolio(r)
+			if s.portfolio <= 0 {
+				s.bust = true
+				for ; y < m.years; y++ {
+					r := results[y]
+					r.bust++
+				}
+				break
+			}
 
 			s.adjustForInflation()
 		}
@@ -130,7 +140,11 @@ func (m *M) trialRunner(trials int64, rc chan<- []*AggResults, tc chan bool) {
 	tc <- true
 }
 
-// CalcValues creates an AggResults slice and runs the model to populate it
+// CalcValues creates an AggResults slice and runs the model to populate
+// it. It runs the model calculations in a pool of goroutines each of which
+// calculates a proportion of the trials and then passes its own results to a
+// separate goroutine which merges them together. When the merging is
+// complete this routine returns the merged results.
 func (m *M) CalcValues() []*AggResults {
 	defer m.modelMetrics.durCalcValues.TimeIt()()
 
@@ -180,6 +194,7 @@ type AggResults struct {
 	surplusAvailable  int
 	minimalIncome     int
 	crash             int
+	bust              int
 	portfolioDown     int
 	portfolio         stat
 	income            stat
@@ -194,6 +209,7 @@ type state struct {
 
 	portfolio        float64
 	initialPortfolio float64
+	bust             bool
 
 	currentRtn float64
 	rtnMean    float64
@@ -216,6 +232,7 @@ func (s *state) setState(m *M) {
 
 	s.portfolio = m.initialPortfolio
 	s.initialPortfolio = m.initialPortfolio
+	s.bust = false
 
 	s.currentRtn = m.rtnMeanPct / 100
 	s.rtnMean = m.rtnMeanPct / 100
@@ -286,6 +303,10 @@ func (s *state) calcNewPortfolio(r *AggResults) {
 
 	for i := 0; i < int(s.model.drawingPeriodsPerYear); i++ {
 		s.portfolio -= periodIncome
+		if s.portfolio < 0 {
+			s.portfolio = 0
+			break
+		}
 		s.portfolio *= periodMult
 	}
 

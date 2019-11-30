@@ -150,6 +150,9 @@ func (m *M) MakeAddParamsFunc() param.PSetOptFunc {
 			"only report every nth year (and the last)",
 			param.AltName("show-yrs"))
 
+		ps.Add("show-intro", psetter.Bool{Value: &m.showIntroText},
+			"print a description of the model before showing the results")
+
 		ps.Add("show-model-params", psetter.Bool{Value: &m.showModelParams},
 			"report the parameters to the model before showing the results")
 

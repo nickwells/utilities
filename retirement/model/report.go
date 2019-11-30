@@ -7,6 +7,7 @@ import (
 
 	"github.com/nickwells/col.mod/v2/col"
 	"github.com/nickwells/col.mod/v2/col/colfmt"
+	"github.com/nickwells/twrap.mod/twrap"
 )
 
 // makeRpt creates the report object
@@ -40,6 +41,7 @@ func makeRpt(m M) *col.Report {
 		col.New(&colfmt.Percent{W: 7, Prec: 2}, "average", "nett", "return"),
 		col.New(&colfmt.Percent{W: 6, Prec: 2}, "drawing", "covered"),
 		col.New(&colfmt.Percent{W: 6, Prec: 2}, "drawing", "minimal"),
+		col.New(&colfmt.Percent{W: 8, Prec: 4}, "chance", "of going", "bust"),
 	}
 	columns := []*col.Col{}
 	columns = append(columns, yearCol...)
@@ -69,6 +71,7 @@ func colVals(m M, lastPfl float64, r *AggResults) ([]interface{}, float64) {
 		(avgPfl - lastPfl) / lastPfl,
 		float64(r.surplusAvailable) / float64(m.trials),
 		float64(r.minimalIncome) / float64(m.trials),
+		float64(r.bust) / float64(m.trials),
 	}
 
 	return vals, avgPfl
@@ -76,6 +79,9 @@ func colVals(m M, lastPfl float64, r *AggResults) ([]interface{}, float64) {
 
 // Report prints the results
 func (m M) Report(results []*AggResults) {
+	if m.showIntroText {
+		m.printIntroText()
+	}
 	if m.showModelParams {
 		m.reportModelParams()
 	}
@@ -96,7 +102,38 @@ func (m M) Report(results []*AggResults) {
 	}
 }
 
-// (m M)reportModelParams will report the model parameters
+// printIntroText prints the introductory text which explains the model
+func (m M) printIntroText() {
+	twc := twrap.NewTWConfOrPanic()
+	twc.Wrap("This report shows the expected behaviour of your portfolio."+
+		"\n\nThe behaviour is modelled over a number of trials and the"+
+		" aggregate results are shown. The model starts by calculating the"+
+		" income to be drawn from the portfolio; the first year this is"+
+		" the target income. Then at the end of each simulated year it will:",
+		0)
+	twc.Wrap2Indent("- look back at the return from the year just passed"+
+		"\n- this is then reduced by the target minimum growth plus inflation"+
+		"\n- the resulting figure is taken to be the available income"+
+		"\n- if this amount is greater than the target income then the"+
+		" next year's drawing is set to the target income and the number"+
+		" of times a surplus was available is incremented."+
+		"\n- if the amount is less than the minimum income then the next"+
+		" year's drawing is set to the minimum income and the number of"+
+		" times we had to take the minimum income is incremented"+
+		"- if the available amount lies between the two figures then that"+
+		" is taken as the next year's drawing",
+		2, 4)
+	twc.Wrap("The report shows the proportion of time that the drawing is"+
+		" fully covered by the income received, the proportion of time that"+
+		" the minimal income was taken and the cumulative proportion of"+
+		" times that all the money is spent (that you go bust)",
+		0)
+	twc.Wrap("figures are all shown adjusted for inflation - that is they"+
+		" are shown in today's pounds/dollars/etc",
+		0)
+}
+
+// reportModelParams will report the model parameters
 func (m M) reportModelParams() {
 	h, err := col.NewHeader()
 	if err != nil {
