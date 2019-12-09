@@ -20,6 +20,7 @@ import (
 	"github.com/nickwells/param.mod/v3/param"
 	"github.com/nickwells/param.mod/v3/param/paramset"
 	"github.com/nickwells/param.mod/v3/param/psetter"
+	"github.com/nickwells/twrap.mod/twrap"
 )
 
 // Created: Sun May 12 16:39:24 2019
@@ -316,13 +317,60 @@ func main() {
 		SetConfigFile,
 		param.SetProgramDescription(`analyse the bank account`))
 	ps.Parse()
+	files := ps.Remainder()
+	if acFileName != "" {
+		files = append(files, acFileName)
+	}
+	if len(files) == 0 {
+		twc := twrap.NewTWConfOrPanic()
+		twc.Wrap("Some account files must be given, either as a named"+
+			" parameter or else as a list at the end of the parameters"+
+			" following a "+ps.TerminalParam(),
+			0)
+		os.Exit(1)
+	}
+	summaries := getAccountData(files)
 
-	f := openFileOrDie(acFileName, "bank account")
-	defer f.Close()
-	r := csv.NewReader(f)
+	summaries.report(style)
+}
 
-	summaries := initSummaries()
+// getAccountData opens each file in turn and reads from it to populate the
+// summaries
+func getAccountData(files []string) *Summaries {
+	checkFiles(files)
 
+	s := initSummaries()
+
+	for _, name := range files {
+		f := openFileOrDie(name, "bank account")
+		r := csv.NewReader(f)
+		s.populateSummaries(name, r)
+		f.Close()
+	}
+	return s
+}
+
+// checkFiles checks the slice of files and if a duplicate is found it will
+// report an error and exit
+func checkFiles(files []string) {
+	m := map[string]bool{}
+	var dupFound int
+	for _, f := range files {
+		if m[f] {
+			fmt.Println("File name", f,
+				"appears more than once in the list of files")
+			dupFound++
+		}
+		m[f] = true
+	}
+	if dupFound > 0 {
+		os.Exit(1)
+	}
+}
+
+// populateSummaries fills in the summaries from the lines read from the
+// io.Reader
+func (s *Summaries) populateSummaries(name string, r *csv.Reader) {
 	lineNum := 0
 	for {
 		parts, err := r.Read()
@@ -330,6 +378,7 @@ func main() {
 			break
 		}
 		if err != nil {
+			fmt.Println("Error found while reading:", name)
 			fmt.Println(err)
 			os.Exit(1)
 		}
@@ -338,16 +387,14 @@ func main() {
 		if skipFirstLine && lineNum == 1 {
 			continue // ignore the first line of headings
 		}
-		xa, err := summaries.mkXactn(lineNum, parts)
+		xa, err := s.mkXactn(lineNum, parts)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
-		summaries.createNewMapEntries(acFileName, lineNum, xa)
-		summaries.summarise(xa)
+		s.createNewMapEntries(name, lineNum, xa)
+		s.summarise(xa)
 	}
-
-	summaries.report(style)
 }
 
 // createNewMapEntries will create new parent/child map entries for the
@@ -505,7 +552,7 @@ func addParams(ps *param.PSet) error {
 			"debit amount\n"+
 			"credit amount\n"+
 			"balance",
-		param.Attrs(param.MustBeSet))
+	)
 
 	ps.Add("map-file",
 		psetter.Pathname{
@@ -568,6 +615,12 @@ func addParams(ps *param.PSet) error {
 
 	ps.Add("minimal-amount", psetter.Float64{Value: &minimalAmount},
 		"don't show summaries where the total transactions are less than this")
+
+	// allow trailing arguments
+	err := ps.SetNamedRemHandler(param.NullRemHandler{}, "bank-AC files")
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
