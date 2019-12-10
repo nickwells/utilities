@@ -1,3 +1,3 @@
 package main
 
-//go:generate mkparamfilefunc
+//go:generate mkparamfilefunc -funcs personalOnly
