@@ -13,16 +13,12 @@ import (
 	"github.com/nickwells/param.mod/v3/param"
 	"github.com/nickwells/param.mod/v3/param/paramset"
 	"github.com/nickwells/param.mod/v3/param/psetter"
+	"github.com/nickwells/twrap.mod/twrap"
 )
 
 // Created: Sat May 25 16:13:02 2019
 
 const (
-	name_SetConfigFile            = "SetConfigFile"
-	name_SetGlobalConfigFile      = "SetGlobalConfigFile"
-	name_SetGroupConfigFile       = "SetGroupConfigFile"
-	name_SetGroupGlobalConfigFile = "SetGroupGlobalConfigFile"
-
 	dfltFileName      = "setConfigFile.go"
 	groupFileNameBase = "setConfigFileForGroup_"
 )
@@ -30,6 +26,8 @@ const (
 var mustExist bool
 var mustExistPersonal bool
 var mustExistGlobal bool
+
+var whichFuncs = "all"
 
 var dontMakeFile bool
 var outputFileName = dfltFileName
@@ -62,43 +60,71 @@ func main() {
 	ps.Parse()
 
 	importPath, pkgName := goList()
-	paramFileParts := strings.Split(importPath, "/")
+	dirs := strings.Split(importPath, "/")
 	var goFile = openGoFile(outputFileName, dontMakeFile)
 
 	printPreamble(goFile, pkgName, ps)
 
-	if groupName == "" {
-		addCFName := "ps.AddConfigFile("
-		if pkgName == "main" {
-			addCFName = "ps.AddConfigFileStrict("
-		}
-		printFuncPersonal(goFile, name_SetConfigFile)
-		printAddCF(goFile, paramFileParts, addCFName, "common.cfg",
-			mustExist || mustExistPersonal)
-		printFuncEnd(goFile)
-
-		printFuncGlobal(goFile, name_SetGlobalConfigFile)
-		printAddCF(goFile, paramFileParts, addCFName, "common.cfg",
-			mustExist || mustExistGlobal)
-		printFuncEnd(goFile)
-	} else {
-		addCFName := fmt.Sprintf("ps.AddGroupConfigFile(%q,", groupName)
-		groupSuffix := "_" + groupName
-		groupSuffix = strings.ReplaceAll(groupSuffix, ".", "_")
-		groupSuffix = strings.ReplaceAll(groupSuffix, "-", "_")
-
-		printFuncPersonal(goFile, name_SetGroupConfigFile+groupSuffix)
-		printAddCF(goFile, paramFileParts, addCFName, "group-"+groupName+".cfg",
-			mustExist || mustExistPersonal)
-		printFuncEnd(goFile)
-
-		printFuncGlobal(goFile, name_SetGroupGlobalConfigFile+groupSuffix)
-		printAddCF(goFile, paramFileParts, addCFName, "group-"+groupName+".cfg",
-			mustExist || mustExistGlobal)
-		printFuncEnd(goFile)
-	}
+	printFuncPersonal(goFile, groupName, pkgName, dirs)
+	printFuncGlobal(goFile, groupName, pkgName, dirs)
 
 	goFile.Close()
+}
+
+// makeFuncNameGlobal generates the name of the function for setting the
+// global config file that this program will write.
+func makeFuncNameGlobal(groupName string) string {
+	if groupName == "" {
+		return "SetGlobalConfigFile"
+	}
+	return "SetGroupGlobalConfigFile" + makeGroupSuffix(groupName)
+}
+
+// makeFuncNamePersonal generates the name of the function for setting the
+// personal config file that this program will write.
+func makeFuncNamePersonal(groupName string) string {
+	if groupName == "" {
+		return "SetConfigFile"
+	}
+	return "SetGroupConfigFile" + makeGroupSuffix(groupName)
+}
+
+// makeGroupSuffix generates the suffix for the function name from the group
+// name. It cleans up any characters in the name which are invalid characters
+// in a Go function name
+func makeGroupSuffix(groupName string) string {
+	groupSuffix := "_" + groupName
+	groupSuffix = strings.ReplaceAll(groupSuffix, ".", "_")
+	groupSuffix = strings.ReplaceAll(groupSuffix, "-", "_")
+	return groupSuffix
+}
+
+// makeAddCFName generates the function name called to add the config file to
+// the set of config files. If the package name is "main" then the config
+// file will be strict (the parameters must exist).
+//
+// Note that the opening parenthesis is given as part of the name, this is
+// because for group config files the first parameter (the group name) is
+// generated as part of the name.
+func makeAddCFName(pkgName, groupName string) string {
+	if groupName != "" {
+		return fmt.Sprintf("ps.AddGroupConfigFile(%q,", groupName)
+	}
+
+	if pkgName == "main" {
+		return "ps.AddConfigFileStrict("
+	}
+
+	return "ps.AddConfigFile("
+}
+
+// makeConfigFileName generates the name of the config file - this varies
+// according to whether or not this is for a group or main
+func makeConfigFileName(groupName string) string {
+	if groupName == "" {
+		return "common.cfg"
+	}
+	return "group-" + groupName + ".cfg"
 }
 
 // openGoFile creates the file, truncating it if it already exists and
@@ -119,24 +145,34 @@ func openGoFile(filename string, dontMakeFile bool) *os.File {
 
 // printFunc prints the func name and signature
 func printFunc(f *os.File, name string) {
-	fmt.Fprintln(f, "//", name)
-	fmt.Fprintln(f, "// will add a config file to the set which the param")
-	fmt.Fprintln(f, "// parser will process before checking the command line")
-	fmt.Fprintln(f, "// parameters. This function is one of a pair which will")
-	fmt.Fprintln(f, "// define the global and personal config files. It is")
-	fmt.Fprintln(f, "// generally best practice to add the global config file")
-	fmt.Fprintln(f, "// before adding the personal one. This is so that any")
-	fmt.Fprintln(f, "// system-wide defaults can be overridden by personal")
-	fmt.Fprintln(f, "// choice. This order also allows any parameters which")
-	fmt.Fprintln(f, "// can only be set once to be set in the global config")
-	fmt.Fprintln(f, "// file.")
+	twc := twrap.NewTWConfOrPanic(twrap.SetWriter(f))
+	fmt.Fprintln(f, "/*")
+	twc.Wrap(name+
+		" adds a config file to the set which the param parser will process"+
+		" before checking the command line parameters.", 0)
+	if whichFuncs == "all" {
+		fmt.Fprintln(f)
+		twc.Wrap(
+			"This function is one of a pair which add the global and personal"+
+				" config files. It is generally best practice to add the"+
+				" global config file before adding the personal one. This"+
+				" allows any system-wide defaults to be overridden by personal"+
+				" choices. Also any parameters which can only be set once can"+
+				" be set in the global config file, thereby enforcing a global"+
+				" policy.",
+			0)
+	}
+	fmt.Fprintln(f, "*/")
 	fmt.Fprint(f, "func "+name+"(ps *param.PSet) error {")
 }
 
-// printFuncPersonal prints the func name and signature and sets the base
-// directory for a personal config file
-func printFuncPersonal(f *os.File, name string) {
-	printFunc(f, name)
+// printFuncPersonal writes out the function for setting a personal config file
+func printFuncPersonal(f *os.File, groupName, pkgName string, dirs []string) {
+	if whichFuncs != "all" && whichFuncs != "personalOnly" {
+		return
+	}
+
+	printFunc(f, makeFuncNamePersonal(groupName))
 	if baseDirPersonal != "" {
 		fmt.Fprintf(f, `
 	baseDir := %q
@@ -146,12 +182,21 @@ func printFuncPersonal(f *os.File, name string) {
 	baseDir := xdg.ConfigHome()
 `)
 	}
+
+	printAddCF(f, dirs,
+		makeAddCFName(pkgName, groupName),
+		makeConfigFileName(groupName),
+		mustExist || mustExistPersonal)
+	printFuncEnd(f)
 }
 
-// printFuncGlobal prints the func name and signature and sets the base
-// directory for a shared, global config file
-func printFuncGlobal(f *os.File, name string) {
-	printFunc(f, name)
+// printFuncGlobal writes out the function for setting a shared, global
+// config file
+func printFuncGlobal(f *os.File, groupName, pkgName string, dirs []string) {
+	if whichFuncs != "all" && whichFuncs != "globalOnly" {
+		return
+	}
+	printFunc(f, makeFuncNameGlobal(groupName))
 	if baseDirGlobal != "" {
 		fmt.Fprintf(f, `
 	baseDir := %q
@@ -165,6 +210,12 @@ func printFuncGlobal(f *os.File, name string) {
 	baseDir := dirs[0]
 `)
 	}
+
+	printAddCF(f, dirs,
+		makeAddCFName(pkgName, groupName),
+		makeConfigFileName(groupName),
+		mustExist || mustExistGlobal)
+	printFuncEnd(f)
 }
 
 // printAddCF prints the lines of code that will call filepath.Join(...)
@@ -346,6 +397,23 @@ func addParams(ps *param.PSet) error {
 			" for global config files."+
 			" The sub-directories (derived from the import path) will still"+
 			" be used",
+		param.Attrs(param.DontShowInStdUsage),
+	)
+
+	ps.Add("funcs", psetter.Enum{
+		Value: &whichFuncs,
+		AVM: param.AVM{
+			AllowedVals: param.AValMap{
+				"all": "create all functions",
+				"personalOnly": "create just the personal config file" +
+					" setter function",
+				"globalOnly": "create just the global config file" +
+					" setter function",
+			},
+		},
+	},
+		"specify which of the two functions (the global or the personal)"+
+			" should be created",
 		param.Attrs(param.DontShowInStdUsage),
 	)
 
