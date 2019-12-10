@@ -15,5 +15,5 @@ require (
 	github.com/nickwells/unitsetter.mod/v2 v2.0.7
 	github.com/nickwells/verbose.mod v1.0.4
 	github.com/nickwells/xdg.mod v1.0.2
-	golang.org/x/sys v0.0.0-20191128015809-6d18c012aee9
+	golang.org/x/sys v0.0.0-20191210023423-ac6580df4449
 )
