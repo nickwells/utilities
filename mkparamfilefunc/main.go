@@ -325,7 +325,7 @@ func addParams(ps *param.PSet) error {
 				check.StringHasSuffix(".go"),
 				check.StringNot(
 					check.StringHasSuffix("_test.go"),
-					"the file must not be a test file"),
+					"a test file"),
 			},
 		},
 		"set the name of the output file",
