@@ -255,6 +255,11 @@ func (s *state) setState(m *M) {
 // amount from the available income. Lastly it ensures that the income we
 // take will be between the target and the minimum.
 func (s *state) calcCurrentIncome(r *AggResults) {
+	if r.withdrawalDefered {
+		s.currentIncome = 0
+		return
+	}
+
 	r.income.addVal(s.currentIncome / s.inflationAdjustment)
 
 	availableInc := s.portfolio * s.currentRtn
