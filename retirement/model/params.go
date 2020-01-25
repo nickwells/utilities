@@ -146,6 +146,20 @@ func (m *M) MakeAddParamsFunc() param.PSetOptFunc {
 			"set the number of trials per year",
 			param.AltName("t"))
 
+		ps.Add("extreme-set-size",
+			psetter.Int64{
+				Value: &m.extremeSetSize,
+				Checks: []check.Int64{
+					check.Int64GT(0),
+				},
+			},
+			"the size of the set of extreme values. This is used to"+
+				" smooth the maximum and minimum values. The value"+
+				" reported is the average of the values in this set. For"+
+				" instance setting this to 10 would mean that the minimum"+
+				" reported would be the average of the 10 smallest values"+
+				" observed.")
+
 		ps.Add("show-every-n-years", psetter.Int64{Value: &m.yearsToShow},
 			"only report every nth year (and the last)",
 			param.AltName("show-yrs"))

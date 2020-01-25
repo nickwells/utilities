@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"runtime"
@@ -58,6 +59,8 @@ type M struct {
 
 	showModelMetrics bool
 	modelMetrics     metrics
+
+	extremeSetSize int64
 }
 
 // New returns a new model with the default values set
@@ -70,6 +73,7 @@ func New() *M {
 		years:                 30,
 		trials:                250000,
 		yearsToShow:           1,
+		extremeSetSize:        10,
 	}
 }
 
@@ -77,7 +81,7 @@ func New() *M {
 func (m M) initResults() []*AggResults {
 	results := make([]*AggResults, m.years)
 	for y, r := range results {
-		r = new(AggResults)
+		r = NewAggResultsOrPanic(int(m.extremeSetSize))
 		r.year = int64(y)
 		if r.year < m.yearsDefered {
 			r.withdrawalDefered = true
@@ -99,8 +103,8 @@ func (m M) mergeResults(results []*AggResults, rc <-chan []*AggResults, dc chan<
 			val.surplusAvailable += r.surplusAvailable
 			val.minimalIncome += r.minimalIncome
 			val.portfolioDown += r.portfolioDown
-			(&val.portfolio).mergeVal(r.portfolio)
-			(&val.income).mergeVal(r.income)
+			(val.portfolio).mergeVal(r.portfolio)
+			(val.income).mergeVal(r.income)
 
 			results[i] = val
 		}
@@ -196,8 +200,34 @@ type AggResults struct {
 	crash             int
 	bust              int
 	portfolioDown     int
-	portfolio         stat
-	income            stat
+	portfolio         *stat
+	income            *stat
+}
+
+// NewAggResults constructs a new AggResults value and returns a pointer to
+// it. An error is returned if the size is less than 1
+func NewAggResults(size int) (*AggResults, error) {
+	if size < 1 {
+		return nil,
+			fmt.Errorf(
+				"the size to be used for the stat members must be >= 1 (is %d)",
+				size)
+	}
+	ar := &AggResults{
+		portfolio: NewStatOrPanic(size),
+		income:    NewStatOrPanic(size),
+	}
+	return ar, nil
+}
+
+// NewAggResultsOrPanic constructs a new AggResults value and returns a
+// pointer to it.
+func NewAggResultsOrPanic(size int) *AggResults {
+	ar, err := NewAggResults(size)
+	if err != nil {
+		panic(err)
+	}
+	return ar
 }
 
 // state holds the current state of the model
