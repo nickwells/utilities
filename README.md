@@ -66,22 +66,23 @@ This provides a way of simply converting the time from one locale to
 another. This can be useful when you are working with colleagues in other
 timezones with different daylight-saving rules.
 
-## retirement
-This will perform a very basic financial analysis of a retirement
-portfolio. It does a very simple modelling of the performance of a retirement
-portfolio over a number of years and allows you to model different scenarios.
-
-## bankACAnalysis
-This will read a csv-file holding bank transactions and will try to group
-them according to various rules you have supplied. This is still very much a
-work in progress but is of some use which is why it is here.
-
 ## mkparamfilefunc
 This is intended to be used with go generate to construct functions that can
 be used to set the parameter files for packages and commands. It will write a
 Go file with functions that can be passed to a call to paramset.NewOrDie to
 set the per-command config files. This will allow the user of a program to
 set parameters that they want to use every time the program is run.
+
+## mkpkgerr
+This will generate the code to provide a package-specific error type
+(pkgError) which allows errors from your package to be distinguished from
+errors from other sources. It defines an interface called Error which will be
+satisfied only by errors from your package. The pkgError is not exported and
+so cannot be used outside of the package but does satisfy the
+package-specific Error interface (and also the standard error interface). It
+also provides a local pkgErrorf function that can be used to generate a
+pkgError. The pkgError is a renaming of string and so a string can simply be
+cast to a pkgError.
 
 ## findCmpRm
 This finds all files in a given directory with a given extension and compares
