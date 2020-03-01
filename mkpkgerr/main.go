@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/nickwells/check.mod/check"
-	"github.com/nickwells/param.mod/v3/param"
-	"github.com/nickwells/param.mod/v3/param/paramset"
-	"github.com/nickwells/param.mod/v3/param/psetter"
+	"github.com/nickwells/param.mod/v4/param"
+	"github.com/nickwells/param.mod/v4/param/paramset"
+	"github.com/nickwells/param.mod/v4/param/psetter"
 )
 
 // Created: Fri Jan 17 18:31:18 2020
@@ -109,16 +109,40 @@ type Error interface {
 
 type pkgError string
 
+type pkgWError struct {
+	msg string
+	err error
+}
+
 // Error returns the string form of the error with an appropriate prefix
 func (e pkgError) Error() string {
 	return "`+pkgName+` error: " + string(e)
 }
 
+// Error returns the string form of the error with an appropriate prefix
+func (e pkgWError) Error() string {
+	return "`+pkgName+` error: " + e.msg
+}
+
 func (e pkgError) `+idFunc+` {}
 
-// pkgErrorf formats its arguments into a pkgError
-func pkgErrorf(format string, args ...interface{}) pkgError {
-	return pkgError(fmt.Sprintf(format, args...))
+func (e pkgWError) `+idFunc+` {}
+
+// Unwrap returns the wrapped error
+func (e pkgWError) Unwrap() error {
+	return e.err
+}
+
+// pkgErrorf formats its arguments into an Error
+func pkgErrorf(format string, args ...interface{}) Error {
+	e := fmt.Errorf(format, args...))
+	if e.Unwrap() == nil {
+		return pkgError(e.Error())
+	}
+	return pkgWError{
+		msg: e.Error(),
+		err: e.Unwrap(),
+	}
 }`)
 }
 

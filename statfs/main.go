@@ -9,11 +9,11 @@ import (
 	"github.com/nickwells/check.mod/check"
 	"github.com/nickwells/col.mod/v2/col"
 	"github.com/nickwells/col.mod/v2/col/colfmt"
-	"github.com/nickwells/param.mod/v3/param"
-	"github.com/nickwells/param.mod/v3/param/paramset"
-	"github.com/nickwells/param.mod/v3/param/psetter"
+	"github.com/nickwells/param.mod/v4/param"
+	"github.com/nickwells/param.mod/v4/param/paramset"
+	"github.com/nickwells/param.mod/v4/param/psetter"
 	"github.com/nickwells/units.mod/units"
-	"github.com/nickwells/unitsetter.mod/v2/unitsetter"
+	"github.com/nickwells/unitsetter.mod/v3/unitsetter"
 
 	"golang.org/x/sys/unix"
 )
@@ -189,7 +189,7 @@ var fiMap = map[string]fieldInfo{
 	},
 }
 
-var allowedFields = param.AValMap{
+var allowedFields = param.AllowedVals{
 	nameStr:     "the name of the directory",
 	fSpStr:      "the total free space available",
 	avSpStr:     "the space available to you",
@@ -235,10 +235,8 @@ func addParams(ps *param.PSet) error {
 
 	ps.Add("show",
 		psetter.EnumList{
-			Value: &fields,
-			AVM: param.AVM{
-				AllowedVals: allowedFields,
-			},
+			Value:       &fields,
+			AllowedVals: allowedFields,
 			Checks: []check.StringSlice{
 				check.StringSliceNoDups,
 				check.StringSliceLenGT(0),

@@ -10,9 +10,9 @@ import (
 
 	"github.com/nickwells/check.mod/check"
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v3/param"
-	"github.com/nickwells/param.mod/v3/param/paramset"
-	"github.com/nickwells/param.mod/v3/param/psetter"
+	"github.com/nickwells/param.mod/v4/param"
+	"github.com/nickwells/param.mod/v4/param/paramset"
+	"github.com/nickwells/param.mod/v4/param/psetter"
 	"github.com/nickwells/twrap.mod/twrap"
 )
 
@@ -309,7 +309,7 @@ import (
 	"path/filepath"
 
 	"github.com/nickwells/filecheck.mod/filecheck"
-	"github.com/nickwells/param.mod/v3/param"
+	"github.com/nickwells/param.mod/v4/param"
 	"github.com/nickwells/xdg.mod/xdg"
 )
 
@@ -402,14 +402,12 @@ func addParams(ps *param.PSet) error {
 
 	ps.Add("funcs", psetter.Enum{
 		Value: &whichFuncs,
-		AVM: param.AVM{
-			AllowedVals: param.AValMap{
-				"all": "create all functions",
-				"personalOnly": "create just the personal config file" +
-					" setter function",
-				"globalOnly": "create just the global config file" +
-					" setter function",
-			},
+		AllowedVals: param.AllowedVals{
+			"all": "create all functions",
+			"personalOnly": "create just the personal config file" +
+				" setter function",
+			"globalOnly": "create just the global config file" +
+				" setter function",
 		},
 	},
 		"specify which of the two functions (the global or the personal)"+

@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/nickwells/check.mod/check"
-	"github.com/nickwells/param.mod/v3/param"
-	"github.com/nickwells/param.mod/v3/param/paction"
-	"github.com/nickwells/param.mod/v3/param/paramset"
-	"github.com/nickwells/param.mod/v3/param/psetter"
+	"github.com/nickwells/param.mod/v4/param"
+	"github.com/nickwells/param.mod/v4/param/paction"
+	"github.com/nickwells/param.mod/v4/param/paramset"
+	"github.com/nickwells/param.mod/v4/param/psetter"
 )
 
 var showTime bool

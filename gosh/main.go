@@ -7,8 +7,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/nickwells/param.mod/v3/param"
-	"github.com/nickwells/param.mod/v3/param/paramset"
+	"github.com/nickwells/param.mod/v4/param"
+	"github.com/nickwells/param.mod/v4/param/paramset"
 )
 
 // Created: Wed Sep  4 09:58:54 2019

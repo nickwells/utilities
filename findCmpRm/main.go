@@ -1,4 +1,4 @@
-// fileChecker
+// findCmpRm
 package main
 
 import (
@@ -14,8 +14,8 @@ import (
 	"github.com/nickwells/cli.mod/cli/responder"
 	"github.com/nickwells/dirsearch.mod/dirsearch"
 	"github.com/nickwells/filecheck.mod/filecheck"
-	"github.com/nickwells/param.mod/v3/param"
-	"github.com/nickwells/param.mod/v3/param/paramset"
+	"github.com/nickwells/param.mod/v4/param"
+	"github.com/nickwells/param.mod/v4/param/paramset"
 	"github.com/nickwells/twrap.mod/twrap"
 	"github.com/nickwells/verbose.mod/verbose"
 )
@@ -34,6 +34,11 @@ var diffCmdParams = []string{}
 
 var lessCmdName = "less"
 var lessCmdParams = []string{}
+
+// status holds counts of various operations on and problems with the files
+type status struct {
+	fileErr, compared, skipped, diffErr, deleted, reverted, leftUntouched int
+}
 
 func main() {
 	ps := paramset.NewOrDie(addParams,
@@ -75,20 +80,22 @@ func main() {
 
 	twc := twrap.NewTWConfOrPanic()
 
+	var s status
 	fmt.Println(len(filenames), " files found")
 fileLoop:
-	for _, name := range filenames {
-		prefix := fmt.Sprintf("%*.*s: ", maxNameLen, maxNameLen, name)
+	for _, nameOrig := range filenames {
+		prefix := fmt.Sprintf("%*.*s: ", maxNameLen, maxNameLen, nameOrig)
 
-		otherName := strings.TrimSuffix(name, extension)
-		err := fileChks.StatusCheck(otherName)
+		nameNew := strings.TrimSuffix(nameOrig, extension)
+		err := fileChks.StatusCheck(nameNew)
 		if err != nil {
 			twc.WrapPrefixed(prefix,
 				fmt.Sprintf(
 					"problem with the other file: %q: %v",
-					filepath.Base(otherName), err),
+					filepath.Base(nameNew), err),
 				0)
 			twc.Wrap("Skipping...", indent)
+			s.fileErr++
 			continue
 		}
 		fmt.Print(prefix)
@@ -98,33 +105,56 @@ fileLoop:
 
 		switch response {
 		case 'y':
-			err = showDiffs(name, otherName)
+			err = showDiffs(nameOrig, nameNew)
 			if err != nil {
 				twc.Wrap(fmt.Sprintf("Error: %v", err), indent)
 				verboseMsg(twc, "Skipping...", indent)
+				s.diffErr++
 				continue
 			}
+			s.compared++
 
-			deleteFile(name, twc, indent)
+			queryDeleteFile(nameOrig, nameNew, twc, indent, &s)
 		case 'n':
 			verboseMsg(twc, "Skipping...", indent)
-			continue
+			s.skipped++
 		case 'q':
 			verboseMsg(twc, "Quitting...", indent)
 			break fileLoop
 		}
 	}
+
 	fmt.Println()
+	fmt.Printf("%3d files\n", len(filenames))
+	if s.fileErr > 0 {
+		fmt.Printf("%3d file errors\n", s.fileErr)
+	}
+	if s.diffErr > 0 {
+		fmt.Printf("%3d diff errors\n", s.diffErr)
+	}
+	fmt.Printf("%3d skipped\n", s.skipped)
+	fmt.Printf("%3d compared\n", s.compared)
+	fmt.Println()
+	if s.deleted > 0 {
+		fmt.Printf("%3d deleted\n", s.deleted)
+	}
+	if s.reverted > 0 {
+		fmt.Printf("%3d reverted\n", s.reverted)
+	}
+	if s.leftUntouched > 0 {
+		fmt.Printf("%3d left untouched\n", s.leftUntouched)
+	}
 }
 
-// deleteFile will ask if the file should be deleted and then act
+// queryDeleteFile will ask if the file should be deleted and then act
 // accordingly, reporting any errors found
-func deleteFile(name string, twc *twrap.TWConf, indent int) {
+func queryDeleteFile(nameOrig, nameNew string, twc *twrap.TWConf, indent int, s *status) {
 	deleteFileResp := responder.NewOrPanic(
 		"delete file",
 		map[rune]string{
 			'y': "to delete this file",
 			'n': "to keep this file",
+			'r': "to revert this file to its original contents",
 		},
 		responder.SetDefault('n'),
 		responder.SetIndents(indent, indent))
@@ -132,17 +162,47 @@ func deleteFile(name string, twc *twrap.TWConf, indent int) {
 	response := deleteFileResp.GetResponseOrDie()
 	fmt.Println()
 
-	if response == 'y' {
-		verboseMsg(twc, "Removing file...", indent)
-		err := os.Remove(name)
-		if err != nil {
-			twc.Wrap(
-				fmt.Sprintf("Couldn't remove the file: %v", err),
-				indent)
-		} else {
-			verboseMsg(twc, "File removed", indent)
-		}
+	switch response {
+	case 'y':
+		deleteFile(nameOrig, twc, indent)
+		s.deleted++
+	case 'r':
+		revertFile(nameOrig, nameNew, twc, indent)
+		s.reverted++
+	default:
+		s.leftUntouched++
 	}
+}
+
+// deleteFile deletes the named file, reporting any errors
+func deleteFile(name string, twc *twrap.TWConf, indent int) {
+	verboseMsg(twc, "Deleting file...", indent)
+
+	err := os.Remove(name)
+	if err != nil {
+		twc.Wrap(
+			fmt.Sprintf("Couldn't delete the file: %v", err),
+			indent)
+		return
+	}
+
+	verboseMsg(twc, "File deleted", indent)
+}
+
+// revertFile reverts the file to its original contents, reporting any
+// errors.
+func revertFile(nameOrig, nameNew string, twc *twrap.TWConf, indent int) {
+	verboseMsg(twc, "Reverting to the original file...", indent)
+
+	err := os.Rename(nameOrig, nameNew)
+	if err != nil {
+		twc.Wrap(
+			fmt.Sprintf("Couldn't revert the file: %v", err),
+			indent)
+		return
+	}
+
+	verboseMsg(twc, "File reverted", indent)
 }
 
 // verboseMsg Wraps the message if verbose messaging is on
@@ -154,11 +214,11 @@ func verboseMsg(twc *twrap.TWConf, msg string, indent int) {
 
 // showDiffs runs a diff command against the two filenames and pipes the
 // output to less
-func showDiffs(fname, otherName string) error {
+func showDiffs(nameOrig, nameNew string) error {
 	r, w := io.Pipe()
 
 	dcp := diffCmdParams
-	dcp = append(dcp, fname, otherName)
+	dcp = append(dcp, nameOrig, nameNew)
 	diffCmd := exec.Command(diffCmdName, dcp...)
 	diffCmd.Stdout = w
 
