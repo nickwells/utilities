@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -133,7 +134,7 @@ func makeConfigFileName(groupName string) string {
 }
 
 // printFunc prints the func name and signature
-func printFunc(f *os.File, name string) {
+func printFunc(f io.Writer, name string) {
 	twc := twrap.NewTWConfOrPanic(twrap.SetWriter(f))
 	fmt.Fprintln(f, "/*")
 	twc.Wrap(name+
@@ -156,7 +157,7 @@ func printFunc(f *os.File, name string) {
 }
 
 // printFuncPersonal writes out the function for setting a personal config file
-func printFuncPersonal(f *os.File, groupName, pkgName string, dirs []string) {
+func printFuncPersonal(f io.Writer, groupName, pkgName string, dirs []string) {
 	if whichFuncs != "all" && whichFuncs != "personalOnly" {
 		return
 	}
@@ -181,7 +182,7 @@ func printFuncPersonal(f *os.File, groupName, pkgName string, dirs []string) {
 
 // printFuncGlobal writes out the function for setting a shared, global
 // config file
-func printFuncGlobal(f *os.File, groupName, pkgName string, dirs []string) {
+func printFuncGlobal(f io.Writer, groupName, pkgName string, dirs []string) {
 	if whichFuncs != "all" && whichFuncs != "globalOnly" {
 		return
 	}
@@ -209,7 +210,7 @@ func printFuncGlobal(f *os.File, groupName, pkgName string, dirs []string) {
 
 // printAddCF prints the lines of code that will call filepath.Join(...)
 // with the base directory name and the the strings from paramFileParts
-func printAddCF(f *os.File, dirs []string, funcName, cfgFName string, mustExist bool) {
+func printAddCF(f io.Writer, dirs []string, funcName, cfgFName string, mustExist bool) {
 	fmt.Fprint(f, `
 	`+funcName+`
 		filepath.Join(baseDir`)
@@ -229,7 +230,7 @@ func printAddCF(f *os.File, dirs []string, funcName, cfgFName string, mustExist 
 }
 
 // printFuncEnd prints the common last lines of the function
-func printFuncEnd(f *os.File) {
+func printFuncEnd(f io.Writer) {
 	fmt.Fprint(f, `
 	return nil
 }
@@ -238,7 +239,7 @@ func printFuncEnd(f *os.File) {
 }
 
 // printImports prints the import declarations into the file
-func printImports(f *os.File) {
+func printImports(f io.Writer) {
 	fmt.Fprint(f, `
 
 import (
