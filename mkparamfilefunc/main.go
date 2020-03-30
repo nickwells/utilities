@@ -66,12 +66,15 @@ func main() {
 		defer f.Close()
 	}
 
-	pkgName := gogen.GetPackageOrDie()
-	importPath := gogen.GetImportPathOrDie()
-	dirs := strings.Split(importPath, "/")
-
 	gogen.PrintPreambleOrDie(f, ps)
-	printImports(f)
+	gogen.PrintImports(f,
+		"path/filepath",
+		"github.com/nickwells/filecheck.mod/filecheck",
+		"github.com/nickwells/param.mod/v4/param",
+		"github.com/nickwells/xdg.mod/xdg")
+
+	pkgName := gogen.GetPackageOrDie()
+	dirs := strings.Split(gogen.GetImportPathOrDie(), "/")
 
 	printFuncPersonal(f, groupName, pkgName, dirs)
 	printFuncGlobal(f, groupName, pkgName, dirs)
@@ -234,21 +237,6 @@ func printFuncEnd(f io.Writer) {
 	fmt.Fprint(f, `
 	return nil
 }
-
-`)
-}
-
-// printImports prints the import declarations into the file
-func printImports(f io.Writer) {
-	fmt.Fprint(f, `
-
-import (
-	"path/filepath"
-
-	"github.com/nickwells/filecheck.mod/filecheck"
-	"github.com/nickwells/param.mod/v4/param"
-	"github.com/nickwells/xdg.mod/xdg"
-)
 
 `)
 }
