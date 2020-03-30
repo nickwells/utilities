@@ -4,6 +4,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/nickwells/check.mod/check"
 	"github.com/nickwells/param.mod/v4/param"
@@ -12,13 +13,13 @@ import (
 )
 
 var script []string
-var beginScript []string
-var endScript []string
+var preScript []string
+var postScript []string
 var globalsList []string
 var imports []string
 
 var showFilename bool
-var clearFileOnSuccess = true
+var dontClearFile bool
 var runInReadLoop bool
 var runAsWebserver bool
 var splitLine bool
@@ -31,9 +32,43 @@ var httpPort int64 = defaultHTTPPort
 
 var filename string
 
+const goImports = "goimports"
+
 var formatter = "gofmt"
 var formatterSet bool
 var formatterArgs = []string{"-w"}
+
+type addPrint struct {
+	prefixes []string
+}
+
+// Edit wraps the parameter value in a call to the appropriate variant of
+// fmt.Print... The exact print function to use is determined by the
+// parameter name and this will determine the errors that might be
+// generated. For instance, fmt.Printf demands at least one argument.
+func (ap addPrint) Edit(paramName, paramVal string) (string, error) {
+	for _, pfx := range ap.prefixes {
+		s := strings.TrimPrefix(paramName, pfx)
+		if s != paramName {
+			paramName = s
+			break
+		}
+	}
+
+	switch paramName {
+	case "print", "p":
+		return "fmt.Print(" + paramVal + ")", nil
+	case "printf", "pf":
+		if paramVal == "" {
+			return "", errors.New(
+				"The parameter value must not be empty when using fmt.Printf")
+		}
+		return "fmt.Printf(" + paramVal + ")", nil
+	case "println", "pln":
+		return "fmt.Println(" + paramVal + ")", nil
+	}
+	panic(fmt.Errorf("unexpected parameter name: %q", paramName))
+}
 
 // addParams will add parameters to the passed ParamSet
 func addParams(ps *param.PSet) error {
@@ -41,25 +76,69 @@ func addParams(ps *param.PSet) error {
 		"follow this with the go code to be run."+
 			" This will be placed inside a main() function",
 		param.AltName("e"),
-		param.Attrs(param.MustBeSet),
 	)
 
-	ps.Add("begin", psetter.StrListAppender{Value: &beginScript},
+	ps.Add("print",
+		psetter.StrListAppender{
+			Value:  &script,
+			Editor: addPrint{},
+		},
+		"follow this with the value to be printed. These print"+
+			" statements will be mixed in with the exec statements"+
+			" in the order they are given",
+		param.AltName("printf"),
+		param.AltName("println"),
+		param.AltName("p"),
+		param.AltName("pf"),
+		param.AltName("pln"),
+	)
+
+	ps.Add("begin", psetter.StrListAppender{Value: &preScript},
 		"follow this with go code to be run at the beginning."+
 			" This will be placed inside a main() function before"+
-			" the code given for the exec parameter and also"+
+			" the code given for the exec parameters and also"+
 			" before any read-loop",
 		param.AltName("before"),
 		param.AltName("b"),
 	)
 
-	ps.Add("end", psetter.StrListAppender{Value: &endScript},
+	ps.Add("begin-print",
+		psetter.StrListAppender{
+			Value:  &preScript,
+			Editor: addPrint{prefixes: []string{"begin-", "b-"}},
+		},
+		"follow this with the value to be printed. These print"+
+			" statements will be mixed in with the exec statements"+
+			" in the order they are given",
+		param.AltName("begin-printf"),
+		param.AltName("begin-println"),
+		param.AltName("b-p"),
+		param.AltName("b-pf"),
+		param.AltName("b-pln"),
+	)
+
+	ps.Add("end", psetter.StrListAppender{Value: &postScript},
 		"follow this with go code to be run at the end."+
 			" This will be placed inside a main() function after"+
-			" the code given for the exec parameter and most"+
+			" the code given for the exec parameters and most"+
 			" importantly outside any read-loop",
 		param.AltName("after"),
 		param.AltName("a"))
+
+	ps.Add("end-print",
+		psetter.StrListAppender{
+			Value:  &postScript,
+			Editor: addPrint{prefixes: []string{"end-", "a-"}},
+		},
+		"follow this with the value to be printed. These print"+
+			" statements will be mixed in with the exec statements"+
+			" in the order they are given",
+		param.AltName("end-printf"),
+		param.AltName("end-println"),
+		param.AltName("a-p"),
+		param.AltName("a-pf"),
+		param.AltName("a-pln"),
+	)
 
 	ps.Add("global", psetter.StrListAppender{Value: &globalsList},
 		"follow this with go code that should be placed at global scope."+
@@ -67,7 +146,11 @@ func addParams(ps *param.PSet) error {
 			" several places, global variables or data types",
 		param.AltName("g"))
 
-	ps.Add("imports", psetter.StrListAppender{Value: &imports},
+	ps.Add("imports",
+		psetter.StrListAppender{
+			Value:  &imports,
+			Checks: []check.String{check.StringLenGT(0)},
+		},
 		"provide any explicit imports",
 		param.AltName("I"))
 
@@ -77,13 +160,14 @@ func addParams(ps *param.PSet) error {
 			" after execution has successfully completed, the"+
 			" assumption being that if you want to know the"+
 			" filename you will also want to examine its contents.",
-		param.PostAction(paction.SetBool(&clearFileOnSuccess, false)),
+		param.PostAction(paction.SetBool(&dontClearFile, true)),
 	)
 
 	ps.Add("set-filename",
 		psetter.String{
 			Value: &filename,
 			Checks: []check.String{
+				check.StringLenGT(3),
 				check.StringHasSuffix(".go"),
 				check.StringNot(
 					check.StringHasSuffix("_test.go"),
@@ -96,7 +180,8 @@ func addParams(ps *param.PSet) error {
 			" after execution has successfully completed, the"+
 			" assumption being that if you have set the"+
 			" filename you will want to preserve its contents.",
-		param.PostAction(paction.SetBool(&clearFileOnSuccess, false)),
+		param.AltName("file-name"),
+		param.PostAction(paction.SetBool(&dontClearFile, true)),
 	)
 
 	rawParam := ps.Add("run-as-webserver", psetter.Bool{Value: &runAsWebserver},
@@ -167,11 +252,13 @@ func addParams(ps *param.PSet) error {
 		param.AltName("no-exec"),
 		param.AltName("no-run"),
 		param.PostAction(paction.SetBool(&showFilename, true)),
-		param.PostAction(paction.SetBool(&clearFileOnSuccess, false)),
+		param.PostAction(paction.SetBool(&dontClearFile, true)),
 	)
 
 	ps.Add("formatter", psetter.String{Value: &formatter},
-		"the name of the formatter command to run",
+		"the name of the formatter command to run. If the default"+
+			" value is not replaced then this program shall look"+
+			" for the "+goImports+" program and use that if it is found",
 		param.PostAction(paction.SetBool(&formatterSet, true)),
 	)
 
@@ -201,19 +288,33 @@ func addParams(ps *param.PSet) error {
 		return nil
 	})
 
+	ps.AddFinalCheck(func() error {
+		if err := check.StringSliceNoDups(imports); err != nil {
+			return fmt.Errorf("bad list of imports: %s", err)
+		}
+		return nil
+	})
+
 	return nil
 }
 
 // addExamples adds some examples of how gosh might be used to the standard
 // help message
 func addExamples(ps *param.PSet) error {
-	ps.AddExample("gosh -e 'fmt.Println(\"Hello, World!\")'",
-		`This will print Hello, World! and exit`)
+	ps.AddExample("gosh -pln '\"Hello, World!\"'",
+		`This will print Hello, World!`)
+	ps.AddExample("gosh -pln 'math.Pi'",
+		`This will print the value of Pi`)
 	ps.AddExample(
-		"gosh -run-in-readloop -b 'count := 0'"+
-			" -e 'count++' -a 'fmt.Println(count)'",
+		"gosh -n -b 'count := 0' -e 'count++' -a-pln 'count'",
 		"This will read from the standard input and print"+
 			" the number of lines read")
+	ps.AddExample("gosh -n -b-p '\"Radius: \"'"+
+		" -e 'r, _ := strconv.ParseFloat(line.Text(), 10)'"+
+		" -pf '\"Area: %9.2f\\n\", r*r*math.Pi'"+
+		" -p '\"Radius: \"'",
+		"This will repeatedly prompt the user for a Radius and print"+
+			" the Area of the corresponding circle")
 
 	return nil
 }

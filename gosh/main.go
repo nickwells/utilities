@@ -3,22 +3,26 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 
+	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/param.mod/v4/param"
 	"github.com/nickwells/param.mod/v4/param/paramset"
 )
 
 // Created: Wed Sep  4 09:58:54 2019
 
+const goshCommentIntro = " gosh : "
+
 func main() {
 	ps := paramset.NewOrDie(
 		addParams,
 		addExamples,
 		param.SetProgramDescription(
-			"this will run go code in an implicit main function."+
+			"This will run Go code in an implicit main function."+
 				" It is also possible to run the code in a"+
 				" loop that will read lines from the standard input"+
 				" and, optionally, to split these lines into fields"+
@@ -30,39 +34,33 @@ func main() {
 
 	ps.Parse()
 
-	f := makeCmdFile(filename)
-	filename = f.Name()
-	if showFilename {
-		fmt.Println(filename)
-	}
+	goFile := makeGoFile()
 
-	populateGoFile(f)
-	f.Close()
-	formatFile(filename)
+	execCmd(goFile)
 
-	execCmd(filename)
-
-	clearFile(filename)
+	clearFile(goFile)
 }
 
 // clearFile removes the created program file if the clearFileOnSuccess flag
 // is set (the default)
 func clearFile(filename string) {
-	if clearFileOnSuccess {
-		err := os.Remove(filename)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Couldn't remove the go file:", err)
-			fmt.Fprintln(os.Stderr, "filename:", filename)
-			os.Exit(1)
-		}
+	if dontClearFile {
+		return
+	}
+
+	err := os.Remove(filename)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Couldn't remove the Go file:", err)
+		fmt.Fprintln(os.Stderr, "filename:", filename)
+		os.Exit(1)
 	}
 }
 
 // formatFile runs the formatter over the populated program file
 func formatFile(filename string) {
 	if !formatterSet {
-		if _, err := exec.LookPath("goimports"); err == nil {
-			formatter = "goimports"
+		if _, err := exec.LookPath(goImports); err == nil {
+			formatter = goImports
 		}
 	}
 
@@ -72,32 +70,26 @@ func formatFile(filename string) {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error formatting the go file:", err)
+		fmt.Fprintln(os.Stderr, "Couldn't format the Go file:", err)
 		fmt.Fprintln(os.Stderr, "filename:", filename)
 		os.Exit(1)
 	}
 }
 
-// makeCmdFile creates the file to hold the program, opens it and returns the
-// open file. If filename is empty then a temporary file is created.
-func makeCmdFile(filename string) *os.File {
+// openGoFile creates the file to hold the program, opens it and returns the
+// open file. If no filename is given then a temporary file is created.
+func openGoFile() *os.File {
 	if filename == "" {
 		f, err := ioutil.TempFile("", "gosh-*.go")
 		if err != nil {
 			fmt.Fprintln(os.Stderr,
-				"Error creating the temporary go file:", err)
+				"Couldn't create the temporary Go file:", err)
 			os.Exit(1)
 		}
 		return f
 	}
 
-	f, err := os.Create(filename)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error creating the go file:", err)
-		fmt.Fprintln(os.Stderr, "filename:", filename)
-		os.Exit(1)
-	}
-	return f
+	return gogen.MakeFileOrDie(filename)
 }
 
 // execCmd will call go run to execute the constructed program
@@ -112,46 +104,46 @@ func execCmd(filename string) {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error running the go file:", err)
+		fmt.Fprintln(os.Stderr, "Couldn't run the Go file:", err)
 		fmt.Fprintln(os.Stderr, "filename:", filename)
 		os.Exit(1)
 	}
 }
 
-// populateGoFileGlobals writes any globals into the go file
-func populateGoFileGlobals(f *os.File) {
+// writeGoFileGlobals writes any globals into the Go file
+func writeGoFileGlobals(f io.Writer) {
 	for _, s := range globalsList {
 		fmt.Fprintln(f)
 		fmt.Fprintln(f, s)
 	}
 }
 
-// populateGoFileBefore writes the statements that come before the main
-// script into the go file
-func populateGoFileBefore(f *os.File) {
-	for _, s := range beginScript {
+// writeGoFilePreScript writes the statements that come before the main
+// script into the Go file
+func writeGoFilePreScript(f io.Writer) {
+	for _, s := range preScript {
 		fmt.Fprintln(f, "\t"+s)
 	}
-	if len(beginScript) > 0 {
+	if len(preScript) > 0 {
 		fmt.Fprintln(f)
 	}
 }
 
-// populateGoFileAfter writes the statements that come after the main
-// script into the go file
-func populateGoFileAfter(f *os.File) {
-	if len(endScript) <= 0 {
+// writeGoFilePostScript writes the statements that come after the main
+// script into the Go file
+func writeGoFilePostScript(f io.Writer) {
+	if len(postScript) <= 0 {
 		return
 	}
 
 	fmt.Fprintln(f)
-	for _, s := range endScript {
+	for _, s := range postScript {
 		fmt.Fprintln(f, "\t"+s)
 	}
 }
 
-// populateGoFileImports writes the import statements into the go file
-func populateGoFileImports(f *os.File) {
+// writeGoFileImports writes the import statements into the Go file
+func writeGoFileImports(f io.Writer) {
 	if runInReadLoop {
 		imports = append([]string{"os", "bufio"}, imports...)
 		if splitLine {
@@ -167,28 +159,29 @@ func populateGoFileImports(f *os.File) {
 	}
 }
 
-// populateGoFileReadLoopOpen writes the opening statements of the readloop
-// (if any) into the go file
-func populateGoFileReadLoopOpen(f *os.File) {
+// writeGoFileReadLoopOpen writes the opening statements of the readloop
+// (if any) into the Go file
+func writeGoFileReadLoopOpen(f io.Writer) {
 	if !runInReadLoop {
 		return
 	}
 
-	if splitLine {
-		fmt.Fprintf(f, "\tlineSplitter := regexp.MustCompile(%q)%s\n",
-			splitPattern, comment("splitLine"))
-	}
-	fmt.Fprintln(f, "\tline := bufio.NewScanner(os.Stdin)"+comment("readLoop"))
-	fmt.Fprintln(f, "\tfor line.Scan() {"+comment("readLoop"))
+	goshTag := comment("readLoop")
 
 	if splitLine {
-		fmt.Fprintln(f, "\t\tf := lineSplitter.Split(line.Text(), -1)"+
-			comment("splitLine"))
+		fmt.Fprintf(f, "\tlineSplitter := regexp.MustCompile(%q)%s\n",
+			splitPattern, goshTag)
+	}
+	fmt.Fprintln(f, "\tline := bufio.NewScanner(os.Stdin)"+goshTag)
+	fmt.Fprintln(f, "\tfor line.Scan() {"+goshTag)
+
+	if splitLine {
+		fmt.Fprintln(f, "\t\tf := lineSplitter.Split(line.Text(), -1)"+goshTag)
 	}
 }
 
-// populateGoFileScript writes the script statements into the go file
-func populateGoFileScript(f *os.File) {
+// writeGoFileScript writes the script statements into the Go file
+func writeGoFileScript(f io.Writer) {
 	scriptIndent := "\t"
 	if runInReadLoop {
 		scriptIndent = "\t\t"
@@ -198,82 +191,118 @@ func populateGoFileScript(f *os.File) {
 	}
 }
 
-// populateGoFileReadLoopClose writes the closing statements of the readloop
-// (if any) into the go file
-func populateGoFileReadLoopClose(f *os.File) {
+// writeGoFileReadLoopClose writes the closing statements of the readloop
+// (if any) into the Go file
+func writeGoFileReadLoopClose(f io.Writer) {
 	if !runInReadLoop {
 		return
 	}
-	fmt.Fprintln(f, "\t}"+comment("readLoop"))
-	fmt.Fprintln(f, "\tif err := line.Err(); err != nil {"+comment("readLoop"))
-	fmt.Fprintln(f,
-		"\t\tfmt.Fprintln(os.Stderr, \"reading standard input:\", err)"+
-			comment("readLoop"))
-	fmt.Fprintln(f, "\t}"+comment("readLoop"))
+
+	goshTag := comment("readLoop")
+
+	fmt.Fprintln(f, "\t}"+goshTag)
+	fmt.Fprintln(f, "\tif err := line.Err(); err != nil {"+goshTag)
+	fmt.Fprintln(f, "\t\tfmt.Fprintln(os.Stderr,"+goshTag)
+	fmt.Fprintln(f, "\t\t\t\"reading standard input:\", err)"+goshTag)
+	fmt.Fprintln(f, "\t}"+goshTag)
 }
 
-// populateGoFileWebserverInit writes the webserver boilerplate code
-// (if any) into the go file
-func populateGoFileWebserverInit(f *os.File) {
+// writeGoFileWebserverInit writes the webserver boilerplate code
+// (if any) into the Go file
+func writeGoFileWebserverInit(f io.Writer) {
 	if !runAsWebserver {
 		return
 	}
-	fmt.Fprintln(f, `http.HandleFunc("/", goshHandler)`+comment("webserver"))
-	fmt.Fprintf(f, "http.ListenAndServe(\":%d\", nil)%s\n",
-		httpPort, comment("webserver"))
+
+	goshTag := comment("webServer")
+
+	fmt.Fprintln(f, "\thttp.HandleFunc(\"/\", goshHandler)"+goshTag)
+	fmt.Fprintf(f, "\thttp.ListenAndServe(\":%d\", nil)%s\n", httpPort, goshTag)
 }
 
-// populateGoFileWebserverHandler writes the webserver handler function
-// (if any) into the go file
-func populateGoFileWebserverHandler(f *os.File) {
+// writeGoFileWebserverHandler writes the webserver handler function
+// (if any) into the Go file
+func writeGoFileWebserverHandler(f io.Writer) {
 	if !runAsWebserver {
 		return
 	}
+
+	goshTag := comment("webServer")
+
 	fmt.Fprintln(f,
-		"func goshHandler(w http.ResponseWriter, r *http.Request) {"+
-			comment("webserver"))
-	populateGoFileScript(f)
-	fmt.Fprintln(f, "}"+comment("webserver"))
+		"func goshHandler(w http.ResponseWriter, r *http.Request) {"+goshTag)
+	writeGoFileScript(f)
+	fmt.Fprintln(f, "}"+goshTag)
 }
 
-// populateGoFile writes the code into the go file
-func populateGoFile(f *os.File) {
-	fmt.Fprint(f,
-		`package main
+// makeGoFile creates the Go file and then writes the code into the it, then
+// it formats the generated code. It returns the name of the generated file.
+func makeGoFile() string {
+	f := openGoFile()
+	defer f.Close()
 
-// ==================================
-// This code was generated by gosh
-// ==================================
+	goFile := f.Name()
+	if showFilename {
+		fmt.Println(goFile)
+	}
 
-`)
+	writeGoFile(f)
 
-	populateGoFileImports(f)
-	populateGoFileGlobals(f)
+	formatFile(goFile)
 
-	fmt.Fprint(f, `
-func main() {
-`)
+	return goFile
+}
 
-	populateGoFileBefore(f)
+// writeGoFile writes the contents of the Go file
+func writeGoFile(f io.Writer) {
+	goshTag := comment("goshFrame")
+
+	fmt.Fprintln(f, "package main"+goshTag)
+
+	writeGoshComment(f)
+	writeGoFileImports(f)
+	writeGoFileGlobals(f)
+
+	fmt.Fprintln(f)
+	fmt.Fprintln(f, "func main() {"+goshTag)
+
+	writeGoFilePreScript(f)
 
 	if runAsWebserver {
-		populateGoFileWebserverInit(f)
+		writeGoFileWebserverInit(f)
 	} else {
-		populateGoFileReadLoopOpen(f)
-		populateGoFileScript(f)
-		populateGoFileReadLoopClose(f)
+		writeGoFileReadLoopOpen(f)
+		writeGoFileScript(f)
+		writeGoFileReadLoopClose(f)
 	}
-	populateGoFileAfter(f)
 
-	fmt.Fprintln(f, "}")
+	writeGoFilePostScript(f)
+
+	fmt.Fprintln(f, "}"+goshTag)
 
 	if runAsWebserver {
-		populateGoFileWebserverHandler(f)
+		writeGoFileWebserverHandler(f)
 	}
+}
+
+// writeGoshComment writes the introductory comment
+func writeGoshComment(f io.Writer) {
+	fmt.Fprintln(f,
+		"// ==================================================================")
+	fmt.Fprintln(f, "// This code was generated by gosh.")
+	fmt.Fprintln(f, "// go get github.com/nickwells/utilities/gosh")
+	fmt.Fprintln(f, "//")
+	fmt.Fprintln(f,
+		"// All code generated by gosh (apart from this) ends with a comment.")
+	fmt.Fprintln(f, "// The comment will start with: '"+goshCommentIntro+"'.")
+	fmt.Fprintln(f, "// User provided code will be as given.")
+	fmt.Fprintln(f,
+		"// ==================================================================")
+	fmt.Fprintln(f)
 }
 
 // comment returns the standard comment string explaining why the line is
 // in the generated code
-func comment(reason string) string {
-	return "\t// AutoGen : " + reason
+func comment(text string) string {
+	return "\t//" + goshCommentIntro + text
 }
