@@ -39,14 +39,41 @@ var formatterSet bool
 var formatterArgs = []string{"-w"}
 
 type addPrint struct {
-	prefixes []string
+	prefixes    []string
+	paramToCall map[string]string
+	needsVal    map[string]bool
 }
 
-// Edit wraps the parameter value in a call to the appropriate variant of
-// fmt.Print... The exact print function to use is determined by the
+var needsValMap = map[string]bool{
+	"printf": true,
+	"pf":     true,
+}
+
+var stdPrintMap = map[string]string{
+	"print":   "fmt.Print(",
+	"p":       "fmt.Print(",
+	"printf":  "fmt.Printf(",
+	"pf":      "fmt.Printf(",
+	"println": "fmt.Println(",
+	"pln":     "fmt.Println(",
+}
+
+var wPrintMap = map[string]string{
+	"print":   "fmt.Fprint(w, ",
+	"p":       "fmt.Fprint(w, ",
+	"printf":  "fmt.Fprintf(w, ",
+	"pf":      "fmt.Fprintf(w, ",
+	"println": "fmt.Fprintln(w, ",
+	"pln":     "fmt.Fprintln(w, ",
+}
+
+// Edit wraps the parameter value in a call to the appropriate variant of the
+// mapped function call. The exact print function to use is determined by the
 // parameter name and this will determine the errors that might be
-// generated. For instance, fmt.Printf demands at least one argument.
+// generated. For instance, if a value is needed then an empty string for
+// paramVal will generate an error.
 func (ap addPrint) Edit(paramName, paramVal string) (string, error) {
+	fullParamName := paramName
 	for _, pfx := range ap.prefixes {
 		s := strings.TrimPrefix(paramName, pfx)
 		if s != paramName {
@@ -55,19 +82,15 @@ func (ap addPrint) Edit(paramName, paramVal string) (string, error) {
 		}
 	}
 
-	switch paramName {
-	case "print", "p":
-		return "fmt.Print(" + paramVal + ")", nil
-	case "printf", "pf":
-		if paramVal == "" {
-			return "", errors.New(
-				"The parameter value must not be empty when using fmt.Printf")
-		}
-		return "fmt.Printf(" + paramVal + ")", nil
-	case "println", "pln":
-		return "fmt.Println(" + paramVal + ")", nil
+	callName, ok := ap.paramToCall[paramName]
+	if !ok {
+		panic(fmt.Errorf("unexpected parameter name: %q", fullParamName))
 	}
-	panic(fmt.Errorf("unexpected parameter name: %q", paramName))
+	if ap.needsVal[paramName] && paramVal == "" {
+		return "", errors.New("The parameter value must not be empty")
+	}
+
+	return callName + paramVal + ")", nil
 }
 
 // addParams will add parameters to the passed ParamSet
@@ -80,8 +103,11 @@ func addParams(ps *param.PSet) error {
 
 	ps.Add("print",
 		psetter.StrListAppender{
-			Value:  &script,
-			Editor: addPrint{},
+			Value: &script,
+			Editor: addPrint{
+				paramToCall: stdPrintMap,
+				needsVal:    needsValMap,
+			},
 		},
 		"follow this with the value to be printed. These print"+
 			" statements will be mixed in with the exec statements"+
@@ -91,6 +117,31 @@ func addParams(ps *param.PSet) error {
 		param.AltName("p"),
 		param.AltName("pf"),
 		param.AltName("pln"),
+	)
+
+	ps.Add("w-print",
+		psetter.StrListAppender{
+			Value: &script,
+			Editor: addPrint{
+				prefixes:    []string{"w-"},
+				paramToCall: wPrintMap,
+				needsVal:    needsValMap,
+			},
+		},
+		"follow this with the value to be printed. These print"+
+			" statements will be mixed in with the exec statements"+
+			" in the order they are given."+
+			"\n\nThis variant will use the Fprint variants,"+
+			" passing 'w' as the writer. Such calls can be used to"+
+			" print to the writer passed in to the HTTP handler"+
+			" which is called 'w' in the generated code. You can"+
+			" think of the 'w' as refering to the web or to a"+
+			" writer if it helps you to remember.",
+		param.AltName("w-printf"),
+		param.AltName("w-println"),
+		param.AltName("w-p"),
+		param.AltName("w-pf"),
+		param.AltName("w-pln"),
 	)
 
 	ps.Add("begin", psetter.StrListAppender{Value: &preScript},
@@ -104,8 +155,12 @@ func addParams(ps *param.PSet) error {
 
 	ps.Add("begin-print",
 		psetter.StrListAppender{
-			Value:  &preScript,
-			Editor: addPrint{prefixes: []string{"begin-", "b-"}},
+			Value: &preScript,
+			Editor: addPrint{
+				prefixes:    []string{"begin-", "b-"},
+				paramToCall: stdPrintMap,
+				needsVal:    needsValMap,
+			},
 		},
 		"follow this with the value to be printed. These print"+
 			" statements will be mixed in with the exec statements"+
@@ -127,8 +182,12 @@ func addParams(ps *param.PSet) error {
 
 	ps.Add("end-print",
 		psetter.StrListAppender{
-			Value:  &postScript,
-			Editor: addPrint{prefixes: []string{"end-", "a-"}},
+			Value: &postScript,
+			Editor: addPrint{
+				prefixes:    []string{"end-", "a-"},
+				paramToCall: stdPrintMap,
+				needsVal:    needsValMap,
+			},
 		},
 		"follow this with the value to be printed. These print"+
 			" statements will be mixed in with the exec statements"+
