@@ -367,13 +367,30 @@ func addExamples(ps *param.PSet) error {
 	ps.AddExample(
 		"gosh -n -b 'count := 0' -e 'count++' -a-pln 'count'",
 		"This will read from the standard input and print"+
-			" the number of lines read")
+			" the number of lines read"+
+			"\n"+
+			"\n-n sets up the loop reading from standard input"+
+			"\n-b 'count := 0' declares and initialises the counter"+
+			" before the loop"+
+			"\n-e 'count++' increments the counter inside the loop"+
+			"\n-a-pln 'count' prints the counter using fmt.Println"+
+			" after the loop")
 	ps.AddExample("gosh -n -b-p '\"Radius: \"'"+
 		" -e 'r, _ := strconv.ParseFloat(line.Text(), 10)'"+
 		" -pf '\"Area: %9.2f\\n\", r*r*math.Pi'"+
 		" -p '\"Radius: \"'",
 		"This will repeatedly prompt the user for a Radius and print"+
-			" the Area of the corresponding circle")
+			" the Area of the corresponding circle"+
+			"\n"+
+			"\n-n sets up the loop reading from standard input"+
+			"\n-b-p '\"Radius: \"' prints the first prompt"+
+			" before the loop"+
+			"\n-e 'r, _ := strconv.ParseFloat(line.Text(), 10)' sets"+
+			" the radius from the text read from standard input,"+
+			" ignoring errors"+
+			"\n-pf '\"Area: %9.2f\\n\", r*r*math.Pi'' calculates and"+
+			" prints the area using fmt.Printf"+
+			"\n-p '\"Radius: \"' prints the next prompt")
 
 	return nil
 }
