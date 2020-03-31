@@ -13,9 +13,9 @@ require (
 	github.com/nickwells/param.mod/v4 v4.1.0
 	github.com/nickwells/twrap.mod v1.3.0
 	github.com/nickwells/units.mod v1.1.0
-	github.com/nickwells/unitsetter.mod/v3 v3.0.0
-	github.com/nickwells/verbose.mod v1.0.5
+	github.com/nickwells/unitsetter.mod/v3 v3.0.2
+	github.com/nickwells/verbose.mod v1.0.6
 	github.com/nickwells/xdg.mod v1.0.2
 	golang.org/x/crypto v0.0.0-20200323165209-0ec3e9974c59 // indirect
-	golang.org/x/sys v0.0.0-20200327173247-9dae0f8f5775
+	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d
 )

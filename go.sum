@@ -16,8 +16,6 @@ github.com/nickwells/location.mod v1.2.5 h1:1vI2z1uPi5Ciyhdr5+5d8wvfN3TLrehrEyG4
 github.com/nickwells/location.mod v1.2.5/go.mod h1:XrX0tLOVtpKChCbXbgN50ONEUBV6FqG7rNdrXMnf3kM=
 github.com/nickwells/mathutil.mod v1.0.7 h1:YW3Vn6uqejOx0osF7Pz9m+8D02U9hAhqGUFhu4W5Qbs=
 github.com/nickwells/mathutil.mod v1.0.7/go.mod h1:t56fow8a/DB4Lkx0kkXrvlHJhDgH7f4zYsgB8P8u48Q=
-github.com/nickwells/param.mod/v4 v4.0.1 h1:3j3Q0JGmpPtVuR2OQsnavWq5diCCBmOWuxuRJVc4Lgo=
-github.com/nickwells/param.mod/v4 v4.0.1/go.mod h1:fRCF6DsSo/l6vAHfV6V3sTbhzRmRKR7xTfUZPX8vL3Y=
 github.com/nickwells/param.mod/v4 v4.1.0 h1:MY4mIyQeQlpuesKRKzq4wlcqO9bIQtgQSjrI7vSDwms=
 github.com/nickwells/param.mod/v4 v4.1.0/go.mod h1:fRCF6DsSo/l6vAHfV6V3sTbhzRmRKR7xTfUZPX8vL3Y=
 github.com/nickwells/strdist.mod v1.0.10 h1:mzZcl/hSCOSZ3N5/pGyRZ/rrBUvb9164osucA3X8Lgs=
@@ -28,10 +26,10 @@ github.com/nickwells/twrap.mod v1.3.0 h1:njmyZdGzkWdMNDRM5h/NST8SFdYzSZoZk5uKToU
 github.com/nickwells/twrap.mod v1.3.0/go.mod h1:73OYoyYwzk9DDw37SPqXsSiaNfQGzU3ApoytW2cf8LE=
 github.com/nickwells/units.mod v1.1.0 h1:HAVUUXpMEuQMTFQbRY69ve2ZlUncvPY8a6EsCo+fvuI=
 github.com/nickwells/units.mod v1.1.0/go.mod h1:IFUcIiALQRlB9lmzEAe9td8o8vrsicYVhNq/kQL+PY4=
-github.com/nickwells/unitsetter.mod/v3 v3.0.0 h1:1JQkCS98urWwuwrbDkP5cva6IetpjYPPC6DhH03KHjk=
-github.com/nickwells/unitsetter.mod/v3 v3.0.0/go.mod h1:GJFwMjT/hoQfTq0t6BB860ffC2dFCxYaO3ruqgh3ZYU=
-github.com/nickwells/verbose.mod v1.0.5 h1:3wuH4twaTJtRMz3JF2nmnd6MN3E/R6VOGcgORTPItzg=
-github.com/nickwells/verbose.mod v1.0.5/go.mod h1:ltNLI+AmIJqBvkK12HMNHOaOTwsiIeL0qJx9Qw95L0M=
+github.com/nickwells/unitsetter.mod/v3 v3.0.2 h1:1VUnI1NjPW0o1m+VNmkKb1Ds2Ey4m8YLNCO6C1hoWm0=
+github.com/nickwells/unitsetter.mod/v3 v3.0.2/go.mod h1:+wHH3PG1J3l8AiQegTskImk1f8aXlTsCkeNKkXzdpX4=
+github.com/nickwells/verbose.mod v1.0.6 h1:yabRLHuutFaTZtnVYyrjjPIHXjHG567dpGYdTUz9Yic=
+github.com/nickwells/verbose.mod v1.0.6/go.mod h1:Hk+DxbLcQJEBsG8OQ+LoxcWIpUCOnoxvKgaZOtJu2kg=
 github.com/nickwells/xdg.mod v1.0.2 h1:rmQPX4dTfxTtUeoRQfkMbPCzUDwN2zP6eNwTYyBcn8w=
 github.com/nickwells/xdg.mod v1.0.2/go.mod h1:h8lRJMpY6oXdD6E3jJuolpO9QJE5FcTvUe8eyRzgyQo=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
@@ -44,6 +42,6 @@ golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5h
 golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191128015809-6d18c012aee9 h1:ZBzSG/7F4eNKz2L3GE9o300RX0Az1Bw5HF7PDraD+qU=
 golang.org/x/sys v0.0.0-20191128015809-6d18c012aee9/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20200327173247-9dae0f8f5775 h1:TC0v2RSO1u2kn1ZugjrFXkRZAEaqMN/RW+OTZkBzmLE=
-golang.org/x/sys v0.0.0-20200327173247-9dae0f8f5775/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20200331124033-c3d80250170d h1:nc5K6ox/4lTFbMVSL9WRR81ixkcwXThoiF6yf+R9scA=
+golang.org/x/sys v0.0.0-20200331124033-c3d80250170d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
