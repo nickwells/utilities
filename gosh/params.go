@@ -234,11 +234,17 @@ func addParams(ps *param.PSet) error {
 						" - the file must not be a test file"),
 			},
 		},
-		"set the filename where the program will be constructed."+
-			" This will also prevent the file from being cleared"+
-			" after execution has successfully completed, the"+
-			" assumption being that if you have set the"+
-			" filename you will want to preserve its contents.",
+		"set the filename where the program will be constructed. This will"+
+			" also prevent the file from being cleared after execution"+
+			" has successfully completed, the assumption being that if"+
+			" you have set the filename you will want to preserve its"+
+			" contents."+
+			"\n\n"+
+			"This will also have the consequence that the directory is not"+
+			" created and the module is not initialised. This may cause"+
+			" problems depending on your current directory (if you are in"+
+			" a Go module directory) and the setting of the GO111MODULE"+
+			" environment variable",
 		param.AltName("file-name"),
 		param.PostAction(paction.SetBool(&dontClearFile, true)),
 	)

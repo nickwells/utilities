@@ -7,105 +7,208 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/param.mod/v4/param"
 	"github.com/nickwells/param.mod/v4/param/paramset"
+	"github.com/nickwells/timer.mod/timer"
+	"github.com/nickwells/verbose.mod/verbose"
 )
 
 // Created: Wed Sep  4 09:58:54 2019
 
+// constantWidthStr returns the string formatter into a right-justified
+// string of a consistent length
+func constantWidthStr(s string) string {
+	return fmt.Sprintf("%18.18s", s)
+}
+
+var blank = constantWidthStr("")
+
+// VerboseTimer used in conjunction with the timer and verbose packages this
+// will print out how long a function took to run
+type VerboseTimer struct {
+}
+
+// Act will perform the action for the timer - it prints out the tag and the
+// duration in milliseconds if the program is in verbose mode
+func (_ VerboseTimer) Act(tag string, d time.Duration) {
+	if !verbose.IsOn() {
+		return
+	}
+	fmt.Printf("%s: %12.3f msecs\n", tag, float64(d/time.Microsecond)/1000.0)
+	fmt.Printf("%s: ------------\n", blank)
+}
+
+var verboseTimer VerboseTimer
+
 const goshCommentIntro = " gosh : "
 
+var cleanupPath string
+
 func main() {
+	defer timer.Start(constantWidthStr("main"), verboseTimer)()
 	ps := paramset.NewOrDie(
+		verbose.AddParams,
 		addParams,
 		addExamples,
 		param.SetProgramDescription(
-			"This will run Go code in an implicit main function."+
-				" It is also possible to run the code in a"+
-				" loop that will read lines from the standard input"+
-				" and, optionally, to split these lines into fields"+
-				" on chosen boundaries. Alternatively you can run"+
-				" the code as a simple webserver."+
-				"\n\nIt is also possible to preserve the"+
-				" temporary file created for subsequent editing."),
+			"This will run Go code in an implicit main function. It is also"+
+				" possible to run the code in a loop that will read lines from"+
+				" the standard input and, optionally, to split these lines"+
+				" into fields on chosen boundaries. Alternatively you can"+
+				" run the code as a simple webserver."+
+				"\n\n"+
+				"It is also possible to preserve the temporary file created"+
+				" for subsequent editing."+
+				"\n\n"+
+				"Note that by default the program will be generated in a"+
+				" temporary directory and executed from there so that any"+
+				" paths used should be given in full rather than relative"+
+				" to your current directory"),
 	)
 
 	ps.Parse()
 
-	goFile := makeGoFile()
+	goFile := buildGoProgram()
 
-	execCmd(goFile)
+	runGoFile(goFile)
 
-	clearFile(goFile)
+	clearFiles()
 }
 
-// clearFile removes the created program file if the clearFileOnSuccess flag
-// is set (the default)
-func clearFile(filename string) {
+// clearFiles removes the created program file, any module files and the
+// containing directory unless the dontClearFile flag is set
+func clearFiles() {
+	intro := constantWidthStr("clearFiles")
+	defer timer.Start(intro, verboseTimer)()
+
 	if dontClearFile {
+		verbose.Print(intro, ": Skipping\n")
 		return
 	}
 
-	err := os.Remove(filename)
+	verbose.Print(intro, ": Cleaning-up the Go files\n")
+
+	err := os.RemoveAll(cleanupPath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Couldn't remove the Go file:", err)
-		fmt.Fprintln(os.Stderr, "filename:", filename)
+		fmt.Fprintln(os.Stderr, "Couldn't remove the Go files:", err)
+		fmt.Fprintln(os.Stderr, "\t:", cleanupPath)
 		os.Exit(1)
 	}
 }
 
 // formatFile runs the formatter over the populated program file
 func formatFile(filename string) {
+	intro := constantWidthStr("formatFile")
+	defer timer.Start(intro, verboseTimer)()
+
+	verbose.Print(intro, ": Formatting the Go file\n")
 	if !formatterSet {
 		if _, err := exec.LookPath(goImports); err == nil {
 			formatter = goImports
+			verbose.Print(intro, ":\tUsing ", goImports, "\n")
 		}
 	}
 
 	formatterArgs = append(formatterArgs, filename)
-	cmd := exec.Command(formatter, formatterArgs...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
+	verbose.Print(intro, ":\tCommand: ",
+		formatter, " ",
+		strings.Join(formatterArgs, " "),
+		"\n")
+	out, err := exec.Command(formatter, formatterArgs...).CombinedOutput()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't format the Go file:", err)
-		fmt.Fprintln(os.Stderr, "filename:", filename)
+		fmt.Fprintln(os.Stderr, "\tfilename:", filename)
+		fmt.Fprintln(os.Stderr, string(out))
 		os.Exit(1)
 	}
 }
 
-// openGoFile creates the file to hold the program, opens it and returns the
-// open file. If no filename is given then a temporary file is created.
-func openGoFile() *os.File {
-	if filename == "" {
-		f, err := ioutil.TempFile("", "gosh-*.go")
-		if err != nil {
-			fmt.Fprintln(os.Stderr,
-				"Couldn't create the temporary Go file:", err)
-			os.Exit(1)
-		}
-		return f
+// createGoFiles creates the file to hold the program, opens it and returns the
+// open file. If no filename is given then a temporary directory is created,
+// the program changes directory to there, creates the file and initialises
+// any module files if necessary.
+func createGoFiles() *os.File {
+	intro := constantWidthStr("createGoFiles")
+	defer timer.Start(intro, verboseTimer)()
+
+	verbose.Print(intro, ": Creating the Go files\n")
+
+	if filename != "" {
+		cleanupPath = filename
+		return gogen.MakeFileOrDie(filename)
 	}
 
-	return gogen.MakeFileOrDie(filename)
+	verbose.Print(intro, ":\tCreating the temporary directory\n")
+	d, err := ioutil.TempDir("", "gosh-*.d")
+	if err != nil {
+		fmt.Fprintln(os.Stderr,
+			"Couldn't create the temporary directory:", err)
+		os.Exit(1)
+	}
+	cleanupPath = d
+
+	verbose.Print(intro, ":\tChdir'ing into ", d, "\n")
+	err = os.Chdir(d)
+	if err != nil {
+		fmt.Fprintf(os.Stderr,
+			"Couldn't chdir to the temporary directory (%s): %v", d, err)
+		os.Exit(1)
+	}
+
+	fName := filepath.Join(d, "gosh.go")
+	verbose.Print(intro, ":\tCreating the Go file: ", fName, "\n")
+	f, err := os.Create(fName)
+	if err != nil {
+		fmt.Fprintf(os.Stderr,
+			"Couldn't create the Go file (%s): %v", fName, err)
+		os.Exit(1)
+	}
+
+	if os.Getenv("GO111MODULE") != "off" {
+		verbose.Print(intro,
+			":\tRunning 'go mod init gosh' (creates the module files)\n")
+		execGoCmd(TCmdIONone, "mod", "init", "gosh")
+	}
+
+	return f
 }
 
-// execCmd will call go run to execute the constructed program
-func execCmd(filename string) {
+// runGoFile will call go run to execute the constructed program
+func runGoFile(filename string) {
+	intro := constantWidthStr("runGoFile")
+	defer timer.Start(intro, verboseTimer)()
+
 	if dontRun {
+		verbose.Print(intro, ": Skipping\n")
 		return
 	}
 
-	cmd := exec.Command("go", "run", filename)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	verbose.Print(intro, ": Running the Go file\n")
+	execGoCmd(TCmdIOShow, "run", filename)
+}
+
+// execGoCmd will exec the go program with the supplied arguments. If it
+// detects an error it will report it and exit
+func execGoCmd(ioMode CmdIO, args ...string) {
+	cmd := exec.Command("go", args...)
+	if ioMode == TCmdIOShow {
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+	}
 	err := cmd.Run()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Couldn't run the Go file:", err)
-		fmt.Fprintln(os.Stderr, "filename:", filename)
+		cmdLine := []string{"go"}
+		cmdLine = append(cmdLine, args...)
+		cmdLineStr := strings.Join(cmdLine, " ")
+		fmt.Fprintln(os.Stderr, "Couldn't exec the go command")
+		fmt.Fprintln(os.Stderr, "\t"+cmdLineStr)
+		fmt.Fprintln(os.Stderr, "\tError:", err)
 		os.Exit(1)
 	}
 }
@@ -235,26 +338,53 @@ func writeGoFileWebserverHandler(f io.Writer) {
 	fmt.Fprintln(f, "}"+goshTag)
 }
 
-// makeGoFile creates the Go file and then writes the code into the it, then
+// buildGoProgram creates the Go file and then writes the code into the it, then
 // it formats the generated code. It returns the name of the generated file.
-func makeGoFile() string {
-	f := openGoFile()
+func buildGoProgram() string {
+	intro := constantWidthStr("buildGoProgram")
+	defer timer.Start(intro, verboseTimer)()
+
+	verbose.Print(intro, ": Building the program\n")
+
+	f := createGoFiles()
 	defer f.Close()
 
 	goFile := f.Name()
 	if showFilename {
 		fmt.Println(goFile)
 	}
+	verbose.Print(intro, ":\tGo file name: ", goFile, "\n")
 
 	writeGoFile(f)
 
 	formatFile(goFile)
 
+	tidyModule()
+
 	return goFile
+}
+
+// tidyModule runs go mod tidy after the file is fully constructed to
+// populate the go.mod and go.sum files
+func tidyModule() {
+	intro := constantWidthStr("tidyModule")
+	defer timer.Start(intro, verboseTimer)()
+
+	if os.Getenv("GO111MODULE") == "off" || filename != "" {
+		verbose.Print(intro, ":\tSkipping\n")
+		return
+	}
+	verbose.Print(intro, ":\tRunning 'go mod tidy' (populates go.mod)\n")
+	execGoCmd(TCmdIONone, "mod", "tidy")
 }
 
 // writeGoFile writes the contents of the Go file
 func writeGoFile(f io.Writer) {
+	intro := constantWidthStr("writeGoFile")
+	defer timer.Start(intro, verboseTimer)()
+
+	verbose.Print(intro, ": Writing the contents of the Go file\n")
+
 	goshTag := comment("goshFrame")
 
 	fmt.Fprintln(f, "package main"+goshTag)
