@@ -18,18 +18,21 @@ var postScript []string
 var globalsList []string
 var imports []string
 
-var showFilename bool
-var dontClearFile bool
 var runInReadLoop bool
-var runAsWebserver bool
 var splitLine bool
 var splitPattern = `\s+`
-var dontRun bool
+var runInReadloopSetters []*param.ByName
+
+var runAsWebserver bool
 
 const defaultHTTPPort = 8080
 
 var httpPort int64 = defaultHTTPPort
+var runAsWebserverSetters []*param.ByName
 
+var showFilename bool
+var dontClearFile bool
+var dontRun bool
 var filename string
 
 const goImports = "goimports"
@@ -93,30 +96,48 @@ func (ap addPrint) Edit(paramName, paramVal string) (string, error) {
 	return callName + paramVal + ")", nil
 }
 
-// addParams will add parameters to the passed ParamSet
-func addParams(ps *param.PSet) error {
-	ps.Add("exec", psetter.StrListAppender{Value: &script},
-		"follow this with the go code to be run."+
-			" This will be placed inside a main() function",
-		param.AltName("e"),
+// addWebParams will add the parameters in the "web" parameter group
+func addWebParams(ps *param.PSet) error {
+	const webGroup = "cmd-web"
+
+	ps.AddGroup(webGroup,
+		"parameters relating to building a script as a web-server.")
+
+	const webServerParam = "run-as-webserver"
+	runAsWebserverSetters = append(runAsWebserverSetters,
+		ps.Add(webServerParam, psetter.Bool{Value: &runAsWebserver},
+			"run a webserver with the script code being run"+
+				" within an http handler function called 'goshHandler'"+
+				" taking two parameters:\n"+
+				" w (an http.ResponseWriter)\n"+
+				" r (a pointer to an http.Request).\n"+
+				" The webserver will listen on port "+
+				fmt.Sprintf("%d", defaultHTTPPort)+
+				" unless the port number has been set explicitly"+
+				" through the http-port parameter.",
+			param.AltName("http"),
+			param.GroupName(webGroup),
+		),
 	)
 
-	ps.Add("print",
-		psetter.StrListAppender{
-			Value: &script,
-			Editor: addPrint{
-				paramToCall: stdPrintMap,
-				needsVal:    needsValMap,
+	runAsWebserverSetters = append(runAsWebserverSetters,
+		ps.Add("http-port",
+			psetter.Int64{
+				Value: &httpPort,
+				Checks: []check.Int64{
+					check.Int64GT(0),
+					check.Int64LT((1 << 16) + 1),
+				},
 			},
-		},
-		"follow this with the value to be printed. These print"+
-			" statements will be mixed in with the exec statements"+
-			" in the order they are given",
-		param.AltName("printf"),
-		param.AltName("println"),
-		param.AltName("p"),
-		param.AltName("pf"),
-		param.AltName("pln"),
+			"set the port number that the webserver will listen on."+
+				" Setting this will also force the script to be run"+
+				" within an http handler function. See the description"+
+				" for the "+webServerParam+" parameter for details. Note"+
+				" that if you set this to a value less than 1024 you"+
+				" will need to have superuser privilege.",
+			param.PostAction(paction.SetBool(&runAsWebserver, true)),
+			param.GroupName(webGroup),
+		),
 	)
 
 	ps.Add("w-print",
@@ -135,20 +156,106 @@ func addParams(ps *param.PSet) error {
 			" passing 'w' as the writer. Such calls can be used to"+
 			" print to the writer passed in to the HTTP handler"+
 			" which is called 'w' in the generated code. You can"+
-			" think of the 'w' as refering to the web or to a"+
+			" think of the 'w' as referring to the web or to a"+
 			" writer if it helps you to remember.",
 		param.AltName("w-printf"),
 		param.AltName("w-println"),
 		param.AltName("w-p"),
 		param.AltName("w-pf"),
 		param.AltName("w-pln"),
+		param.GroupName(webGroup),
+	)
+
+	return nil
+}
+
+// addReadloopParams will add the parameters in the "readloop" parameter
+// group
+func addReadloopParams(ps *param.PSet) error {
+	const rlGroup = "cmd-readloop"
+
+	ps.AddGroup(rlGroup,
+		"parameters relating to building a script with a read-loop.")
+
+	runInReadloopSetters = append(runInReadloopSetters,
+		ps.Add("run-in-readloop", psetter.Bool{Value: &runInReadLoop},
+			"have the script code being run within a loop that reads from stdin"+
+				" one a line at a time. The value of each line can be"+
+				" accessed by calling 'line.Text()'. Note that any"+
+				" newline will have been removed and will need to be added"+
+				" back if you want to print the line.",
+			param.AltName("n"),
+			param.GroupName(rlGroup),
+		),
+	)
+
+	runInReadloopSetters = append(runInReadloopSetters,
+		ps.Add("split-line", psetter.Bool{Value: &splitLine},
+			"split the lines into fields around runs of whitespace"+
+				" characters. The fields will be available in a slice"+
+				" of strings called 'f'. Setting this will also force"+
+				" the script to be run in the loop reading from stdin.",
+			param.AltName("s"),
+			param.PostAction(paction.SetBool(&runInReadLoop, true)),
+			param.GroupName(rlGroup),
+		),
+	)
+
+	runInReadloopSetters = append(runInReadloopSetters,
+		ps.Add("split-pattern", psetter.String{Value: &splitPattern},
+			"change the behaviour when splitting the line into fields."+
+				" The provided string must compile into a regular expression."+
+				" Setting this will also force the script to be run in the"+
+				" loop reading from stdin and for each line to be split.",
+			param.AltName("sp"),
+			param.PostAction(paction.SetBool(&runInReadLoop, true)),
+			param.PostAction(paction.SetBool(&splitLine, true)),
+			param.GroupName(rlGroup),
+		),
+	)
+	return nil
+}
+
+// addParams will add parameters to the passed ParamSet
+func addParams(ps *param.PSet) error {
+	err := addWebParams(ps)
+	if err != nil {
+		return err
+	}
+	err = addReadloopParams(ps)
+	if err != nil {
+		return err
+	}
+
+	ps.Add("exec", psetter.StrListAppender{Value: &script},
+		"follow this with the Go code to be run."+
+			" This will be placed inside a main() function.",
+		param.AltName("e"),
+	)
+
+	ps.Add("print",
+		psetter.StrListAppender{
+			Value: &script,
+			Editor: addPrint{
+				paramToCall: stdPrintMap,
+				needsVal:    needsValMap,
+			},
+		},
+		"follow this with the value to be printed. These print"+
+			" statements will be mixed in with the exec statements"+
+			" in the order they are given.",
+		param.AltName("printf"),
+		param.AltName("println"),
+		param.AltName("p"),
+		param.AltName("pf"),
+		param.AltName("pln"),
 	)
 
 	ps.Add("begin", psetter.StrListAppender{Value: &preScript},
-		"follow this with go code to be run at the beginning."+
+		"follow this with Go code to be run at the beginning."+
 			" This will be placed inside a main() function before"+
 			" the code given for the exec parameters and also"+
-			" before any read-loop",
+			" before any read-loop.",
 		param.AltName("before"),
 		param.AltName("b"),
 	)
@@ -164,7 +271,7 @@ func addParams(ps *param.PSet) error {
 		},
 		"follow this with the value to be printed. These print"+
 			" statements will be mixed in with the exec statements"+
-			" in the order they are given",
+			" in the order they are given.",
 		param.AltName("begin-printf"),
 		param.AltName("begin-println"),
 		param.AltName("b-p"),
@@ -173,10 +280,10 @@ func addParams(ps *param.PSet) error {
 	)
 
 	ps.Add("end", psetter.StrListAppender{Value: &postScript},
-		"follow this with go code to be run at the end."+
+		"follow this with Go code to be run at the end."+
 			" This will be placed inside a main() function after"+
 			" the code given for the exec parameters and most"+
-			" importantly outside any read-loop",
+			" importantly outside any read-loop.",
 		param.AltName("after"),
 		param.AltName("a"))
 
@@ -191,7 +298,7 @@ func addParams(ps *param.PSet) error {
 		},
 		"follow this with the value to be printed. These print"+
 			" statements will be mixed in with the exec statements"+
-			" in the order they are given",
+			" in the order they are given.",
 		param.AltName("end-printf"),
 		param.AltName("end-println"),
 		param.AltName("a-p"),
@@ -200,26 +307,31 @@ func addParams(ps *param.PSet) error {
 	)
 
 	ps.Add("global", psetter.StrListAppender{Value: &globalsList},
-		"follow this with go code that should be placed at global scope."+
+		"follow this with Go code that should be placed at global scope."+
 			" For instance, functions that you might want to call from"+
-			" several places, global variables or data types",
-		param.AltName("g"))
+			" several places, global variables or data types.",
+		param.AltName("g"),
+	)
 
 	ps.Add("imports",
 		psetter.StrListAppender{
 			Value:  &imports,
 			Checks: []check.String{check.StringLenGT(0)},
 		},
-		"provide any explicit imports",
-		param.AltName("I"))
+		"provide any explicit imports.",
+		param.AltName("I"),
+	)
 
-	ps.Add("show-filename", psetter.Bool{Value: &showFilename},
+	const showFileParam = "show-filename"
+	ps.Add(showFileParam, psetter.Bool{Value: &showFilename},
 		"show the filename where the program has been constructed."+
-			" This will also prevent the file from being cleared"+
-			" after execution has successfully completed, the"+
-			" assumption being that if you want to know the"+
+			" This will also prevent the generated code from being"+
+			" cleared after execution has successfully completed,"+
+			" the assumption being that if you want to know the"+
 			" filename you will also want to examine its contents.",
+		param.AltName("show-file"),
 		param.PostAction(paction.SetBool(&dontClearFile, true)),
+		param.Attrs(param.DontShowInStdUsage),
 	)
 
 	ps.Add("set-filename",
@@ -231,122 +343,68 @@ func addParams(ps *param.PSet) error {
 				check.StringNot(
 					check.StringHasSuffix("_test.go"),
 					"a string ending with _test.go"+
-						" - the file must not be a test file"),
+						" - the file must not be a test file."),
 			},
 		},
 		"set the filename where the program will be constructed. This will"+
-			" also prevent the file from being cleared after execution"+
-			" has successfully completed, the assumption being that if"+
-			" you have set the filename you will want to preserve its"+
-			" contents."+
+			" also prevent the generated code from being cleared after"+
+			" execution has successfully completed, the assumption being"+
+			" that if you have set the filename you will want to preserve"+
+			" its contents."+
 			"\n\n"+
 			"This will also have the consequence that the directory is not"+
 			" created and the module is not initialised. This may cause"+
 			" problems depending on your current directory (if you are in"+
 			" a Go module directory) and the setting of the GO111MODULE"+
-			" environment variable",
+			" environment variable.",
 		param.AltName("file-name"),
 		param.PostAction(paction.SetBool(&dontClearFile, true)),
-	)
-
-	rawParam := ps.Add("run-as-webserver", psetter.Bool{Value: &runAsWebserver},
-		"run a webserver with the script code being run"+
-			" within an http handler function called 'goshHandler'"+
-			" taking two parameters:\n"+
-			" w (an http.ResponseWriter)\n"+
-			" r (a pointer to an http.Request).\n"+
-			" The webserver will listen on port "+
-			fmt.Sprintf("%d", defaultHTTPPort)+
-			" unless the port number has been set explicitly"+
-			" through the http-port parameter.",
-		param.AltName("http"),
-	)
-
-	hpParam := ps.Add("http-port",
-		psetter.Int64{
-			Value: &httpPort,
-			Checks: []check.Int64{
-				check.Int64GT(0),
-				check.Int64LT((1 << 16) + 1),
-			},
-		},
-		"set the port number that the http port will listen on."+
-			" Setting this will also force the script to be run"+
-			" within an http handler function. See the description"+
-			" for the run-as-webserver parameter for details. Note"+
-			" that if you set this to a value less than 1024 you"+
-			" will need to have superuser privilege",
-		param.PostAction(paction.SetBool(&runAsWebserver, true)),
-	)
-
-	rirParam := ps.Add("run-in-readloop", psetter.Bool{Value: &runInReadLoop},
-		"have the script code being run within a loop that reads from stdin"+
-			" one a line at a time. The value of each line can be"+
-			" accessed by calling 'line.Text()'. Note that any"+
-			" newline will have been removed and will need to be added"+
-			" back if you want to print the line",
-		param.AltName("n"),
-	)
-
-	slParam := ps.Add("split-line", psetter.Bool{Value: &splitLine},
-		"split the lines into fields around runs of whitespace"+
-			" characters. The fields will be available in a slice"+
-			" of strings called 'f'. Setting this will also force"+
-			" the script to be run in the loop reading from stdin",
-		param.AltName("s"),
-		param.PostAction(paction.SetBool(&runInReadLoop, true)),
-	)
-
-	ps.Add("split-pattern", psetter.String{Value: &splitPattern},
-		"change the behaviour when splitting the line into fields."+
-			" The provided string must compile into a regular expression"+
-			" Setting this will also force the script to be run in the"+
-			" loop reading from stdin and for each line to be split",
-		param.AltName("sp"),
-		param.PostAction(paction.SetBool(&runInReadLoop, true)),
-		param.PostAction(paction.SetBool(&splitLine, true)),
+		param.Attrs(param.DontShowInStdUsage),
 	)
 
 	ps.Add("dont-exec", psetter.Bool{Value: &dontRun},
-		"don't run the generated code - this forces the"+
-			" show-filename parameter to true. This can be"+
+		"don't run the generated code - this prevents the generated"+
+			" code from being cleared and forces the "+showFileParam+
+			" parameter to true. This can be"+
 			" useful if you have completed the work you were using"+
 			" the generated code for and now want to save the file "+
-			" for future use",
+			" for future use.",
 		param.AltName("dont-run"),
 		param.AltName("no-exec"),
 		param.AltName("no-run"),
 		param.PostAction(paction.SetBool(&showFilename, true)),
 		param.PostAction(paction.SetBool(&dontClearFile, true)),
+		param.Attrs(param.DontShowInStdUsage),
 	)
 
 	ps.Add("formatter", psetter.String{Value: &formatter},
 		"the name of the formatter command to run. If the default"+
 			" value is not replaced then this program shall look"+
-			" for the "+goImports+" program and use that if it is found",
+			" for the "+goImports+" program and use that if it is found.",
 		param.PostAction(paction.SetBool(&formatterSet, true)),
+		param.Attrs(param.DontShowInStdUsage),
 	)
 
 	ps.Add("formatter-args", psetter.StrList{Value: &formatterArgs},
 		"the arguments to pass to the formatter command. Note that the"+
-			" final argument will always be the name of the generated program")
+			" final argument will always be the name of the generated program.",
+		param.Attrs(param.DontShowInStdUsage),
+	)
 
 	ps.AddFinalCheck(func() error {
 		if runAsWebserver && runInReadLoop {
 			errStr := "gosh cannot read from standard input" +
 				" and run as a webserver." +
 				" Parameters set at:"
-			for _, w := range rawParam.WhereSet() {
-				errStr += "\n\t" + w
+			for _, p := range runAsWebserverSetters {
+				for _, w := range p.WhereSet() {
+					errStr += "\n\t" + w
+				}
 			}
-			for _, w := range hpParam.WhereSet() {
-				errStr += "\n\t" + w
-			}
-			for _, w := range rirParam.WhereSet() {
-				errStr += "\n\t" + w
-			}
-			for _, w := range slParam.WhereSet() {
-				errStr += "\n\t" + w
+			for _, p := range runInReadloopSetters {
+				for _, w := range p.WhereSet() {
+					errStr += "\n\t" + w
+				}
 			}
 			return errors.New(errStr)
 		}
@@ -380,7 +438,7 @@ func addExamples(ps *param.PSet) error {
 			" before the loop"+
 			"\n-e 'count++' increments the counter inside the loop"+
 			"\n-a-pln 'count' prints the counter using fmt.Println"+
-			" after the loop")
+			" after the loop.")
 	ps.AddExample("gosh -n -b-p '\"Radius: \"'"+
 		" -e 'r, _ := strconv.ParseFloat(line.Text(), 10)'"+
 		" -pf '\"Area: %9.2f\\n\", r*r*math.Pi'"+
@@ -396,7 +454,7 @@ func addExamples(ps *param.PSet) error {
 			" ignoring errors"+
 			"\n-pf '\"Area: %9.2f\\n\", r*r*math.Pi'' calculates and"+
 			" prints the area using fmt.Printf"+
-			"\n-p '\"Radius: \"' prints the next prompt")
+			"\n-p '\"Radius: \"' prints the next prompt.")
 
 	return nil
 }

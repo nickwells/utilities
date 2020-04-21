@@ -30,12 +30,11 @@ var blank = constantWidthStr("")
 
 // VerboseTimer used in conjunction with the timer and verbose packages this
 // will print out how long a function took to run
-type VerboseTimer struct {
-}
+type VerboseTimer struct{}
 
 // Act will perform the action for the timer - it prints out the tag and the
 // duration in milliseconds if the program is in verbose mode
-func (_ VerboseTimer) Act(tag string, d time.Duration) {
+func (VerboseTimer) Act(tag string, d time.Duration) {
 	if !verbose.IsOn() {
 		return
 	}
