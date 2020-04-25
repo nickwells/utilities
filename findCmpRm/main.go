@@ -35,9 +35,32 @@ var diffCmdParams = []string{}
 var lessCmdName = "less"
 var lessCmdParams = []string{}
 
-// status holds counts of various operations on and problems with the files
-type status struct {
+// Status holds counts of various operations on and problems with the files
+type Status struct {
 	fileErr, compared, skipped, diffErr, deleted, reverted, leftUntouched int
+	shouldQuit                                                            bool
+}
+
+// Report will print out the Status structure
+func (s Status) Report() {
+	if s.fileErr > 0 {
+		fmt.Printf("%3d file errors\n", s.fileErr)
+	}
+	if s.diffErr > 0 {
+		fmt.Printf("%3d diff errors\n", s.diffErr)
+	}
+	fmt.Printf("%3d skipped\n", s.skipped)
+	fmt.Printf("%3d compared\n", s.compared)
+	fmt.Println()
+	if s.deleted > 0 {
+		fmt.Printf("%3d deleted\n", s.deleted)
+	}
+	if s.reverted > 0 {
+		fmt.Printf("%3d reverted\n", s.reverted)
+	}
+	if s.leftUntouched > 0 {
+		fmt.Printf("%3d left untouched\n", s.leftUntouched)
+	}
 }
 
 func main() {
@@ -68,19 +91,9 @@ func main() {
 		},
 	}
 
-	showDiffResp := responder.NewOrPanic(
-		"Show differences",
-		map[rune]string{
-			'y': "to show differences",
-			'n': "to skip this file",
-			'q': "to quit",
-		},
-		responder.SetDefault('y'),
-		responder.SetIndents(0, indent))
-
 	twc := twrap.NewTWConfOrPanic()
 
-	var s status
+	var s Status
 	fmt.Println(len(filenames), " files found")
 fileLoop:
 	for _, nameOrig := range filenames {
@@ -100,55 +113,58 @@ fileLoop:
 		}
 		fmt.Print(prefix)
 
-		response := showDiffResp.GetResponseOrDie()
-		fmt.Println()
-
-		switch response {
-		case 'y':
-			err = showDiffs(nameOrig, nameNew)
-			if err != nil {
-				twc.Wrap(fmt.Sprintf("Error: %v", err), indent)
-				verboseMsg(twc, "Skipping...", indent)
-				s.diffErr++
-				continue
-			}
-			s.compared++
-
-			queryDeleteFile(nameOrig, nameNew, twc, indent, &s)
-		case 'n':
-			verboseMsg(twc, "Skipping...", indent)
-			s.skipped++
-		case 'q':
-			verboseMsg(twc, "Quitting...", indent)
+		queryShowDiff(nameOrig, nameNew, twc, indent, &s)
+		if s.shouldQuit {
 			break fileLoop
 		}
 	}
 
 	fmt.Println()
 	fmt.Printf("%3d files\n", len(filenames))
-	if s.fileErr > 0 {
-		fmt.Printf("%3d file errors\n", s.fileErr)
-	}
-	if s.diffErr > 0 {
-		fmt.Printf("%3d diff errors\n", s.diffErr)
-	}
-	fmt.Printf("%3d skipped\n", s.skipped)
-	fmt.Printf("%3d compared\n", s.compared)
+	s.Report()
+}
+
+// queryShowDiff asks if the differences between the new file and the
+// original should be shown and then acts accordingly, reporting any errors
+// found.
+func queryShowDiff(nameOrig, nameNew string, twc *twrap.TWConf, indent int, s *Status) {
+	showDiffResp := responder.NewOrPanic(
+		"Show differences",
+		map[rune]string{
+			'y': "to show differences",
+			'n': "to skip this file",
+			'q': "to quit",
+		},
+		responder.SetDefault('y'),
+		responder.SetIndents(0, indent))
+
+	response := showDiffResp.GetResponseOrDie()
 	fmt.Println()
-	if s.deleted > 0 {
-		fmt.Printf("%3d deleted\n", s.deleted)
-	}
-	if s.reverted > 0 {
-		fmt.Printf("%3d reverted\n", s.reverted)
-	}
-	if s.leftUntouched > 0 {
-		fmt.Printf("%3d left untouched\n", s.leftUntouched)
+
+	switch response {
+	case 'y':
+		err := showDiffs(nameOrig, nameNew)
+		if err != nil {
+			twc.Wrap(fmt.Sprintf("Error: %v", err), indent)
+			verboseMsg(twc, "Skipping...", indent)
+			s.diffErr++
+			return
+		}
+		s.compared++
+
+		queryDeleteFile(nameOrig, nameNew, twc, indent, s)
+	case 'n':
+		verboseMsg(twc, "Skipping...", indent)
+		s.skipped++
+	case 'q':
+		verboseMsg(twc, "Quitting...", indent)
+		s.shouldQuit = true
 	}
 }
 
-// queryDeleteFile will ask if the file should be deleted and then act
-// accordingly, reporting any errors found
-func queryDeleteFile(nameOrig, nameNew string, twc *twrap.TWConf, indent int, s *status) {
+// queryDeleteFile asks if the file should be deleted and then acts
+// accordingly, reporting any errors found.
+func queryDeleteFile(nameOrig, nameNew string, twc *twrap.TWConf, indent int, s *Status) {
 	deleteFileResp := responder.NewOrPanic(
 		"delete file",
 		map[rune]string{
