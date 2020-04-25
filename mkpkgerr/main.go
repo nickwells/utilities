@@ -25,7 +25,8 @@ func main() {
 	ps := paramset.NewOrDie(
 		gogen.AddParams(&outputFileName, &makeFile),
 		param.SetProgramDescription(
-			"This creates a Go file defining a package-specific error type"),
+			"This creates a Go file defining a package-specific error"+
+				" type. The default name of the file is: "+dfltFileName),
 	)
 
 	ps.Parse()
@@ -37,7 +38,7 @@ func main() {
 	}
 
 	gogen.PrintPreambleOrDie(f, ps)
-	gogen.PrintImports(f, "fmt")
+	gogen.PrintImports(f, "errors", "fmt")
 
 	printFile(f)
 }
@@ -86,14 +87,14 @@ func (e pkgWError) Unwrap() error {
 
 // pkgErrorf formats its arguments into an Error
 func pkgErrorf(format string, args ...interface{}) Error {
-	e := fmt.Errorf(format, args...))
-	if e.Unwrap() == nil {
-		return pkgError(e.Error())
+	e := fmt.Errorf(format, args...)
+	if we := errors.Unwrap(e); we != nil {
+		return pkgWError{
+			msg: e.Error(),
+			err: we,
+		}
 	}
-	return pkgWError{
-		msg: e.Error(),
-		err: e.Unwrap(),
-	}
+	return pkgError(e.Error())
 }
 `)
 }
