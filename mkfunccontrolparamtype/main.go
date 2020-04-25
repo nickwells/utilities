@@ -20,6 +20,7 @@ var typeName string
 var typeDesc string
 var outputFileName string
 var makeFile = true
+var forTesting bool
 var constNames []string
 
 func main() {
@@ -34,7 +35,11 @@ func main() {
 
 	var f = os.Stdout
 	if makeFile {
-		f = gogen.MakeFileOrDie(outputFileName)
+		if forTesting {
+			f = gogen.MakeTestFileOrDie(outputFileName)
+		} else {
+			f = gogen.MakeFileOrDie(outputFileName)
+		}
 		defer f.Close()
 	}
 
@@ -47,30 +52,39 @@ func printFile(f *os.File, ps *param.PSet) {
 
 	fmt.Fprintln(f)
 
-	fmt.Fprintf(f, "// %s %s\n", typeName, typeDesc)
-	fmt.Fprintf(f, "type %s int\n\n", typeName)
+	fullTypeName := typeName + "Type"
 
-	namePfx := "T" + typeName
-	minValName := namePfx + "MinVal"
-	maxValName := namePfx + "MaxVal"
-	fmt.Fprint(f, `const (
+	fmt.Fprintf(f, "// %s %s\n", fullTypeName, typeDesc)
+	fmt.Fprintf(f, "// Generated Code\n")
+	fmt.Fprintf(f, "type %s int\n", fullTypeName)
+
+	nameSuffix := "For" + fullTypeName
+	minValName := "MinVal" + nameSuffix
+	maxValName := "MaxVal" + nameSuffix
+	fmt.Fprint(f, `
+// Set the lower sentinel value to minus one so that the default (0)
+// value is the first meaningful entry
+const (
 `)
-	fmt.Fprintf(f, "\t%s %s = iota\n", minValName, typeName)
+	fmt.Fprintf(f, "\t%s %s = iota - 1\n", minValName, fullTypeName)
 	for _, v := range constNames {
-		fmt.Fprintf(f, "\t%s%s\n", namePfx, v)
+		fmt.Fprintln(f, "\t"+v)
 	}
-	fmt.Fprintf(f, "\t%s\n", maxValName)
+	fmt.Fprintln(f, "\t"+maxValName)
 	fmt.Fprint(f, `)
 
 `)
 
 	const validFuncName = "IsValid"
 
-	fmt.Fprintf(f, "// %s is a method on the %s type that can be used\n",
-		validFuncName, typeName)
-	fmt.Fprintln(f, "// to check a received parameter and return an error")
-	fmt.Fprintln(f, "// or panic if an illegal parameter value is passed")
-	fmt.Fprintf(f, "func (v %s)%s() bool {\n", typeName, validFuncName)
+	fmt.Fprintf(f, "// %s is a method on the %s type that can be used",
+		validFuncName, fullTypeName)
+	fmt.Fprint(f, `
+// to check a received parameter for validity. It compares
+// the value against the sentinel values for the type
+// and returns false if it is outside the valid range
+`)
+	fmt.Fprintf(f, "func (v %s) %s() bool {\n", fullTypeName, validFuncName)
 	fmt.Fprintf(f, "\tif v <= %s {\n", minValName)
 	fmt.Fprintf(f, "\t\treturn false\n")
 	fmt.Fprintln(f, "\t}")
@@ -151,6 +165,9 @@ func addParams(ps *param.PSet) error {
 		param.Attrs(param.DontShowInStdUsage),
 	)
 
+	ps.Add("for-testing", psetter.Bool{Value: &forTesting},
+		"create the type for testing only")
+
 	ps.AddFinalCheck(func() error {
 		if fileNameParam.HasBeenSet() && noFileParam.HasBeenSet() {
 			return fmt.Errorf(
@@ -158,7 +175,11 @@ func addParams(ps *param.PSet) error {
 				fileNameParam.Name(), noFileParam.Name())
 		}
 		if !fileNameParam.HasBeenSet() && !noFileParam.HasBeenSet() {
-			outputFileName = "type" + typeName + ".go"
+			suffix := ".go"
+			if forTesting {
+				suffix = "_test.go"
+			}
+			outputFileName = "type" + typeName + suffix
 		}
 		return nil
 	})
