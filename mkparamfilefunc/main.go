@@ -14,13 +14,14 @@ import (
 	"github.com/nickwells/param.mod/v4/param/paramset"
 	"github.com/nickwells/param.mod/v4/param/psetter"
 	"github.com/nickwells/twrap.mod/twrap"
+	"github.com/nickwells/verbose.mod/verbose"
 )
 
 // Created: Sat May 25 16:13:02 2019
 
 const (
 	dfltFileName      = "setConfigFile.go"
-	groupFileNameBase = "setConfigFileForGroup_"
+	groupFileNameBase = "setConfigFile"
 )
 
 var mustExist bool
@@ -28,6 +29,7 @@ var mustExistPersonal bool
 var mustExistGlobal bool
 
 var whichFuncs = "all"
+var privateFunc bool
 
 var makeFile = true
 var outputFileName = dfltFileName
@@ -38,6 +40,7 @@ var baseDirGlobal string
 func main() {
 	ps := paramset.NewOrDie(
 		gogen.AddParams(&outputFileName, &makeFile),
+		verbose.AddParams,
 		addParams,
 		param.SetProgramDescription(
 			"This creates a Go file defining functions which set the"+
@@ -83,28 +86,49 @@ func main() {
 // makeFuncNameGlobal generates the name of the function for setting the
 // global config file that this program will write.
 func makeFuncNameGlobal(groupName string) string {
-	if groupName == "" {
-		return "SetGlobalConfigFile"
+	prefix := "Set"
+	if privateFunc {
+		prefix = "set"
 	}
-	return "SetGroupGlobalConfigFile" + makeGroupSuffix(groupName)
+
+	fName := prefix + "GlobalConfigFile" + makeGroupSuffix(groupName)
+	verbose.Print("Global function name: ", fName, "\n")
+
+	return fName
 }
 
 // makeFuncNamePersonal generates the name of the function for setting the
 // personal config file that this program will write.
 func makeFuncNamePersonal(groupName string) string {
-	if groupName == "" {
-		return "SetConfigFile"
+	prefix := "Set"
+	if privateFunc {
+		prefix = "set"
 	}
-	return "SetGroupConfigFile" + makeGroupSuffix(groupName)
+
+	fName := prefix + "ConfigFile" + makeGroupSuffix(groupName)
+	verbose.Print("Personal function name: ", fName, "\n")
+
+	return fName
 }
 
 // makeGroupSuffix generates the suffix for the function name from the group
 // name. It cleans up any characters in the name which are invalid characters
 // in a Go function name
 func makeGroupSuffix(groupName string) string {
-	groupSuffix := "_" + groupName
-	groupSuffix = strings.ReplaceAll(groupSuffix, ".", "_")
-	groupSuffix = strings.ReplaceAll(groupSuffix, "-", "_")
+	if groupName == "" {
+		return ""
+	}
+
+	groupSuffix := "ForGroup"
+
+	// Now split the group name into words and Titleise each word, adding it
+	// to the group suffix
+	groupName = strings.ReplaceAll(groupName, "-", ".")
+	groupParts := strings.Split(groupName, ".")
+	for _, part := range groupParts {
+		groupSuffix += strings.Title(part)
+	}
+
 	return groupSuffix
 }
 
@@ -136,9 +160,10 @@ func makeConfigFileName(groupName string) string {
 	return "group-" + groupName + ".cfg"
 }
 
-// printFunc prints the func name and signature
-func printFunc(f io.Writer, name string) {
+// printFuncIntro prints the function comment and the func name and signature
+func printFuncIntro(f io.Writer, name string) {
 	twc := twrap.NewTWConfOrPanic(twrap.SetWriter(f))
+	fmt.Fprintln(f)
 	fmt.Fprintln(f, "/*")
 	twc.Wrap(name+
 		" adds a config file to the set which the param parser will process"+
@@ -165,7 +190,7 @@ func printFuncPersonal(f io.Writer, groupName, pkgName string, dirs []string) {
 		return
 	}
 
-	printFunc(f, makeFuncNamePersonal(groupName))
+	printFuncIntro(f, makeFuncNamePersonal(groupName))
 	if baseDirPersonal != "" {
 		fmt.Fprintf(f, `
 	baseDir := %q
@@ -189,7 +214,7 @@ func printFuncGlobal(f io.Writer, groupName, pkgName string, dirs []string) {
 	if whichFuncs != "all" && whichFuncs != "globalOnly" {
 		return
 	}
-	printFunc(f, makeFuncNameGlobal(groupName))
+	printFuncIntro(f, makeFuncNameGlobal(groupName))
 	if baseDirGlobal != "" {
 		fmt.Fprintf(f, `
 	baseDir := %q
@@ -237,16 +262,16 @@ func printFuncEnd(f io.Writer) {
 	fmt.Fprint(f, `
 	return nil
 }
-
 `)
 }
 
 // addParams will add parameters to the passed ParamSet
 func addParams(ps *param.PSet) error {
-	ps.Add("group", psetter.String{
-		Value:  &groupName,
-		Checks: []check.String{param.GroupNameCheck},
-	},
+	ps.Add("group",
+		psetter.String{
+			Value:  &groupName,
+			Checks: []check.String{param.GroupNameCheck},
+		},
 		"sets the name of the group of parameters for which we are"+
 			" building the functions. If this is not given then only"+
 			" common config file functions will be generated. If a"+
@@ -318,6 +343,10 @@ func addParams(ps *param.PSet) error {
 		param.Attrs(param.DontShowInStdUsage),
 	)
 
+	ps.Add("private", psetter.Bool{Value: &privateFunc},
+		"this will generate private (non-global) function names",
+	)
+
 	return nil
 }
 
@@ -325,7 +354,7 @@ func addParams(ps *param.PSet) error {
 // is already set to some non-default value
 func setFileNameForGroup(_loc location.L, _ *param.ByName, _ []string) error {
 	if outputFileName == dfltFileName {
-		outputFileName = groupFileNameBase + groupName + ".go"
+		outputFileName = groupFileNameBase + makeGroupSuffix(groupName) + ".go"
 	}
 	return nil
 }
