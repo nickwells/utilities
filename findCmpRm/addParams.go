@@ -4,8 +4,8 @@ package main
 import (
 	"github.com/nickwells/check.mod/check"
 	"github.com/nickwells/filecheck.mod/filecheck"
-	"github.com/nickwells/param.mod/v4/param"
-	"github.com/nickwells/param.mod/v4/param/psetter"
+	"github.com/nickwells/param.mod/v5/param"
+	"github.com/nickwells/param.mod/v5/param/psetter"
 )
 
 // addParams will add parameters to the passed ParamSet
@@ -35,7 +35,7 @@ func addParams(ps *param.PSet) error {
 
 	ps.Add("extension",
 		psetter.String{
-			Value:  &extension,
+			Value:  &fileExtension,
 			Checks: []check.String{check.StringLenGT(0)},
 		},
 		"give the extension for the files to search for",
@@ -49,8 +49,8 @@ func addParams(ps *param.PSet) error {
 		},
 		"give the name of the command to use when showing the"+
 			" differences between files",
-		param.AltName("dc"),
-		param.AltName("cmd"),
+		param.AltName("diff"),
+		param.Attrs(param.DontShowInStdUsage),
 	)
 
 	ps.Add("diff-cmd-params",
@@ -59,8 +59,9 @@ func addParams(ps *param.PSet) error {
 			Checks: []check.StringSlice{check.StringSliceLenGT(0)},
 		},
 		"give any parameters to be supplied to the diff command",
-		param.AltName("cmd-params"),
-		param.AltName("dcp"),
+		param.AltName("diff-params"),
+		param.AltName("diff-args"),
+		param.Attrs(param.DontShowInStdUsage),
 	)
 
 	ps.Add("less-cmd",
@@ -70,7 +71,8 @@ func addParams(ps *param.PSet) error {
 		},
 		"give the name of the command to use for paginating the"+
 			" differences calculated by the diff command",
-		param.AltName("lc"),
+		param.AltName("less"),
+		param.Attrs(param.DontShowInStdUsage),
 	)
 
 	ps.Add("less-cmd-params",
@@ -79,7 +81,9 @@ func addParams(ps *param.PSet) error {
 			Checks: []check.StringSlice{check.StringSliceLenGT(0)},
 		},
 		"give any parameters to be supplied to the less command",
-		param.AltName("lcp"),
+		param.AltName("less-params"),
+		param.AltName("less-args"),
+		param.Attrs(param.DontShowInStdUsage),
 	)
 
 	return nil

@@ -13,9 +13,10 @@ import (
 	"github.com/nickwells/check.mod/check"
 	"github.com/nickwells/cli.mod/cli/responder"
 	"github.com/nickwells/dirsearch.mod/dirsearch"
+	"github.com/nickwells/english.mod/english"
 	"github.com/nickwells/filecheck.mod/filecheck"
-	"github.com/nickwells/param.mod/v4/param"
-	"github.com/nickwells/param.mod/v4/param/paramset"
+	"github.com/nickwells/param.mod/v5/param"
+	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/twrap.mod/twrap"
 	"github.com/nickwells/verbose.mod/verbose"
 )
@@ -27,9 +28,11 @@ const dfltDir = "."
 
 var searchSubDirs bool
 var dir string = dfltDir
-var extension string = dfltExtension
+var fileExtension string = dfltExtension
 
-var diffCmdName = "diff"
+const dfltDiffCmd = "diff"
+
+var diffCmdName = dfltDiffCmd
 var diffCmdParams = []string{}
 
 var lessCmdName = "less"
@@ -37,8 +40,13 @@ var lessCmdParams = []string{}
 
 // Status holds counts of various operations on and problems with the files
 type Status struct {
-	fileErr, compared, skipped, diffErr, deleted, reverted, leftUntouched int
-	shouldQuit                                                            bool
+	fileErr, diffErr                                int
+	compared, skipped, deleted, reverted, untouched int
+	shouldQuit, revertAll, deleteAll                bool
+
+	twc        *twrap.TWConf
+	fileChecks filecheck.Provisos
+	indent     int
 }
 
 // Report will print out the Status structure
@@ -58,13 +66,20 @@ func (s Status) Report() {
 	if s.reverted > 0 {
 		fmt.Printf("%3d reverted\n", s.reverted)
 	}
-	if s.leftUntouched > 0 {
-		fmt.Printf("%3d left untouched\n", s.leftUntouched)
+	if s.untouched > 0 {
+		fmt.Printf("%3d left untouched\n", s.untouched)
+	}
+	if s.revertAll {
+		fmt.Printf("Some files were reverted without comparison\n")
+	}
+	if s.shouldQuit {
+		fmt.Printf("Quit before end\n")
 	}
 }
 
 func main() {
 	ps := paramset.NewOrDie(addParams,
+		addExamples,
 		verbose.AddParams,
 		SetGlobalConfigFile,
 		SetConfigFile,
@@ -82,38 +97,49 @@ func main() {
 
 	filenames := getFiles()
 	maxNameLen := getMaxNameLen(filenames)
-	indent := maxNameLen + 2
 
-	fileChks := filecheck.Provisos{
-		Existence: filecheck.MustExist,
-		Checks: []check.FileInfo{
-			check.FileInfoIsRegular,
+	s := &Status{
+		twc: twrap.NewTWConfOrPanic(),
+		fileChecks: filecheck.Provisos{
+			Existence: filecheck.MustExist,
+			Checks: []check.FileInfo{
+				check.FileInfoIsRegular,
+			},
 		},
+		indent: maxNameLen + 2,
 	}
 
-	twc := twrap.NewTWConfOrPanic()
+	fmt.Println(len(filenames),
+		english.Plural("file", len(filenames)),
+		"found:")
+	s.twc.IdxNoRptPathList(filenames, 4)
 
-	var s Status
-	fmt.Println(len(filenames), " files found")
 fileLoop:
 	for _, nameOrig := range filenames {
-		prefix := fmt.Sprintf("%*.*s: ", maxNameLen, maxNameLen, nameOrig)
-
-		nameNew := strings.TrimSuffix(nameOrig, extension)
-		err := fileChks.StatusCheck(nameNew)
-		if err != nil {
-			twc.WrapPrefixed(prefix,
-				fmt.Sprintf(
-					"problem with the other file: %q: %v",
-					filepath.Base(nameNew), err),
-				0)
-			twc.Wrap("Skipping...", indent)
-			s.fileErr++
+		nameNew := strings.TrimSuffix(nameOrig, fileExtension)
+		if s.revertAll {
+			s.revertFile(nameOrig, nameNew)
 			continue
 		}
-		fmt.Print(prefix)
+		if s.deleteAll {
+			s.deleteFile(nameOrig)
+			continue
+		}
 
-		queryShowDiff(nameOrig, nameNew, twc, indent, &s)
+		fmt.Printf("%*.*s: ", maxNameLen, maxNameLen, nameOrig)
+
+		if !s.fileOK(nameNew) {
+			s.twc.Wrap("Skipping...", s.indent)
+			continue
+		}
+
+		s.queryShowDiff(nameOrig, nameNew)
+		if s.revertAll {
+			s.revertFile(nameOrig, nameNew)
+		}
+		if s.deleteAll {
+			s.deleteFile(nameOrig)
+		}
 		if s.shouldQuit {
 			break fileLoop
 		}
@@ -124,19 +150,40 @@ fileLoop:
 	s.Report()
 }
 
+// fileOK checks that the file passes the status checks and returns true if
+// it does and false otherwise
+func (s *Status) fileOK(file string) bool {
+	err := s.fileChecks.StatusCheck(file)
+	if err != nil {
+		fmt.Println()
+		s.twc.Wrap(
+			fmt.Sprintf(
+				"problem with the other file: %q: %v",
+				filepath.Base(file), err),
+			s.indent)
+		s.fileErr++
+		return false
+	}
+	return true
+}
+
 // queryShowDiff asks if the differences between the new file and the
 // original should be shown and then acts accordingly, reporting any errors
 // found.
-func queryShowDiff(nameOrig, nameNew string, twc *twrap.TWConf, indent int, s *Status) {
+func (s *Status) queryShowDiff(nameOrig, nameNew string) {
 	showDiffResp := responder.NewOrPanic(
 		"Show differences",
 		map[rune]string{
 			'y': "to show differences",
 			'n': "to skip this file",
+			'd': "delete this and all subsequent files" +
+				" with extension: " + fileExtension,
+			'r': "revert this and all subsequent base files" +
+				" to the contents of the files with extension: " + fileExtension,
 			'q': "to quit",
 		},
 		responder.SetDefault('y'),
-		responder.SetIndents(0, indent))
+		responder.SetIndents(0, s.indent))
 
 	response := showDiffResp.GetResponseOrDie()
 	fmt.Println()
@@ -145,86 +192,112 @@ func queryShowDiff(nameOrig, nameNew string, twc *twrap.TWConf, indent int, s *S
 	case 'y':
 		err := showDiffs(nameOrig, nameNew)
 		if err != nil {
-			twc.Wrap(fmt.Sprintf("Error: %v", err), indent)
-			verboseMsg(twc, "Skipping...", indent)
+			s.twc.Wrap(fmt.Sprintf("Error: %v", err), s.indent)
+			s.verboseMsg("Skipping...")
 			s.diffErr++
 			return
 		}
 		s.compared++
 
-		queryDeleteFile(nameOrig, nameNew, twc, indent, s)
+		s.queryDeleteFile(nameOrig, nameNew)
 	case 'n':
-		verboseMsg(twc, "Skipping...", indent)
-		s.skipped++
+		s.skip()
+	case 'r':
+		s.setRevertAll()
+	case 'd':
+		s.setDeleteAll()
 	case 'q':
-		verboseMsg(twc, "Quitting...", indent)
-		s.shouldQuit = true
+		s.setShouldQuit()
 	}
+}
+
+// skip reports the skipping of the file
+func (s *Status) skip() {
+	s.verboseMsg("Skipping...")
+	s.skipped++
+}
+
+// setRevertAll sets the revertAll flag
+func (s *Status) setRevertAll() {
+	s.verboseMsg("Reverting all...")
+	s.revertAll = true
+}
+
+// setDeleteAll sets the deleteAll flag
+func (s *Status) setDeleteAll() {
+	s.verboseMsg("Deleting all...")
+	s.deleteAll = true
+}
+
+// setShouldQuit sets the shouldQuit flag
+func (s *Status) setShouldQuit() {
+	s.verboseMsg("Quitting...")
+	s.shouldQuit = true
 }
 
 // queryDeleteFile asks if the file should be deleted and then acts
 // accordingly, reporting any errors found.
-func queryDeleteFile(nameOrig, nameNew string, twc *twrap.TWConf, indent int, s *Status) {
+func (s *Status) queryDeleteFile(nameOrig, nameNew string) {
 	deleteFileResp := responder.NewOrPanic(
 		"delete file",
 		map[rune]string{
 			'y': "to delete this file",
 			'n': "to keep this file",
-			'r': "to revert this file to its original contents",
+			'r': "to revert the file to this content",
 		},
 		responder.SetDefault('n'),
-		responder.SetIndents(indent, indent))
+		responder.SetIndents(s.indent, s.indent))
 
 	response := deleteFileResp.GetResponseOrDie()
 	fmt.Println()
 
 	switch response {
 	case 'y':
-		deleteFile(nameOrig, twc, indent)
-		s.deleted++
+		s.deleteFile(nameOrig)
 	case 'r':
-		revertFile(nameOrig, nameNew, twc, indent)
-		s.reverted++
+		s.revertFile(nameOrig, nameNew)
 	default:
-		s.leftUntouched++
+		s.untouched++
 	}
 }
 
 // deleteFile deletes the named file, reporting any errors
-func deleteFile(name string, twc *twrap.TWConf, indent int) {
-	verboseMsg(twc, "Deleting file...", indent)
+func (s *Status) deleteFile(name string) {
+	s.verboseMsg("Deleting file...")
 
 	err := os.Remove(name)
 	if err != nil {
-		twc.Wrap(
+		s.twc.Wrap(
 			fmt.Sprintf("Couldn't delete the file: %v", err),
-			indent)
+			s.indent)
 		return
 	}
 
-	verboseMsg(twc, "File deleted", indent)
+	s.verboseMsg("File deleted")
+	s.deleted++
 }
 
 // revertFile reverts the file to its original contents, reporting any
 // errors.
-func revertFile(nameOrig, nameNew string, twc *twrap.TWConf, indent int) {
-	verboseMsg(twc, "Reverting to the original file...", indent)
+func (s *Status) revertFile(nameOrig, nameNew string) {
+	s.verboseMsg("Reverting to the file with extension '" + fileExtension + "' ...")
 
 	err := os.Rename(nameOrig, nameNew)
 	if err != nil {
-		twc.Wrap(
+		s.twc.Wrap(
 			fmt.Sprintf("Couldn't revert the file: %v", err),
-			indent)
+			s.indent)
 		return
 	}
 
-	verboseMsg(twc, "File reverted", indent)
+	s.verboseMsg("File reverted")
+	s.reverted++
 }
 
 // verboseMsg Wraps the message if verbose messaging is on
-func verboseMsg(twc *twrap.TWConf, msg string, indent int) {
+func (s *Status) verboseMsg(msg string) {
 	if verbose.IsOn() {
-		twc.Wrap(msg, indent)
+		s.twc.Wrap(msg, s.indent)
 	}
 }
 
@@ -285,7 +358,7 @@ func getFiles() []string {
 		findFunc = dirsearch.FindRecurse
 	}
 	entries, errs := findFunc(dir,
-		check.FileInfoName(check.StringHasSuffix(extension)),
+		check.FileInfoName(check.StringHasSuffix(fileExtension)),
 		check.FileInfoIsRegular)
 
 	if len(errs) != 0 {

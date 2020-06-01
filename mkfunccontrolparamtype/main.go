@@ -9,9 +9,9 @@ import (
 
 	"github.com/nickwells/check.mod/check"
 	"github.com/nickwells/gogen.mod/gogen"
-	"github.com/nickwells/param.mod/v4/param"
-	"github.com/nickwells/param.mod/v4/param/paramset"
-	"github.com/nickwells/param.mod/v4/param/psetter"
+	"github.com/nickwells/param.mod/v5/param"
+	"github.com/nickwells/param.mod/v5/param/paramset"
+	"github.com/nickwells/param.mod/v5/param/psetter"
 )
 
 // Created: Sat Mar 21 11:18:36 2020

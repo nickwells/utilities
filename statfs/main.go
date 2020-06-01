@@ -9,9 +9,9 @@ import (
 	"github.com/nickwells/check.mod/check"
 	"github.com/nickwells/col.mod/v2/col"
 	"github.com/nickwells/col.mod/v2/col/colfmt"
-	"github.com/nickwells/param.mod/v4/param"
-	"github.com/nickwells/param.mod/v4/param/paramset"
-	"github.com/nickwells/param.mod/v4/param/psetter"
+	"github.com/nickwells/param.mod/v5/param"
+	"github.com/nickwells/param.mod/v5/param/paramset"
+	"github.com/nickwells/param.mod/v5/param/psetter"
 	"github.com/nickwells/units.mod/units"
 	"github.com/nickwells/unitsetter.mod/v3/unitsetter"
 
@@ -189,7 +189,7 @@ var fiMap = map[string]fieldInfo{
 	},
 }
 
-var allowedFields = param.AllowedVals{
+var allowedFields = psetter.AllowedVals{
 	nameStr:     "the name of the directory",
 	fSpStr:      "the total free space available",
 	avSpStr:     "the space available to you",

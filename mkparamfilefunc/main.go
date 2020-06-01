@@ -10,9 +10,9 @@ import (
 	"github.com/nickwells/check.mod/check"
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v4/param"
-	"github.com/nickwells/param.mod/v4/param/paramset"
-	"github.com/nickwells/param.mod/v4/param/psetter"
+	"github.com/nickwells/param.mod/v5/param"
+	"github.com/nickwells/param.mod/v5/param/paramset"
+	"github.com/nickwells/param.mod/v5/param/psetter"
 	"github.com/nickwells/twrap.mod/twrap"
 	"github.com/nickwells/verbose.mod/verbose"
 )
@@ -73,7 +73,7 @@ func main() {
 	gogen.PrintImports(f,
 		"path/filepath",
 		"github.com/nickwells/filecheck.mod/filecheck",
-		"github.com/nickwells/param.mod/v4/param",
+		"github.com/nickwells/param.mod/v5/param",
 		"github.com/nickwells/xdg.mod/xdg")
 
 	pkgName := gogen.GetPackageOrDie()
@@ -330,7 +330,7 @@ func addParams(ps *param.PSet) error {
 
 	ps.Add("funcs", psetter.Enum{
 		Value: &whichFuncs,
-		AllowedVals: param.AllowedVals{
+		AllowedVals: psetter.AllowedVals{
 			"all": "create all functions",
 			"personalOnly": "create just the personal config file" +
 				" setter function",
