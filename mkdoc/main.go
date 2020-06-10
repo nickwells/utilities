@@ -73,11 +73,17 @@ func main() {
 
 	examplesText := getDocPart(cmd, "examples") + getText(examplesTailFile)
 	if examplesText != "" {
-		docText += "For examples [see here](" + examplesFileName + ")\n"
+		docText += "\n\n" +
+			"## Examples" +
+			"\n" +
+			"For examples [see here](" + examplesFileName + ")\n"
 		makeFile(examplesFileName, examplesText)
 	}
 	if refsText != "" {
-		docText += "For external references [see here](" + refsFileName + ")\n"
+		docText += "\n\n" +
+			"## See Also" +
+			"\n" +
+			"For external references [see here](" + refsFileName + ")\n"
 		makeFile(refsFileName, refsText)
 	}
 	docText += docExtras
