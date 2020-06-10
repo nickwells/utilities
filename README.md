@@ -6,43 +6,8 @@ and so they support the standard '-help' parameter which will print out a
 comprehensive usage message.
 
 ## gosh
-This is a tool for running very short Go programs from the command line in a
-similar way that perl programs can be run from the command line. The
-resulting programs can be preserved for subsequent editing. The tool can also
-wrap the supplied code in a loop which reads lines from stdin and can also
-split these lines around spaces. Alternatively you can use it to generate a
-simple web server.
-
-You might find it useful to set an alias to preset some parameters. You can
-also collect useful setup code into files and then use the `-params-file`
-parameter to apply these chunks as desired.
-
-It's faster than opening an editor and writing a go program from scratch
-especially if there are only a few lines of non-boilerplate code. You can
-also save the program code that it generates and edit that if the few lines
-become many lines. The workflow around this would be that you use gosh to
-make the first few iterations of the command and if that is sufficient then
-just stop; if you need to do more then save the file and edit it just like a
-regular go program.
-
-Call gosh with the -help parameter to get extensive documentation on how to
-use it.
-
-Here are some examples of how you might use gosh:
-
-To print all lines from a file longer than 80 characters
-```
-gosh -n -e 'if l := len(line.Text()); l > 80 { fmt.Println(l, line.Text()) }' < ./README.md
-```
-
-To run a webserver (listening on port 8080) that will return "Gosh!" for every query:
-```
-gosh -http -e 'fmt.Fprintf(w, "Gosh!")'
-```
-
-There are some alternatives available:
-- [goexec](https://github.com/shurcooL/goexec/) - a command-line tool for executing Go code.
-- [gommand](https://github.com/sno6/gommand) - a command-line tool for executing Go code, similar to python -c.
+This is a tool for running Go code from the command line.
+[See here](gosh/_gosh.DOC.md).
 
 ## statfs
 This provides an equivalent to the `df` command but in a form that is easier
@@ -83,6 +48,10 @@ package-specific Error interface (and also the standard error interface). It
 also provides a local pkgErrorf function that can be used to generate a
 pkgError. The pkgError is a renaming of string and so a string can simply be
 cast to a pkgError.
+
+## mkdoc
+This is a tool for generating markdown files documenting programs.
+[See here](mkdoc/_mkdoc.DOC.md).
 
 ## findCmpRm
 This finds all files in a given directory with a given extension and compares
