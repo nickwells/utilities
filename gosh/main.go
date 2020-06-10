@@ -156,12 +156,11 @@ func (g *Gosh) createGoFiles() {
 	verbose.Print(intro, ": Creating the Go files\n")
 
 	if g.filename != "" {
+		verbose.Print(intro, ":\tCreating ", g.filename, "\n")
 		g.cleanupPath = g.filename
-		g.w = gogen.MakeFileOrDie(g.filename)
+		g.makeFile()
+		return
 	}
-
-	// TODO: test that this works if you give a filename
-	//       do we need to specify a directory instead?
 
 	verbose.Print(intro, ":\tCreating the temporary directory\n")
 	d, err := ioutil.TempDir("", "gosh-*.d")
@@ -182,17 +181,23 @@ func (g *Gosh) createGoFiles() {
 
 	g.filename = filepath.Join(d, "gosh.go")
 	verbose.Print(intro, ":\tCreating the Go file: ", g.filename, "\n")
-	g.w, err = os.Create(g.filename)
-	if err != nil {
-		fmt.Fprintf(os.Stderr,
-			"Couldn't create the Go file (%s): %v", g.filename, err)
-		os.Exit(1)
-	}
+	g.makeFile()
 
 	if os.Getenv("GO111MODULE") != "off" {
 		verbose.Print(intro,
 			":\tRunning 'go mod init gosh' (creates the module files)\n")
 		gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "init", "gosh")
+	}
+}
+
+// makeFile will create the go file and exit if it fails
+func (g *Gosh) makeFile() {
+	var err error
+	g.w, err = os.Create(g.filename)
+	if err != nil {
+		fmt.Fprintf(os.Stderr,
+			"Couldn't create the Go file (%s): %v", g.filename, err)
+		os.Exit(1)
 	}
 }
 
