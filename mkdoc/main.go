@@ -93,7 +93,7 @@ func main() {
 // makeFile creates the file and populates it
 func makeFile(filename, contents string) {
 	f, err := os.Create(filename)
-	defer f.Close()
+	defer f.Close() //nolint: staticcheck
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Could not create the file:", err)
