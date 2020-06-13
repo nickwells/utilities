@@ -7,6 +7,7 @@ comprehensive usage message.
 
 ## gosh
 This is a tool for running Go code from the command line.
+
 [See here](gosh/_gosh.DOC.md).
 
 ## statfs
@@ -50,16 +51,19 @@ pkgError. The pkgError is a renaming of string and so a string can simply be
 cast to a pkgError.
 
 ## mkdoc
-This is a tool for generating markdown files documenting programs.
+This is a tool for generating markdown files documenting Go programs.
+
 [See here](mkdoc/_mkdoc.DOC.md).
 
 ## findCmpRm
-This finds all files in a given directory with a given extension and compares
-them against corresponding files without the extension. Then the user is
-prompted to delete the file with the extension. The command name echoes this:
-find, compare, remove.
+This finds files with copies, compares them with the copies and optionally
+deletes the old copies.
 
-It is most useful in conjunction with the testhelper package. The testhelper
-package will retain the original contents of a golden file in a file of the
-same name with an extension of '.orig'. This command will help you to review
-the changes and tidy up afterwards.
+[See here](findCmpRm/_findCmpRm.DOC.md)
+
+
+## findGoDirs
+This finds Go source directories and optionally performs some useful tasks on
+them or just lists them.
+
+[See here](findGoDirs/_findGoDirs.DOC.md)
