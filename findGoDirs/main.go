@@ -105,7 +105,7 @@ func onMatchDo(dir string, actions ...string) {
 	}
 	defer undo()
 
-	if !isPkg() {
+	if !isPkg(pkgNames) {
 		return
 	}
 
@@ -141,7 +141,7 @@ func cd(dir string) (func(), error) {
 // isPkg will try to run the command to get the package name. If this fails,
 // it returns false. Otherwise it will compare the package name against the
 // list of target packages and return true only if any of them match.
-func isPkg() bool {
+func isPkg(pkgNames []string) bool {
 	pkg, err := gogen.GetPackage()
 	if err != nil { // it's not a package directory
 		return false
