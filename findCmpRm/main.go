@@ -80,17 +80,21 @@ func (s Status) Report() {
 func main() {
 	ps := paramset.NewOrDie(addParams,
 		addExamples,
+		addRefs,
 		verbose.AddParams,
 		SetGlobalConfigFile,
 		SetConfigFile,
 		param.SetProgramDescription(
-			"this finds any files in the given directory"+
+			"This finds any files in the given directory"+
 				" (by default: "+dfltDir+") with the given extension"+
 				" (by default: "+dfltExtension+"). It presents each"+
 				" file and gives the user the chance to compare it"+
 				" with the corresponding file without the"+
 				" extension. The user is then asked whether to"+
-				" remove the file with the extension."),
+				" remove the file with the extension. The command name"+
+				" echoes this: find, compare, remove. You will also have"+
+				" the opportunity to revert the file back to the original"+
+				" contents."),
 	)
 
 	ps.Parse()
