@@ -42,7 +42,12 @@ func main() {
 				" will generate a main doc file which will have links to"+
 				" the examples and references files if they exist. This"+
 				" main doc file should then be linked to from the"+
-				" README.md file"),
+				" README.md file."+
+				"\n\n"+
+				"You can give additional text to be printed at the end of"+
+				" each of the markdown files in the following files"+
+				" (none of which need to exist): '"+
+				docTailFile+"', '"+examplesTailFile+"', '"+refsTailFile+"'"),
 	)
 
 	ps.Parse()
@@ -63,31 +68,37 @@ func main() {
 	gogen.ExecGoCmd(gogen.NoCmdIO, "build")
 
 	docFileName := prefix + cmdName + docSuffix
-	examplesFileName := prefix + cmdName + examplesSuffix
-	refsFileName := prefix + cmdName + refsSuffix
-
 	docText := getDocPart(cmd, "intro")
 	docExtras := getText(docTailFile)
 
-	refsText := getDocPart(cmd, "refs") + getText(refsTailFile)
-
 	examplesText := getDocPart(cmd, "examples") + getText(examplesTailFile)
 	if examplesText != "" {
+		examplesFileName := prefix + cmdName + examplesSuffix
+		makeFile(examplesFileName, examplesText)
+
 		docText += "\n\n" +
 			"## Examples" +
 			"\n" +
 			"For examples [see here](" + examplesFileName + ")\n"
-		makeFile(examplesFileName, examplesText)
 	}
+
+	refsText := getDocPart(cmd, "refs") + getText(refsTailFile)
 	if refsText != "" {
+		refsFileName := prefix + cmdName + refsSuffix
+		makeFile(refsFileName, refsText)
+
 		docText += "\n\n" +
 			"## See Also" +
 			"\n" +
 			"For external references [see here](" + refsFileName + ")\n"
-		makeFile(refsFileName, refsText)
 	}
+
 	docText += docExtras
 	makeFile(docFileName, docText)
+
+	fmt.Println("Add the following lines to the README.md file")
+	fmt.Printf("## %s\n\n", cmdName)
+	fmt.Printf("[See here](%s/%s)\n", cmdName, docFileName)
 }
 
 // makeFile creates the file and populates it
