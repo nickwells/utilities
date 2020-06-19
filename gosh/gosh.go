@@ -136,11 +136,11 @@ var knownVarMap varMap = varMap{
 	},
 	"_gh": {
 		typeName: dfltHTTPHandlerName,
-		desc:     "the HTTP Handler type (it provides ServeHTTP)",
+		desc:     "the HTTP Handler (providing ServeHTTP)",
 	},
 	"_w": {
 		typeName: "*os.File",
-		desc:     "the file to write to when editing in place",
+		desc:     "the file written to if editing in place",
 	},
 	"_l": {
 		typeName: "*bufio.Scanner",
