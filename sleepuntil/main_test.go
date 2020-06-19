@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nickwells/golem/mathutil"
+	"github.com/nickwells/mathutil.mod/mathutil"
 	"github.com/nickwells/testhelper.mod/testhelper"
 )
 
