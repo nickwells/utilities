@@ -139,10 +139,17 @@ func getText(filename string) string {
 // getDocPart this will run the command passing it the standard help
 // parameters. It will capture the output and return it. If the command fails
 // then the program exits.
+//
+// Note that errors are not shown and the program will not exit with a
+// non-zero exit status if there are any errors. This is because if any
+// arguments are required then an error will be generated and go generate
+// will abort the command.
 func getDocPart(cmdPath, part string) string {
 	args := []string{
 		"-help-format", "markdown",
 		"-help-show", part,
+		"-params-dont-show-errors",
+		"-params-dont-exit-on-errors",
 	}
 
 	cmd := exec.Command(cmdPath, args...)
