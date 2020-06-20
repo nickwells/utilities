@@ -18,14 +18,9 @@ required.
 
 ## sleepuntil
 This provides a way of repeatedly sleeping until a particular time is
-reached. This time can be given as a particular time and date or as a
-specification of some fragment of the day. It will sleep until that fragment
-of the day is reached. For instance if you choose to sleep until hour 8 then
-it will sleep until 8:00 or 16:00 or midnight. You can specify if you want it
-to repeat indefinitely or for a set number of times and you can specify what
-you want to happen when it wakes up. This can be useful if you want something
-to happen, for instance, every hour, on the hour, but only within a script
-(otherwise you could use cron).
+reached.
+
+[See here](sleepuntil/_sleepuntil.DOC.md)
 
 ## timeconv
 This provides a way of simply converting the time from one locale to
