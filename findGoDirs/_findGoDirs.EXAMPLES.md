@@ -20,3 +20,11 @@ findGoDirs -pkg main -d github.com/nickwells -do install
 ```
 This will install all the Go programs under github.com/nickwells.
 
+```sh
+findGoDirs -pkg main -not-having .gitignore
+```
+This will find all the Go directories with code for building commands that don't
+have a .gitignore  file. Note that when you run go build in the directory you
+will get an executable built in the directory which you don't want to check in
+to git and so you need it to be ignored.
+
