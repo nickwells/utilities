@@ -48,6 +48,7 @@ func addActionParams(ps *param.PSet) error {
 			},
 		},
 		"run the command in a subshell when you wake up",
+		param.AltName("do"),
 		param.PostAction(countParams),
 		param.GroupName(paramGroupNameActions),
 	)
@@ -74,7 +75,9 @@ func addActionParams(ps *param.PSet) error {
 // addParams adds the program parameters to the PSet
 func addParams(ps *param.PSet) error {
 	ps.Add(paramNameRepeat, psetter.Bool{Value: &repeat},
-		"repeatedly sleep. Sleep and then sleep again and again...")
+		"repeatedly sleep. Sleep and then sleep again and again...",
+		param.AltName("r"),
+	)
 
 	ps.Add("repeat-count",
 		psetter.Int64{
@@ -84,6 +87,7 @@ func addParams(ps *param.PSet) error {
 		},
 		"the number of times to repeat the operation.",
 		param.AltName("times"),
+		param.AltName("rc"),
 		param.PostAction(paction.SetBool(&repeat, true)))
 
 	ps.Add("dont-sleep", psetter.Bool{Value: &doSleep, Invert: true},
@@ -113,6 +117,8 @@ func addTimeParams(ps *param.PSet) error {
 	ps.Add("timezone", psetter.TimeLocation{Value: &absTimeLocation},
 		"the timezone that the time is in. If this is supplied then an"+
 			" absolute time must also be given.",
+		param.AltName("tz"),
+		param.AltName("location"),
 		param.PostAction(paction.SetBool(&needAbsTime, true)),
 		param.GroupName(paramGroupNameTime),
 	)
@@ -124,14 +130,15 @@ func addTimeParams(ps *param.PSet) error {
 				check.StringLenEQ(len(absTimeFormat)),
 			},
 		},
-		"the actual time to sleep until. Format: '"+absTimeFormat+"'. "+
-			"This cannot be used with the "+paramNameRepeat+" argument",
+		"the actual time to sleep until. Format: '"+absTimeFormat+"'."+
+			" This cannot be used with the "+paramNameRepeat+" argument",
+		param.AltName("t"),
 		param.PostAction(countTimeParams),
 		param.PostAction(paction.SetBool(&hasAbsTime, true)),
 		param.GroupName(paramGroupNameTime),
 	)
 
-	ps.Add("min",
+	ps.Add("minute",
 		psetter.Int64{
 			Value: &timeMins,
 			Checks: []check.Int64{
@@ -140,11 +147,14 @@ func addTimeParams(ps *param.PSet) error {
 			},
 		},
 		"the minute to sleep until",
+		param.AltName("m"),
+		param.AltName("min"),
+		param.AltName("minutes"),
 		param.PostAction(countTimeParams),
 		param.GroupName(paramGroupNameTime),
 	)
 
-	ps.Add("sec",
+	ps.Add("second",
 		psetter.Int64{
 			Value: &timeSecs,
 			Checks: []check.Int64{
@@ -153,6 +163,9 @@ func addTimeParams(ps *param.PSet) error {
 			},
 		},
 		"the second to sleep until",
+		param.AltName("s"),
+		param.AltName("sec"),
+		param.AltName("seconds"),
 		param.PostAction(countTimeParams),
 		param.GroupName(paramGroupNameTime),
 	)
@@ -179,9 +192,9 @@ func addTimeParams(ps *param.PSet) error {
 				check.Int64Divides(60 * 60),
 			},
 		},
-		"the number of parts to split the hour into. "+
-			"A value of 20 would sleep until the next 3-minute period. "+
-			"This would be minute 00, 03, 06, 09, 12 etc",
+		"the number of parts to split the hour into."+
+			" A value of 20 would sleep until the next 3-minute period."+
+			" This would be minute 00, 03, 06, 09, 12 etc.",
 		param.PostAction(countTimeParams),
 		param.GroupName(paramGroupNameTime),
 	)
@@ -194,8 +207,8 @@ func addTimeParams(ps *param.PSet) error {
 				check.Int64Divides(60),
 			},
 		},
-		"the number of parts to split the minute into. "+
-			"A value of 20 would sleep until the next 3-second period",
+		"the number of parts to split the minute into."+
+			" A value of 20 would sleep until the next 3-second period.",
 		param.PostAction(countTimeParams),
 		param.GroupName(paramGroupNameTime),
 	)
@@ -209,14 +222,32 @@ func addTimeParams(ps *param.PSet) error {
 					"The offset must not be zero"),
 			},
 		},
-		"set an offset to the calculated time (in seconds)",
+		"set an offset to the calculated time (in seconds)."+
+			"\n\n"+
+			" The two offsets are added together to give a combined offset.",
+		param.GroupName(paramGroupNameTime),
+	)
+
+	ps.Add("offset-mins",
+		psetter.Int64{
+			Value: &offsetMins,
+			Checks: []check.Int64{
+				check.Int64Not(
+					check.Int64EQ(0),
+					"The offset must not be zero"),
+			},
+		},
+		"set an offset to the calculated time (in minutes)."+
+			"\n\n"+
+			" The two offsets are added together to give a combined offset.",
 		param.GroupName(paramGroupNameTime),
 	)
 
 	ps.AddFinalCheck(func() error {
 		if needAbsTime && !hasAbsTime {
-			return errors.New("A location has been specified for a time" +
-				" to be interpreted in but no time has been given")
+			return errors.New("A location (timezone) has been specified" +
+				" for a time to be interpreted in but no time has been" +
+				" given.")
 		}
 		if !hasAbsTime {
 			return nil

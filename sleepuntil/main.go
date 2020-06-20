@@ -29,6 +29,7 @@ var msg string
 var absTime time.Time
 
 var offset int64
+var offsetMins int64
 
 var timeMins int64
 var timeSecs int64
@@ -117,18 +118,27 @@ func calcDurationSecs() int64 {
 }
 
 func main() {
-	ps := paramset.NewOrDie(addParams,
+	ps := paramset.NewOrDie(
+		addParams,
 		addTimeParams,
 		addActionParams,
 		verbose.AddParams,
+		addExamples,
 		param.SetProgramDescription(
-			"This will sleep until a given time.\n\n"+
-				"You can specify the interval you want it to sleep for and"+
-				" rather than sleeping for that period it will sleep until"+
-				" the next round interval."+
+			"This will sleep until a given time and then perform the"+
+				" chosen actions."+
+				"\n\n"+
+				"You can specify either a particular time of day to sleep"+
+				" until or some fragment of the day or some regular"+
+				" period (which must divide the day into a whole number"+
+				" of parts)."+
+				"\n\n"+
 				" So for instance you could choose to sleep until the next"+
 				" hour and it will wake up at minute 00 rather than"+
-				" 60 minutes later"))
+				" 60 minutes later."+
+				"\n\n"+
+				"You can give an offset to the regular time and the delay"+
+				" will be adjusted accordingly."))
 	ps.Parse()
 
 	if !absTime.IsZero() {
@@ -143,7 +153,8 @@ func main() {
 				now = now.UTC()
 			}
 
-			sleepToTarget(now, sleepCalc(durationSecs, offset, now))
+			sleepToTarget(now,
+				sleepCalc(durationSecs, offset+(offsetMins*60), now))
 			action()
 
 			if finished() {
