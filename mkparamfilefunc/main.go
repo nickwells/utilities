@@ -191,14 +191,11 @@ func printFuncPersonal(f io.Writer, groupName, pkgName string, dirs []string) {
 	}
 
 	printFuncIntro(f, makeFuncNamePersonal(groupName))
+	fmt.Fprint(f, "\n\tbaseDir := ")
 	if baseDirPersonal != "" {
-		fmt.Fprintf(f, `
-	baseDir := %q
-`, baseDirPersonal)
+		fmt.Fprintf(f, "%q\n", baseDirPersonal)
 	} else {
-		fmt.Fprint(f, `
-	baseDir := xdg.ConfigHome()
-`)
+		fmt.Fprintln(f, "xdg.ConfigHome()")
 	}
 
 	printAddCF(f, dirs,
@@ -216,9 +213,7 @@ func printFuncGlobal(f io.Writer, groupName, pkgName string, dirs []string) {
 	}
 	printFuncIntro(f, makeFuncNameGlobal(groupName))
 	if baseDirGlobal != "" {
-		fmt.Fprintf(f, `
-	baseDir := %q
-`, baseDirGlobal)
+		fmt.Fprintf(f, "\n\tbaseDir := %q\n", baseDirGlobal)
 	} else {
 		fmt.Fprint(f, `
 	dirs := xdg.ConfigDirs()
