@@ -14,11 +14,8 @@ func addParams(ps *param.PSet) error {
 
 	ps.Add("dir",
 		psetter.Pathname{
-			Value: &dir,
-			Expectation: filecheck.Provisos{
-				Existence: filecheck.MustExist,
-				Checks:    []check.FileInfo{check.FileInfoIsDir},
-			},
+			Value:       &dir,
+			Expectation: filecheck.DirExists(),
 		},
 		"give the name of the directory to search for files"+
 			"\nNote that only the directory itself is searched,"+

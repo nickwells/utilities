@@ -103,14 +103,9 @@ func main() {
 	maxNameLen := getMaxNameLen(filenames)
 
 	s := &Status{
-		twc: twrap.NewTWConfOrPanic(),
-		fileChecks: filecheck.Provisos{
-			Existence: filecheck.MustExist,
-			Checks: []check.FileInfo{
-				check.FileInfoIsRegular,
-			},
-		},
-		indent: maxNameLen + 2,
+		twc:        twrap.NewTWConfOrPanic(),
+		fileChecks: filecheck.FileExists(),
+		indent:     maxNameLen + 2,
 	}
 
 	fmt.Println(len(filenames),
