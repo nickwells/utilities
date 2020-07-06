@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/nickwells/check.mod/check"
+	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paction"
 	"github.com/nickwells/param.mod/v5/param/psetter"
@@ -19,6 +20,79 @@ const (
 	paramNameInPlaceEdit = "in-place-edit"
 	paramNameHTTPServer  = "http-server"
 )
+
+// addSnippetParams will add the parameters in the "snippet" parameter group
+func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
+	return func(ps *param.PSet) error {
+		const (
+			snippetHelpIntro = "insert a snippet of code from the given" +
+				" filename (which must be in one of the snippets directories)" +
+				" into the "
+		)
+
+		ps.Add("snippet-dir",
+			psetter.PathnameListAppender{
+				Value:       &g.snippetsDirs,
+				Expectation: filecheck.DirExists(),
+				Prepend:     true,
+			},
+			"add a new code snippets directory. The files in these"+
+				" directories contain code to be added to the script by"+
+				" the '...-snippet' parameters. The directory is added at"+
+				" the start of the list of snippets directories and so"+
+				" will be searched before any existing directories. This"+
+				" can be given multiple times and each instance will"+
+				" insert another direcory into the list. When finding"+
+				" snippets the directories are searched in order and the"+
+				" first snippet found is used.",
+			param.Attrs(param.DontShowInStdUsage),
+		)
+
+		var snippetName string
+		ps.Add("exec-snippet",
+			psetter.String{
+				Value:  &snippetName,
+				Checks: []check.String{check.StringLenGT(0)},
+			},
+			snippetHelpIntro+"script.",
+			param.AltName("snippet"),
+			param.AltName("e-s"),
+			param.PostAction(snippetPAF(g, &snippetName, &g.script)),
+		)
+
+		ps.Add("before-snippet",
+			psetter.String{
+				Value:  &snippetName,
+				Checks: []check.String{check.StringLenGT(0)},
+			},
+			snippetHelpIntro+"'before' script.",
+			param.AltName("b-s"),
+			param.PostAction(snippetPAF(g, &snippetName, &g.beforeScript)),
+		)
+
+		ps.Add("after-snippet",
+			psetter.String{
+				Value:  &snippetName,
+				Checks: []check.String{check.StringLenGT(0)},
+			},
+			snippetHelpIntro+"'after' script.",
+			param.AltName("a-s"),
+			param.PostAction(snippetPAF(g, &snippetName, &g.afterScript)),
+		)
+
+		ps.Add("global-snippet",
+			psetter.String{
+				Value:  &snippetName,
+				Checks: []check.String{check.StringLenGT(0)},
+			},
+			snippetHelpIntro+"'global' script (outside of the main function).",
+			param.AltName("g-s"),
+			param.PostAction(snippetPAF(g, &snippetName, &g.globalsList)),
+		)
+
+		return nil
+	}
+}
 
 // addWebParams will add the parameters in the "web" parameter group
 func addWebParams(g *Gosh) func(ps *param.PSet) error {
@@ -113,7 +187,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 				"follow this with the value to be printed. These print"+
 					" statements will be mixed in with the exec statements"+
 					" in the order they are given."+
-					"\n\nThis variant will use the Fprint variants,"+
+					"\n\nThis variant will use the Fprint functions,"+
 					" passing '_rw' as the writer. Such calls can be used to"+
 					" print to the HTTP handler's ResponseWriter "+
 					" which is called '_rw' in the generated code.",
@@ -234,7 +308,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 func addParams(g *Gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		ps.Add("exec", psetter.StrListAppender{Value: &g.script},
-			"follow this with the Go code to be run."+
+			"follow this with the Go code to be run (the script)."+
 				" This will be placed inside a main() function.",
 			param.AltName("e"),
 		)
@@ -257,20 +331,19 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.AltName("pln"),
 		)
 
-		ps.Add("begin", psetter.StrListAppender{Value: &g.preScript},
+		ps.Add("before", psetter.StrListAppender{Value: &g.beforeScript},
 			"follow this with Go code to be run at the beginning."+
 				" This will be placed inside a main() function before"+
 				" the code given for the exec parameters and also"+
 				" before any read-loop.",
-			param.AltName("before"),
 			param.AltName("b"),
 		)
 
-		ps.Add("begin-print",
+		ps.Add("before-print",
 			psetter.StrListAppender{
-				Value: &g.preScript,
+				Value: &g.beforeScript,
 				Editor: addPrint{
-					prefixes:    []string{"begin-", "b-"},
+					prefixes:    []string{"before-", "b-"},
 					paramToCall: stdPrintMap,
 					needsVal:    needsValMap,
 				},
@@ -278,26 +351,25 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			"follow this with the value to be printed. These print"+
 				" statements will be mixed in with the exec statements"+
 				" in the order they are given.",
-			param.AltName("begin-printf"),
-			param.AltName("begin-println"),
+			param.AltName("before-printf"),
+			param.AltName("before-println"),
 			param.AltName("b-p"),
 			param.AltName("b-pf"),
 			param.AltName("b-pln"),
 		)
 
-		ps.Add("end", psetter.StrListAppender{Value: &g.postScript},
+		ps.Add("after", psetter.StrListAppender{Value: &g.afterScript},
 			"follow this with Go code to be run at the end."+
 				" This will be placed inside a main() function after"+
 				" the code given for the exec parameters and most"+
 				" importantly outside any read-loop.",
-			param.AltName("after"),
 			param.AltName("a"))
 
-		ps.Add("end-print",
+		ps.Add("after-print",
 			psetter.StrListAppender{
-				Value: &g.postScript,
+				Value: &g.afterScript,
 				Editor: addPrint{
-					prefixes:    []string{"end-", "a-"},
+					prefixes:    []string{"after-", "a-"},
 					paramToCall: stdPrintMap,
 					needsVal:    needsValMap,
 				},
@@ -305,8 +377,8 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			"follow this with the value to be printed. These print"+
 				" statements will be mixed in with the exec statements"+
 				" in the order they are given.",
-			param.AltName("end-printf"),
-			param.AltName("end-println"),
+			param.AltName("after-printf"),
+			param.AltName("after-println"),
 			param.AltName("a-p"),
 			param.AltName("a-pf"),
 			param.AltName("a-pln"),
@@ -424,6 +496,16 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 
 		ps.Add("no-comment", psetter.Bool{Value: &g.addComments, Invert: true},
 			"do not generate the end-of-line comments.",
+			param.Attrs(param.DontShowInStdUsage),
+		)
+
+		ps.Add("base-temp-dir",
+			psetter.Pathname{
+				Value:       &g.baseTempDir,
+				Expectation: filecheck.DirExists(),
+			},
+			"set the directory where the temporary directories in which"+
+				" the gosh program will be generated",
 			param.Attrs(param.DontShowInStdUsage),
 		)
 

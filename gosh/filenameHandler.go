@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/nickwells/check.mod/check"
 	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v5/param"
@@ -13,16 +12,11 @@ import (
 const origExt = ".orig"
 
 // fileProvisos records the checks to be carried out on the files
-var fileProvisos = filecheck.Provisos{
-	Existence: filecheck.MustExist,
-	Checks: []check.FileInfo{
-		check.FileInfoIsRegular,
-	},
-}
+var fileProvisos = filecheck.FileExists()
 
 // origFileProvisos records the checks to be carried out on the files with
 // extension '.orig'
-var origFileProvisos = filecheck.Provisos{Existence: filecheck.MustNotExist}
+var origFileProvisos = filecheck.IsNew()
 
 // AddErr adds the error to the named error map entry
 func (g *Gosh) AddErr(name string, err error) {

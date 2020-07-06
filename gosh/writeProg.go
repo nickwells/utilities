@@ -20,10 +20,10 @@ func (g *Gosh) writeGoFileGlobals() {
 // writeGoFilePreScript writes the statements that come before the main
 // script into the Go file
 func (g *Gosh) writeGoFilePreScript() {
-	for _, s := range g.preScript {
+	for _, s := range g.beforeScript {
 		g.print(s)
 	}
-	if len(g.preScript) > 0 {
+	if len(g.beforeScript) > 0 {
 		g.print("")
 	}
 }
@@ -31,12 +31,12 @@ func (g *Gosh) writeGoFilePreScript() {
 // writeGoFilePostScript writes the statements that come after the main
 // script into the Go file
 func (g *Gosh) writeGoFilePostScript() {
-	if len(g.postScript) <= 0 {
+	if len(g.afterScript) <= 0 {
 		return
 	}
 
 	g.print("")
-	for _, s := range g.postScript {
+	for _, s := range g.afterScript {
 		g.print(s)
 	}
 }

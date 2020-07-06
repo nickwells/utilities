@@ -37,5 +37,12 @@ func addNotes(ps *param.PSet) error {
 			" should not change the values of any of these."+
 			"\n\n"+makeKnownVarList())
 
+	ps.AddNote("Snippets",
+		"You can introduce pre-defined blocks of code (called snippets)"+
+			" into your script. gosh will search through a list of"+
+			" directories for a file with the snippet name and insert"+
+			" that into your script. The inserted code is prefixed with a"+
+			" comment showing which file it came from to help with debugging.")
+
 	return nil
 }

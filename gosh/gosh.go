@@ -4,10 +4,12 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/nickwells/param.mod/v5/param"
+	"github.com/nickwells/xdg.mod/xdg"
 )
 
 const (
@@ -30,11 +32,11 @@ type Gosh struct {
 	indent      int
 	addComments bool
 
-	script      []string
-	preScript   []string
-	postScript  []string
-	globalsList []string
-	imports     []string
+	script       []string
+	beforeScript []string
+	afterScript  []string
+	globalsList  []string
+	imports      []string
 
 	runInReadLoop bool
 	inPlaceEdit   bool
@@ -62,6 +64,9 @@ type Gosh struct {
 	cwd         string
 	filesToRead []string
 	filesErrMap param.ErrMap
+
+	snippetsDirs []string
+	baseTempDir  string
 }
 
 // NewGosh creates a new instance of the Gosh struct with all the initial
@@ -84,6 +89,22 @@ func NewGosh() *Gosh {
 		httpHandler: dfltHTTPHandlerName,
 	}
 	g.formatterArgs = append(g.formatterArgs, dfltFormatterArg)
+
+	snippetPath := []string{
+		"github.com",
+		"nickwells",
+		"utilities",
+		"gosh",
+		"snippets"}
+
+	g.snippetsDirs = []string{
+		filepath.Join(append([]string{xdg.ConfigHome()}, snippetPath...)...),
+	}
+	dirs := xdg.ConfigDirs()
+	if len(dirs) > 0 {
+		g.snippetsDirs = append(g.snippetsDirs,
+			filepath.Join(append(dirs[:1], snippetPath...)...))
+	}
 
 	return g
 }
@@ -162,7 +183,7 @@ var knownVarMap varMap = varMap{
 		typeName: "error",
 		desc:     "an error",
 	},
-	"_splt": {
+	"_sre": {
 		typeName: "*regexp.Regexp",
 		desc:     "the regexp used to split lines",
 	},

@@ -48,12 +48,19 @@ func main() {
 	g := NewGosh()
 	ps := paramset.NewOrDie(
 		verbose.AddParams,
+
+		addSnippetParams(g),
 		addWebParams(g),
 		addReadloopParams(g),
 		addParams(g),
+
 		addNotes,
 		addExamples,
 		addReferences,
+
+		SetGlobalConfigFile,
+		SetConfigFile,
+
 		param.SetProgramDescription(
 			"This allows you to write lines of Go code and have them run"+
 				" for you in a framework that provides the main() func"+
@@ -163,7 +170,7 @@ func (g *Gosh) createGoFiles() {
 	}
 
 	verbose.Print(intro, ":\tCreating the temporary directory\n")
-	d, err := ioutil.TempDir("", "gosh-*.d")
+	d, err := ioutil.TempDir(g.baseTempDir, "gosh-*.d")
 	if err != nil {
 		fmt.Fprintln(os.Stderr,
 			"Couldn't create the temporary directory:", err)
