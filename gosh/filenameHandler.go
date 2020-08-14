@@ -37,9 +37,10 @@ func (g *Gosh) HandleRemainder(ps *param.PSet, _ *location.L) {
 	goodNames := make([]string, 0, len(names))
 	dupMap := make(map[string]int)
 
-	for i, name := range names {
-		if !filepath.IsAbs(name) {
-			name = filepath.Join(g.cwd, name)
+	for i, n := range names {
+		name, err := filepath.Abs(n)
+		if err != nil {
+			g.AddErr("make file an absolute path", err)
 		}
 
 		if firstIdx, exists := dupMap[name]; exists {
