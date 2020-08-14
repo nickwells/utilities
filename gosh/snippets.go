@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -41,11 +39,7 @@ func addSnippet(script *[]string, fName string) bool {
 	addSnippetComment(script, fName)
 	addSnippetComment(script, "BEGIN")
 
-	buf := bytes.NewBuffer(content)
-	scanner := bufio.NewScanner(buf)
-	for scanner.Scan() {
-		*script = append(*script, scanner.Text())
-	}
+	*script = append(*script, string(content[:]))
 
 	addSnippetComment(script, "END")
 
