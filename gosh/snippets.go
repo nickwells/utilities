@@ -14,6 +14,15 @@ import (
 // script with the contents of the snippet file
 func snippetPAF(g *Gosh, sName *string, script *[]string) param.ActionFunc {
 	return func(_ location.L, _ *param.ByName, _ []string) error {
+		if filepath.IsAbs(*sName) {
+			if addSnippet(script, *sName) {
+				return nil
+			}
+			return fmt.Errorf(
+				"The snippet file %q doesn't exist or can't be read",
+				*sName)
+		}
+
 		for _, dir := range g.snippetsDirs {
 			fName := filepath.Join(dir, *sName)
 			if addSnippet(script, fName) {
