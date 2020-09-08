@@ -1,0 +1,16 @@
+// snippet: -*- go -*-
+// snippet: Note: This must come second
+// snippet: Note:
+// snippet: Note: Make sure that the simple stats package
+// snippet: Note: "github.com/nickwells/smpls.mod/smpls"
+// snippet: Note: is imported
+// snippet: Note:
+// snippet: Note: Any Go code after this will be timed and reported by the
+// snippet: Note: code in the final snippet
+	for __repeats > 0 {
+		__repeats--
+
+		__s := smpls.NewStatOrPanic("nanoseconds")
+
+		for __i := int64(0); __i < __trials; __i++ {
+			__start := time.Now()

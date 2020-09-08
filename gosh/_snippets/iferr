@@ -1,0 +1,8 @@
+// snippet: -*- go -*-
+// snippet: Note: This will check the value of err and if it
+// snippet: Note: is non-nil it will print the err and exit
+
+if err != nil {
+	fmt.Println(err)
+	os.Exit(0)
+}

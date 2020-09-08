@@ -1,0 +1,11 @@
+// snippet: -*- go -*-
+// snippet: Note: This must come first
+// snippet: Note:
+// snippet: Note: It declares some parameters to control
+// snippet: Note: the frequency and number of repeats of
+// snippet: Note: the timing and what gets reported
+// snippet: Note:
+// snippet: Note: You can add Go code after this to change the default values
+var __repeats int64 = 1
+var __trials int64 = 1e6
+var __showHist bool

@@ -1,0 +1,8 @@
+// snippet: -*- go -*-
+// snippet: Note: this will skip blank lines.
+// snippet: Note:
+// snippet: Note: It only makes sense to use this snippet in the exec
+// snippet: Note: section and only when you are running gosh in a readloop
+if _l.Text() == "" {
+	continue
+}

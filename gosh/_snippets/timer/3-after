@@ -1,0 +1,11 @@
+// snippet -*- go -*-
+// snippet: Note: This must come last (after the code to be timed)
+// snippet: Note:
+// snippet: Note: It captures the timings and reports the results
+			__s.Add(float64(time.Since(__start)))
+		}
+		fmt.Println(__s)
+		if __showHist {
+			fmt.Println(__s.Hist())
+		}
+	}
