@@ -4,10 +4,12 @@ You can copy them into a snippets directory with the following
 command (on Linux):
 
 ```
-cp -r --suffix=.orig --backup ./_snippets ...snippets
+cp -r --suffix=.orig --backup ./_snippets/* <your-snippets-dir>
 ```
 
-The available snippets directories are listed in the program notes:
+Choose one of the available snippets directories to replace the placeholder
+`<your-snippets-dir>` above. These directories are listed in the program
+notes:
 
 ```
 gosh -help-show notes

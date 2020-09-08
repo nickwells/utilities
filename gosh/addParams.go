@@ -19,18 +19,51 @@ const (
 
 	paramNameInPlaceEdit = "in-place-edit"
 	paramNameHTTPServer  = "http-server"
+
+	paramNameSnippetDir  = "snippets-dir"
+	paramNameSnippetList = "snippets-list"
+
+	globalSect = "global"
+	beforeSect = "before"
+	execSect   = "exec"
+	afterSect  = "after"
 )
+
+// makeSnippetHelpText returns the standard text for the various snippet
+// parameters
+func makeSnippetHelpText(section string) string {
+	return "insert a snippet of code from the given" +
+		" filename (which must be in one of the snippets directories" +
+		" or a complete pathname) into the '" + section + "' section."
+}
+
+// makePrintHelpText makes the help text for the various print... parameters
+func makePrintHelpText(sect string) string {
+	return "follow this with the value to be printed." +
+		makeCodeSectionHelpText(" resulting print", sect)
+}
+
+// makePrintVariantHelpText makes the help text for the print... parameters
+// that use Fprint functions
+func makePrintVariantHelpText(varName, desc string) string {
+	return "\n\n" +
+		"This variant will use the Fprint family of functions," +
+		" passing '" + varName + "' as the writer." +
+		" Such calls can be used to print to the " + desc +
+		" which is called '" + varName + "' in the generated code."
+}
+
+// makeCodeSectionHelpText makes the fragment of help text describing how
+// statements appear in the given section.
+func makeCodeSectionHelpText(name, sect string) string {
+	return " These" + name + " statements will appear with others" +
+		" in the '" + sect + "' section in the order they are given."
+}
 
 // addSnippetParams will add the parameters in the "snippet" parameter group
 func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
-		const (
-			snippetHelpIntro = "insert a snippet of code from the given" +
-				" filename (which must be in one of the snippets directories)" +
-				" into the "
-		)
-
-		ps.Add("snippet-dir",
+		ps.Add(paramNameSnippetDir,
 			psetter.PathnameListAppender{
 				Value:       &g.snippetsDirs,
 				Expectation: filecheck.DirExists(),
@@ -45,7 +78,18 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 				" insert another direcory into the list. When finding"+
 				" snippets the directories are searched in order and the"+
 				" first snippet found is used.",
+			param.AltName("snippet-dir"),
 			param.Attrs(param.DontShowInStdUsage),
+		)
+
+		ps.Add(paramNameSnippetList,
+			psetter.Bool{Value: &g.showSnippets},
+			"list all the available snippets and exit, no program is run."+
+				" It will also show any per-snippet documentation and"+
+				" report on any problems detected with the snippets.",
+			param.AltName("show-snippets"),
+			param.AltName("snippet-list"),
+			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
 
 		var snippetName string
@@ -54,10 +98,11 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 				Value:  &snippetName,
 				Checks: []check.String{check.StringLenGT(0)},
 			},
-			snippetHelpIntro+"script.",
+			makeSnippetHelpText(execSect),
 			param.AltName("snippet"),
 			param.AltName("e-s"),
 			param.PostAction(snippetPAF(g, &snippetName, &g.script)),
+			param.SeeAlso(paramNameSnippetDir, paramNameSnippetList),
 		)
 
 		ps.Add("before-snippet",
@@ -65,7 +110,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 				Value:  &snippetName,
 				Checks: []check.String{check.StringLenGT(0)},
 			},
-			snippetHelpIntro+"'before' script.",
+			makeSnippetHelpText(beforeSect),
 			param.AltName("b-s"),
 			param.PostAction(snippetPAF(g, &snippetName, &g.beforeScript)),
 		)
@@ -75,7 +120,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 				Value:  &snippetName,
 				Checks: []check.String{check.StringLenGT(0)},
 			},
-			snippetHelpIntro+"'after' script.",
+			makeSnippetHelpText(afterSect),
 			param.AltName("a-s"),
 			param.PostAction(snippetPAF(g, &snippetName, &g.afterScript)),
 		)
@@ -85,7 +130,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 				Value:  &snippetName,
 				Checks: []check.String{check.StringLenGT(0)},
 			},
-			snippetHelpIntro+"'global' script (outside of the main function).",
+			makeSnippetHelpText(globalSect),
 			param.AltName("g-s"),
 			param.PostAction(snippetPAF(g, &snippetName, &g.globalsList)),
 		)
@@ -184,13 +229,9 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 						needsVal:    needsValMap,
 					},
 				},
-				"follow this with the value to be printed. These print"+
-					" statements will be mixed in with the exec statements"+
-					" in the order they are given."+
-					"\n\nThis variant will use the Fprint functions,"+
-					" passing '_rw' as the writer. Such calls can be used to"+
-					" print to the HTTP handler's ResponseWriter "+
-					" which is called '_rw' in the generated code.",
+				makePrintHelpText(execSect)+
+					makePrintVariantHelpText("_rw",
+						"HTTP handler's ResponseWriter"),
 				param.AltName("web-printf"),
 				param.AltName("web-println"),
 				param.AltName("web-p"),
@@ -239,8 +280,9 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 			ps.Add("split-line", psetter.Bool{Value: &g.splitLine},
 				"split the lines into fields around runs of whitespace"+
 					" characters. The fields will be available in a slice"+
-					" of strings called 'f'. Setting this will also force"+
-					" the script to be run in the loop reading from stdin.",
+					" of strings (see the Note '"+noteVars+"')."+
+					" Setting this will also force"+
+					" the script to be run in a loop reading from stdin.",
 				param.AltName("s"),
 				param.PostAction(paction.SetBool(&g.runInReadLoop, true)),
 				param.GroupName(paramGroupNameReadloop),
@@ -252,7 +294,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 				"change the behaviour when splitting the line into"+
 					" fields. The provided string must compile into a"+
 					" regular expression. Setting this will also force"+
-					" the script to be run in the loop reading from stdin"+
+					" the script to be run in a loop reading from stdin"+
 					" and for each line to be split.",
 				param.AltName("sp"),
 				param.PostAction(paction.SetBool(&g.runInReadLoop, true)),
@@ -308,12 +350,12 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 func addParams(g *Gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		ps.Add("exec", psetter.StrListAppender{Value: &g.script},
-			"follow this with the Go code to be run (the script)."+
-				" This will be placed inside a main() function.",
+			"follow this with Go code."+
+				makeCodeSectionHelpText("", execSect),
 			param.AltName("e"),
 		)
 
-		ps.Add("print",
+		ps.Add("exec-print",
 			psetter.StrListAppender{
 				Value: &g.script,
 				Editor: addPrint{
@@ -321,9 +363,8 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 					needsVal:    needsValMap,
 				},
 			},
-			"follow this with the value to be printed. These print"+
-				" statements will be mixed in with the exec statements"+
-				" in the order they are given.",
+			makePrintHelpText(execSect),
+			param.AltName("print"),
 			param.AltName("printf"),
 			param.AltName("println"),
 			param.AltName("p"),
@@ -332,10 +373,8 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add("before", psetter.StrListAppender{Value: &g.beforeScript},
-			"follow this with Go code to be run at the beginning."+
-				" This will be placed inside a main() function before"+
-				" the code given for the exec parameters and also"+
-				" before any read-loop.",
+			"follow this with Go code."+
+				makeCodeSectionHelpText("", beforeSect),
 			param.AltName("b"),
 		)
 
@@ -348,9 +387,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 					needsVal:    needsValMap,
 				},
 			},
-			"follow this with the value to be printed. These print"+
-				" statements will be mixed in with the exec statements"+
-				" in the order they are given.",
+			makePrintHelpText(beforeSect),
 			param.AltName("before-printf"),
 			param.AltName("before-println"),
 			param.AltName("b-p"),
@@ -359,10 +396,8 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add("after", psetter.StrListAppender{Value: &g.afterScript},
-			"follow this with Go code to be run at the end."+
-				" This will be placed inside a main() function after"+
-				" the code given for the exec parameters and most"+
-				" importantly outside any read-loop.",
+			"follow this with Go code."+
+				makeCodeSectionHelpText("", afterSect),
 			param.AltName("a"))
 
 		ps.Add("after-print",
@@ -374,9 +409,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 					needsVal:    needsValMap,
 				},
 			},
-			"follow this with the value to be printed. These print"+
-				" statements will be mixed in with the exec statements"+
-				" in the order they are given.",
+			makePrintHelpText(afterSect),
 			param.AltName("after-printf"),
 			param.AltName("after-println"),
 			param.AltName("a-p"),
@@ -393,13 +426,9 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 					needsVal:    needsValMap,
 				},
 			},
-			"follow this with the value to be printed. These print"+
-				" statements will be mixed in with the exec statements"+
-				" in the order they are given."+
-				"\n\nThis variant will use the Fprint variants,"+
-				" passing '_w' as the writer. Such calls can be used to"+
-				" print to the output file used for in-place editing"+
-				" which is called '_w' in the generated code.",
+			makePrintHelpText(execSect)+
+				makePrintVariantHelpText("_w",
+					"output file used for in-place editing"),
 			param.AltName("w-printf"),
 			param.AltName("w-println"),
 			param.AltName("w-p"),
@@ -408,9 +437,10 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add("global", psetter.StrListAppender{Value: &g.globalsList},
-			"follow this with Go code that should be placed at global scope."+
+			"follow this with Go code."+
 				" For instance, functions that you might want to call from"+
-				" several places, global variables or data types.",
+				" several places, global variables or data types."+
+				makeCodeSectionHelpText("", globalSect),
 			param.AltName("g"),
 		)
 
@@ -475,7 +505,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.AltName("no-run"),
 			param.PostAction(paction.SetBool(&g.showFilename, true)),
 			param.PostAction(paction.SetBool(&g.dontClearFile, true)),
-			param.Attrs(param.DontShowInStdUsage),
+			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
 		)
 
 		ps.Add("formatter", psetter.String{Value: &g.formatter},

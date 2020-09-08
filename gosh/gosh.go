@@ -61,27 +61,22 @@ type Gosh struct {
 	formatterSet  bool
 	formatterArgs []string
 
-	cwd         string
 	filesToRead []string
 	filesErrMap param.ErrMap
 
 	snippetsDirs []string
-	baseTempDir  string
+	showSnippets bool
+
+	baseTempDir string
 }
 
 // NewGosh creates a new instance of the Gosh struct with all the initial
 // default values set correctly.
 func NewGosh() *Gosh {
-	cwd, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-
 	g := &Gosh{
 		addComments:  true,
 		splitPattern: dfltSplitPattern,
 		formatter:    dfltFormatter,
-		cwd:          cwd,
 		filesErrMap:  make(param.ErrMap),
 
 		httpPort:    dfltHTTPPort,
@@ -149,7 +144,7 @@ var knownVarMap varMap = varMap{
 	},
 	"_rw": {
 		typeName: "http.ResponseWriter",
-		desc:     "the response writer for the seb server",
+		desc:     "the response writer for the web server",
 	},
 	"_req": {
 		typeName: "*http.Request",

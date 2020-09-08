@@ -54,7 +54,7 @@ func main() {
 		addReadloopParams(g),
 		addParams(g),
 
-		addNotes,
+		addNotes(g),
 		addExamples,
 		addReferences,
 
@@ -70,7 +70,7 @@ func main() {
 				"\n\n"+
 				"You can run the code in a loop that will read lines from"+
 				" the standard input or from a list of files and,"+
-				" optionally, split them into fields."+
+				" optionally, split each line into fields."+
 				"\n\n"+
 				" Alternatively you can quickly generate a simple webserver."+
 				"\n\n"+
@@ -91,9 +91,24 @@ func main() {
 	)
 
 	ps.Parse()
+
+	if g.showSnippets {
+		g.listSnippets()
+		os.Exit(0)
+	}
+
 	if len(g.filesErrMap) != 0 {
 		twc := twrap.NewTWConfOrPanic(twrap.SetWriter(os.Stderr))
 		phelp.ReportErrors(twc, "gosh", g.filesErrMap)
+		os.Exit(1)
+	}
+
+	if len(g.script) == 0 &&
+		len(g.beforeScript) == 0 &&
+		len(g.afterScript) == 0 &&
+		len(g.globalsList) == 0 &&
+		len(g.imports) == 0 {
+		fmt.Fprintln(os.Stderr, "There is no code to run")
 		os.Exit(1)
 	}
 

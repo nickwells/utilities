@@ -8,7 +8,7 @@ some common requirements. The resulting program can be preserved for subsequent
 editing.
 
 You can run the code in a loop that will read lines from the standard input or
-from a list of files and, optionally, split them into fields.
+from a list of files and, optionally, split each line into fields.
 
 Alternatively you can quickly generate a simple webserver.
 
@@ -31,3 +31,24 @@ For examples [see here](_gosh.EXAMPLES.md)
 
 ## See Also
 For external references [see here](_gosh.REFERENCES.md)
+There are some sample snippets in the `_snippets` directory.
+
+You can copy them into a snippets directory with the following
+command (on Linux):
+
+```
+cp -r --suffix=.orig --backup ./_snippets/* <your-snippets-dir>
+```
+
+Choose one of the available snippets directories to replace the placeholder
+`<your-snippets-dir>` above. These directories are listed in the program
+notes:
+
+```
+gosh -help-show notes
+```
+
+If you aleady have snippets in your snippets directories the `cp` command
+given above will preserve any that have a clash of names with those given in
+the `_snippets` directory and you can use the `findCmpRm` command to examine
+them and tidy up.
