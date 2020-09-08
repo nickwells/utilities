@@ -39,6 +39,18 @@ func addParams(ps *param.PSet) error {
 		param.AltName("e"),
 	)
 
+	ps.Add("tidy", psetter.Bool{Value: &tidyFiles},
+		"this makes the command tidy any redundant files."+
+			"\n\n"+
+			" Redundant"+
+			" means files where there is no F corresponding to the F.orig"+
+			" or where the F corresponding to the F.orig is"+
+			" a directory not a file"+
+			" or where F is identical to F.orig."+
+			"\n\n"+
+			" Tidy means to remove the F.orig file.",
+	)
+
 	ps.Add("diff-cmd",
 		psetter.String{
 			Value:  &diffCmdName,

@@ -2,11 +2,13 @@
 package main
 
 import (
+	"crypto/md5"
+	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -29,6 +31,7 @@ const dfltDir = "."
 var searchSubDirs bool
 var dir string = dfltDir
 var fileExtension string = dfltExtension
+var tidyFiles bool
 
 const dfltDiffCmd = "diff"
 
@@ -40,34 +43,45 @@ var lessCmdParams = []string{}
 
 // Status holds counts of various operations on and problems with the files
 type Status struct {
-	fileErr, diffErr                                int
-	compared, skipped, deleted, reverted, untouched int
-	shouldQuit, revertAll, deleteAll                bool
+	rawFileCount                                                int
+	fileErr, diffErr                                            int
+	compared, skipped, deleted, reverted, kept, tidied, ignored int
+	shouldQuit, revertAll, deleteAll                            bool
 
 	twc        *twrap.TWConf
 	fileChecks filecheck.Provisos
 	indent     int
 }
 
+// reportVal checks that n is greater than zero, reports the value and
+// returns true, false otherwise
+func reportVal(n int, name string, indent int) bool {
+	if n <= 0 {
+		return false
+	}
+	fmt.Printf("%s%3d %s\n", strings.Repeat(" ", indent), n, name)
+	return true
+}
+
 // Report will print out the Status structure
 func (s Status) Report() {
-	if s.fileErr > 0 {
-		fmt.Printf("%3d file errors\n", s.fileErr)
+	fmt.Printf("%3d %s found\n",
+		s.rawFileCount,
+		english.Plural("file", s.rawFileCount))
+
+	reportVal(s.skipped, "skipped", 0)
+	reportVal(s.tidied, "tidied", 0)
+	if reportVal(s.ignored, "ignored due to error", 0) {
+		fmt.Println("\tof which:")
+		reportVal(s.fileErr, "due to file error", 8)
+		reportVal(s.diffErr, "due to diff error", 8)
 	}
-	if s.diffErr > 0 {
-		fmt.Printf("%3d diff errors\n", s.diffErr)
-	}
-	fmt.Printf("%3d skipped\n", s.skipped)
-	fmt.Printf("%3d compared\n", s.compared)
-	fmt.Println()
-	if s.deleted > 0 {
-		fmt.Printf("%3d deleted\n", s.deleted)
-	}
-	if s.reverted > 0 {
-		fmt.Printf("%3d reverted\n", s.reverted)
-	}
-	if s.untouched > 0 {
-		fmt.Printf("%3d left untouched\n", s.untouched)
+
+	if reportVal(s.compared, "compared", 0) {
+		fmt.Println("\tof which:")
+		reportVal(s.deleted, "deleted", 8)
+		reportVal(s.reverted, "reverted", 8)
+		reportVal(s.kept, "kept", 8)
 	}
 	if s.revertAll {
 		fmt.Printf("Some files were reverted without comparison\n")
@@ -100,13 +114,32 @@ func main() {
 	ps.Parse()
 
 	filenames := getFiles()
-	maxNameLen := getMaxNameLen(filenames)
 
 	s := &Status{
-		twc:        twrap.NewTWConfOrPanic(),
-		fileChecks: filecheck.FileExists(),
-		indent:     maxNameLen + 2,
+		twc:          twrap.NewTWConfOrPanic(),
+		fileChecks:   filecheck.FileExists(),
+		rawFileCount: len(filenames),
 	}
+	if tidyFiles {
+		filenames = s.tidyRedundantFiles(filenames)
+	}
+
+	s.cmpRmFiles(filenames)
+
+	fmt.Println()
+	s.Report()
+}
+
+// cmpRmFiles loops over the files prompting the user to compare each one
+// with the new instance and then asking if the file should be deleted or the
+// new file reverted.
+func (s *Status) cmpRmFiles(filenames []string) {
+	if len(filenames) == 0 {
+		return
+	}
+
+	maxNameLen := getMaxNameLen(filenames)
+	s.indent = maxNameLen + 2
 
 	fmt.Println(len(filenames),
 		english.Plural("file", len(filenames)),
@@ -127,8 +160,9 @@ fileLoop:
 
 		fmt.Printf("%*.*s: ", maxNameLen, maxNameLen, nameOrig)
 
-		if !s.fileOK(nameNew) {
-			s.twc.Wrap("Skipping...", s.indent)
+		if err := s.fileOK(nameNew); err != nil {
+			fmt.Println("Ignoring due to:", err)
+			s.ignored++
 			continue
 		}
 
@@ -143,27 +177,71 @@ fileLoop:
 			break fileLoop
 		}
 	}
+}
 
-	fmt.Println()
-	fmt.Printf("%3d files\n", len(filenames))
-	s.Report()
+// tidyRedundantFiles checks the original file list for missing new files,
+// new files that are directories or new files identical to the original and
+// removes the problem original file
+func (s *Status) tidyRedundantFiles(filenames []string) []string {
+	curatedFiles := []string{}
+	for _, nameOrig := range filenames {
+		if isRedundant(nameOrig) {
+			s.tidy(nameOrig)
+			continue
+		}
+		curatedFiles = append(curatedFiles, nameOrig)
+	}
+
+	return curatedFiles
+}
+
+// isRedundant returns the result of the redundancy checks
+func isRedundant(nameOrig string) bool {
+	nameNew := strings.TrimSuffix(nameOrig, fileExtension)
+	info, err := os.Stat(nameNew)
+	if errors.Is(err, os.ErrNotExist) {
+		return true
+	}
+	if info.IsDir() {
+		return true
+	}
+	newContent, err := ioutil.ReadFile(nameNew)
+	if err != nil {
+		return false
+	}
+	origContent, err := ioutil.ReadFile(nameOrig)
+	if err != nil {
+		return false
+	}
+
+	newMD5 := md5.Sum(newContent)
+	origMD5 := md5.Sum(origContent)
+
+	return newMD5 == origMD5
+}
+
+// tidy reports the tidying of the file
+func (s *Status) tidy(name string) {
+	s.verboseMsg("Tidying " + name + "...")
+
+	err := os.Remove(name)
+	if err != nil {
+		s.twc.Wrap("Couldn't delete file: "+err.Error(), 0)
+		return
+	}
+
+	s.tidied++
 }
 
 // fileOK checks that the file passes the status checks and returns true if
 // it does and false otherwise
-func (s *Status) fileOK(file string) bool {
+func (s *Status) fileOK(file string) error {
 	err := s.fileChecks.StatusCheck(file)
 	if err != nil {
-		fmt.Println()
-		s.twc.Wrap(
-			fmt.Sprintf(
-				"problem with the other file: %q: %v",
-				filepath.Base(file), err),
-			s.indent)
 		s.fileErr++
-		return false
+		return err
 	}
-	return true
+	return nil
 }
 
 // queryShowDiff asks if the differences between the new file and the
@@ -191,8 +269,8 @@ func (s *Status) queryShowDiff(nameOrig, nameNew string) {
 	case 'y':
 		err := showDiffs(nameOrig, nameNew)
 		if err != nil {
-			s.twc.Wrap(fmt.Sprintf("Error: %v", err), s.indent)
-			s.verboseMsg("Skipping...")
+			s.twc.Wrap(fmt.Sprintf("Ignoring due to: %v", err), s.indent)
+			s.ignored++
 			s.diffErr++
 			return
 		}
@@ -256,7 +334,7 @@ func (s *Status) queryDeleteFile(nameOrig, nameNew string) {
 	case 'r':
 		s.revertFile(nameOrig, nameNew)
 	default:
-		s.untouched++
+		s.kept++
 	}
 }
 
