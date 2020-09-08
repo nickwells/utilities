@@ -29,6 +29,7 @@ func addParams(ps *param.PSet) error {
 	ps.Add("package-names", psetter.StrList{Value: &pkgNames},
 		"set the names of packages to be matched. If this is not set then"+
 			" any package name will be matched",
+		param.AltName("package"),
 		param.AltName("pkg"),
 	)
 
