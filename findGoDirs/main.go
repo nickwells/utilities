@@ -79,7 +79,13 @@ func main() {
 	dirs, errs := dirsearch.FindRecursePrune(dir, -1,
 		[]check.FileInfo{
 			check.FileInfoName(check.StringNot(
-				check.StringEquals(".git"), "Ignore .git directories")),
+				check.StringEquals("testdata"), "Ignore testdata directories")),
+			check.FileInfoName(check.StringNot(
+				check.StringHasPrefix("_"),
+				"Ignore directories with name starting with '_'")),
+			check.FileInfoName(check.StringNot(
+				check.StringHasPrefix("."),
+				"Ignore hidden directories (including .git)")),
 		},
 		check.FileInfoIsDir)
 	for _, err := range errs {
