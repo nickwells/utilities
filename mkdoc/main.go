@@ -37,7 +37,7 @@ func main() {
 				" uses the param package"+
 				" (github.com/nickwells/param.mod/*/param). It will"+
 				" generate a markdown file containing examples if the"+
-				" program has examples and it will generare a file"+
+				" program has examples and it will generate a file"+
 				" containing references if the program has references. It"+
 				" will generate a main doc file which will have links to"+
 				" the examples and references files if they exist. This"+
@@ -68,8 +68,9 @@ func main() {
 	gogen.ExecGoCmd(gogen.NoCmdIO, "build")
 
 	docFileName := prefix + cmdName + docSuffix
-	docText := getDocPart(cmd, "intro")
-	docExtras := getText(docTailFile)
+	docText := getDocPart(cmd, "intro") +
+		"\n\n" +
+		getText(docTailFile)
 
 	examplesText := getDocPart(cmd, "examples") + getText(examplesTailFile)
 	if examplesText != "" {
@@ -93,7 +94,6 @@ func main() {
 			"For external references [see here](" + refsFileName + ")\n"
 	}
 
-	docText += docExtras
 	makeFile(docFileName, docText)
 
 	fmt.Println("Add the following lines to the README.md file")
