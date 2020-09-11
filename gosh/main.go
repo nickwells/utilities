@@ -82,12 +82,7 @@ func main() {
 				" use this to make the first few iterations of the"+
 				" command and if that is sufficient then just stop. If"+
 				" you need to do more then save the file and edit it just"+
-				" like a regular Go program."+
-				"\n\n"+
-				"By default the program will be generated in a"+
-				" temporary directory and executed from there so that any"+
-				" paths used should be given in full rather than relative"+
-				" to your current directory."),
+				" like a regular Go program."),
 	)
 
 	ps.Parse()
@@ -168,9 +163,8 @@ func (g *Gosh) formatFile() {
 }
 
 // createGoFiles creates the file to hold the program and opens it. If no
-// filename is given then a temporary directory is created, the program
-// changes directory to there, creates the file and initialises any module
-// files if necessary.
+// filename is given then a temporary directory is created, the program files
+// and any module files are created in that directory.
 func (g *Gosh) createGoFiles() {
 	intro := constantWidthStr("createGoFiles")
 	defer timer.Start(intro, verboseTimer)()

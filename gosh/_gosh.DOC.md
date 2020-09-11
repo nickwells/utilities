@@ -19,18 +19,8 @@ lines. The workflow would be that you use this to make the first few iterations
 of the command and if that is sufficient then just stop. If you need to do more
 then save the file and edit it just like a regular Go program.
 
-By default the program will be generated in a temporary directory and executed
-from there so that any paths used should be given in full rather than relative
-to your current directory.
 
 
-
-## Examples
-For examples [see here](_gosh.EXAMPLES.md)
-
-
-## See Also
-For external references [see here](_gosh.REFERENCES.md)
 There are some sample snippets in the `_snippets` directory.
 
 You can copy them into a snippets directory with the following
@@ -52,3 +42,11 @@ If you aleady have snippets in your snippets directories the `cp` command
 given above will preserve any that have a clash of names with those given in
 the `_snippets` directory and you can use the `findCmpRm` command to examine
 them and tidy up.
+
+
+## Examples
+For examples [see here](_gosh.EXAMPLES.md)
+
+
+## See Also
+For external references [see here](_gosh.REFERENCES.md)

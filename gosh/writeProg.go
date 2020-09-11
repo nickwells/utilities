@@ -236,6 +236,15 @@ func (g *Gosh) writeGoFile() {
 	g.gPrint("", "frame")
 	g.gPrint("func main() {", "frame")
 	g.in()
+	g.gPrint(fmt.Sprintf("if err := os.Chdir(%q); err != nil {", g.runDir), "frame")
+	g.in()
+	g.gPrint(
+		fmt.Sprintf("fmt.Printf(%q, %q, err)",
+			"Couldn't change directory to %q: %v\n", g.runDir),
+		"frame")
+	g.gPrint("os.Exit(1)", "frame")
+	g.out()
+	g.gPrint("}", "frame")
 
 	g.writeGoFilePreScript()
 

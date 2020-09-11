@@ -68,11 +68,17 @@ type Gosh struct {
 	showSnippets bool
 
 	baseTempDir string
+	runDir      string
 }
 
 // NewGosh creates a new instance of the Gosh struct with all the initial
 // default values set correctly.
 func NewGosh() *Gosh {
+	cwd, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Couldn't get the working directory:", err)
+		os.Exit(1)
+	}
 	g := &Gosh{
 		addComments:  true,
 		splitPattern: dfltSplitPattern,
@@ -82,6 +88,8 @@ func NewGosh() *Gosh {
 		httpPort:    dfltHTTPPort,
 		httpPath:    dfltHTTPPath,
 		httpHandler: dfltHTTPHandlerName,
+
+		runDir: cwd,
 	}
 	g.formatterArgs = append(g.formatterArgs, dfltFormatterArg)
 

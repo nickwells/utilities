@@ -43,12 +43,15 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 
 		ps.AddNote(noteFilenames,
 			"A list of filenames to be processed can be given"+
-				" (after "+ps.TerminalParam()+"). Each filename will be edited"+
-				" to be an absolute path if it is not already; the current"+
+				" (after "+ps.TerminalParam()+")."+
+				" Each filename will be edited to be an absolute path"+
+				" if it is not already; the current"+
 				" directory will be added at the start of the path."+
 				" If any files are given then some parameter for"+
 				" reading them should be given. See the parameters in"+
-				" group: '"+paramGroupNameReadloop+"'.")
+				" group: '"+paramGroupNameReadloop+"'."+
+				"\n\n"+
+				" Note that it is an error if the same name appears twice.")
 
 		ps.AddNote(noteVars,
 			"gosh will create some variables as it builds the program."+

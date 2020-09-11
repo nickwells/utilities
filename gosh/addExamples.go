@@ -57,11 +57,7 @@ func addExamples(ps *param.PSet) error {
 			" files called abc.go.orig and xyz.go.orig.")
 
 	ps.AddExample(`gosh -http-handler 'http.FileServer(http.Dir("/tmp/xxx"))'`,
-		"This runs a web server that serves files from /tmp/xxx."+
-			" Remember that any relative paths (not starting with '/')"+
-			" will be evaluated ralative to the temporary run directory"+
-			" from where the gosh program is run and not relative to the"+
-			" directory where you are running gosh.")
+		"This runs a web server that serves files from /tmp/xxx.")
 
 	ps.AddExample(`gosh -web-p '"Gosh!"'`,
 		"This runs a web server (listening on port "+
