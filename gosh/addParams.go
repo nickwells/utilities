@@ -353,6 +353,9 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", execSect),
 			param.AltName("e"),
+			// ... and to help our python-speaking friends feel at home
+			// (bash also uses -c)
+			param.AltName("c"),
 		)
 
 		ps.Add("exec-print",

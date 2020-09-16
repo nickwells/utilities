@@ -23,8 +23,11 @@ gosh -n -b 'count := 0' -e 'count++' -a-pln 'count'
 This reads from the standard input and prints the number of lines read
 
 -n sets up the loop reading from standard input
+
 -b 'count := 0' declares and initialises the counter before the loop
+
 -e 'count++' increments the counter inside the loop
+
 -a-pln 'count' prints the counter using fmt.Println after the loop.
 
 ```sh
@@ -34,11 +37,15 @@ This repeatedly prompts the user for a Radius and prints the Area of the
 corresponding circle
 
 -n sets up the loop reading from standard input
+
 -b-p '"Radius: "' prints the first prompt before the loop.
+
 -e 'r, _ := strconv.ParseFloat(_l.Text(), 10)' sets the radius from the text
 read from standard input, ignoring errors.
+
 -pf '"Area: %9.2f\n", r*r*math.Pi' calculates and prints the area using
 fmt.Printf.
+
 -p '"Radius: "' prints the next prompt.
 
 ```sh
