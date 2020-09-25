@@ -2,8 +2,8 @@
 
 # findGoDirs
 
-This will search for directories containing Go packages. You can add extra
-criteria for selecting the directory. Once in each selected directory you can
+This will search for directories containing Go packages\. You can add extra
+criteria for selecting the directory\. Once in each selected directory you can
 perform certain actions
 
 

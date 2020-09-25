@@ -3,21 +3,21 @@
 # gosh
 
 This allows you to write lines of Go code and have them run for you in a
-framework that provides the main() func and any necessary boilerplate code for
-some common requirements. The resulting program can be preserved for subsequent
-editing.
+framework that provides the main\(\) func and any necessary boilerplate code for
+some common requirements\. The resulting program can be preserved for subsequent
+editing\.
 
 You can run the code in a loop that will read lines from the standard input or
-from a list of files and, optionally, split each line into fields.
+from a list of files and, optionally, split each line into fields\.
 
-Alternatively you can quickly generate a simple webserver.
+Alternatively you can quickly generate a simple webserver\.
 
-It's faster than opening an editor and writing a Go program from scratch
-especially if there are only a few lines of non-boilerplate code. You can also
+It&apos;s faster than opening an editor and writing a Go program from scratch
+especially if there are only a few lines of non\-boilerplate code\. You can also
 save the program that it generates and edit that if the few lines become many
-lines. The workflow would be that you use this to make the first few iterations
-of the command and if that is sufficient then just stop. If you need to do more
-then save the file and edit it just like a regular Go program.
+lines\. The workflow would be that you use this to make the first few iterations
+of the command and if that is sufficient then just stop\. If you need to do more
+then save the file and edit it just like a regular Go program\.
 
 
 
