@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/nickwells/param.mod/v5/param"
+	"github.com/nickwells/param.mod/v5/param/paction"
 	"github.com/nickwells/param.mod/v5/param/psetter"
 )
 
@@ -13,7 +14,7 @@ func addParams(ps *param.PSet) error {
 	)
 
 	ps.Add("actions",
-		psetter.EnumList{
+		psetter.EnumMap{
 			Value: &actions,
 			AllowedVals: psetter.AllowedVals{
 				installAct:  "install the command (go install)",
@@ -24,6 +25,20 @@ func addParams(ps *param.PSet) error {
 		"set the actions to perform when a Go command directory is discovered",
 		param.AltName("a"),
 		param.AltName("do"),
+	)
+
+	ps.Add("generate-args", psetter.StrListAppender{Value: &generateArgs},
+		"set the arguments to be given to the go generate command",
+		param.AltName("gen-args"),
+		param.PostAction(paction.SetMapIf(actions, generateAct, true,
+			paction.IsACommandLineParam)),
+	)
+
+	ps.Add("install-args", psetter.StrListAppender{Value: &installArgs},
+		"set the arguments to be given to the go install command",
+		param.AltName("inst-args"),
+		param.PostAction(paction.SetMapIf(actions, installAct, true,
+			paction.IsACommandLineParam)),
 	)
 
 	ps.Add("package-names", psetter.StrList{Value: &pkgNames},
@@ -54,6 +69,13 @@ func addParams(ps *param.PSet) error {
 			" functions will just report what they would have done.",
 		param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 	)
+
+	ps.AddFinalCheck(func() error {
+		if len(actions) == 0 {
+			actions[printAct] = true
+		}
+		return nil
+	})
 
 	return nil
 }

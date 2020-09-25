@@ -39,7 +39,9 @@ func doInstall(name string) {
 		fmt.Printf("%-20.20s : %s\n", "go install", name)
 		return
 	}
-	gogen.ExecGoCmd(gogen.ShowCmdIO, "install")
+	args := []string{"install"}
+	args = append(args, installArgs...)
+	gogen.ExecGoCmd(gogen.ShowCmdIO, args...)
 }
 
 // doGenerate will run go generate
@@ -48,16 +50,21 @@ func doGenerate(name string) {
 		fmt.Printf("%-20.20s : %s\n", "go generate", name)
 		return
 	}
-	gogen.ExecGoCmd(gogen.ShowCmdIO, "generate")
+	args := []string{"generate"}
+	args = append(args, generateArgs...)
+	gogen.ExecGoCmd(gogen.ShowCmdIO, args...)
 }
 
 var dir string = "."
-var actions = []string{printAct}
+var actions = make(map[string]bool)
 var actionFuncs = map[string]func(string){
 	printAct:    doPrint,
 	installAct:  doInstall,
 	generateAct: doGenerate,
 }
+
+var generateArgs = []string{}
+var installArgs = []string{}
 
 var pkgNames []string
 var filesWanted []string
@@ -91,19 +98,19 @@ func main() {
 	for _, err := range errs {
 		fmt.Println("Err:", err)
 	}
-	keys := make([]string, 0, len(dirs))
+	sortedDirs := make([]string, 0, len(dirs))
 	for d := range dirs {
-		keys = append(keys, d)
+		sortedDirs = append(sortedDirs, d)
 	}
-	sort.Strings(keys)
-	for _, d := range keys {
-		onMatchDo(d, actions...)
+	sort.Strings(sortedDirs)
+	for _, d := range sortedDirs {
+		onMatchDo(d, actions)
 	}
 }
 
 // onMatchDo performs the actions if the directory is a go package directory
 // meeting the criteria
-func onMatchDo(dir string, actions ...string) {
+func onMatchDo(dir string, actions map[string]bool) {
 	undo, err := cd(dir)
 	if err != nil {
 		return
@@ -122,8 +129,12 @@ func onMatchDo(dir string, actions ...string) {
 		return
 	}
 
-	for _, action := range actions {
-		actionFuncs[action](dir)
+	// We force the order that actions take place - we should always generate
+	// any files before installing (if both are requested)
+	for _, a := range []string{printAct, generateAct, installAct} {
+		if actions[a] {
+			actionFuncs[a](dir)
+		}
 	}
 }
 
