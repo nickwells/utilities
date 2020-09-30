@@ -1,4 +1,3 @@
-// gosh
 package main
 
 import (

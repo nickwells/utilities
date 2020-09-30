@@ -1,4 +1,3 @@
-// findCmpRm
 package main
 
 import (

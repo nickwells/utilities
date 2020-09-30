@@ -1,4 +1,3 @@
-// mkparamfilefunc
 package main
 
 import (

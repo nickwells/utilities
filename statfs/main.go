@@ -1,4 +1,3 @@
-// statfs
 package main
 
 import (

@@ -1,4 +1,3 @@
-// mkfunccontrolparamtype
 package main
 
 import (

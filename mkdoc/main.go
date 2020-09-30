@@ -1,4 +1,3 @@
-// mkdoc
 package main
 
 import (

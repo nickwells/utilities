@@ -1,4 +1,3 @@
-// mkpkgerr
 package main
 
 import (

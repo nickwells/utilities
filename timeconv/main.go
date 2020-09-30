@@ -1,4 +1,3 @@
-// timeconv
 package main
 
 import (

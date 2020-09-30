@@ -1,4 +1,3 @@
-// fileChecker
 package main
 
 import (

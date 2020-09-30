@@ -1,4 +1,3 @@
-// findGoCmdDirs
 package main
 
 import (
