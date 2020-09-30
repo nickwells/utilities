@@ -17,8 +17,9 @@ func addParams(ps *param.PSet) error {
 		psetter.EnumMap{
 			Value: &actions,
 			AllowedVals: psetter.AllowedVals{
-				installAct:  "install the command (go install)",
-				generateAct: "generate any auto-generated files (go generate)",
+				buildAct:    "build the command/package (go build)",
+				installAct:  "install the command/package (go install)",
+				generateAct: "auto-generate files, if any (go generate)",
 				printAct:    "print the directory name",
 			},
 		},
@@ -38,6 +39,12 @@ func addParams(ps *param.PSet) error {
 		"set the arguments to be given to the go install command",
 		param.AltName("inst-args"),
 		param.PostAction(paction.SetMapIf(actions, installAct, true,
+			paction.IsACommandLineParam)),
+	)
+
+	ps.Add("build-args", psetter.StrListAppender{Value: &buildArgs},
+		"set the arguments to be given to the go build command",
+		param.PostAction(paction.SetMapIf(actions, buildAct, true,
 			paction.IsACommandLineParam)),
 	)
 

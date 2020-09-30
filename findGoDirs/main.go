@@ -17,6 +17,7 @@ import (
 
 const (
 	printAct    = "print"
+	buildAct    = "build"
 	installAct  = "install"
 	generateAct = "generate"
 )
@@ -32,25 +33,29 @@ func doPrint(name string) {
 	fmt.Println(name)
 }
 
+// doBuild will run go build
+func doBuild(name string) {
+	doGoCommand(name, "build", buildArgs)
+}
+
 // doInstall will run go install
 func doInstall(name string) {
-	if noAction {
-		fmt.Printf("%-20.20s : %s\n", "go install", name)
-		return
-	}
-	args := []string{"install"}
-	args = append(args, installArgs...)
-	gogen.ExecGoCmd(gogen.ShowCmdIO, args...)
+	doGoCommand(name, "install", installArgs)
 }
 
 // doGenerate will run go generate
 func doGenerate(name string) {
+	doGoCommand(name, "generate", generateArgs)
+}
+
+// doGoCommand will run the Go subcommand with the passed args
+func doGoCommand(name, command string, cmdArgs []string) {
 	if noAction {
-		fmt.Printf("%-20.20s : %s\n", "go generate", name)
+		fmt.Printf("%-20.20s : %s\n", "go "+command, name)
 		return
 	}
-	args := []string{"generate"}
-	args = append(args, generateArgs...)
+	args := []string{command}
+	args = append(args, cmdArgs...)
 	gogen.ExecGoCmd(gogen.ShowCmdIO, args...)
 }
 
@@ -58,12 +63,14 @@ var dir string = "."
 var actions = make(map[string]bool)
 var actionFuncs = map[string]func(string){
 	printAct:    doPrint,
+	buildAct:    doBuild,
 	installAct:  doInstall,
 	generateAct: doGenerate,
 }
 
 var generateArgs = []string{}
 var installArgs = []string{}
+var buildArgs = []string{}
 
 var pkgNames []string
 var filesWanted []string
@@ -129,8 +136,8 @@ func onMatchDo(dir string, actions map[string]bool) {
 	}
 
 	// We force the order that actions take place - we should always generate
-	// any files before installing (if both are requested)
-	for _, a := range []string{printAct, generateAct, installAct} {
+	// any files before building or installing (if generate is requested)
+	for _, a := range []string{printAct, generateAct, buildAct, installAct} {
 		if actions[a] {
 			actionFuncs[a](dir)
 		}
