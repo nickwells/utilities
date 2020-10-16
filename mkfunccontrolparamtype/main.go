@@ -51,28 +51,34 @@ func printFile(f *os.File, ps *param.PSet) {
 
 	fmt.Fprintln(f)
 
+	printTypeDeclaration(f)
+	printIsValidFunc(f)
+}
+
+// printTypeDeclaration writes the type declaration and constant values to
+// the file
+func printTypeDeclaration(f *os.File) {
 	fullTypeName := typeName + "Type"
 
 	fmt.Fprintf(f, "// %s %s\n", fullTypeName, typeDesc)
-	fmt.Fprintf(f, "// Generated Code\n")
 	fmt.Fprintf(f, "type %s int\n", fullTypeName)
 
-	nameSuffix := "For" + fullTypeName
-	minValName := "MinVal" + nameSuffix
-	maxValName := "MaxVal" + nameSuffix
+	suffix := " " + fullTypeName + " = iota"
 	fmt.Fprint(f, `
-// Set the lower sentinel value to minus one so that the default (0)
-// value is the first meaningful entry
 const (
 `)
-	fmt.Fprintf(f, "\t%s %s = iota - 1\n", minValName, fullTypeName)
 	for _, v := range constNames {
-		fmt.Fprintln(f, "\t"+v)
+		fmt.Fprintln(f, "\t"+v+suffix)
+		suffix = ""
 	}
-	fmt.Fprintln(f, "\t"+maxValName)
 	fmt.Fprint(f, `)
 
 `)
+}
+
+// printIsValidFunc writes the IsValid function to the file being generated
+func printIsValidFunc(f *os.File) {
+	fullTypeName := typeName + "Type"
 
 	const validFuncName = "IsValid"
 
@@ -80,14 +86,14 @@ const (
 		validFuncName, fullTypeName)
 	fmt.Fprint(f, `
 // to check a received parameter for validity. It compares
-// the value against the sentinel values for the type
+// the value against the boundary values for the type
 // and returns false if it is outside the valid range
 `)
 	fmt.Fprintf(f, "func (v %s) %s() bool {\n", fullTypeName, validFuncName)
-	fmt.Fprintf(f, "\tif v <= %s {\n", minValName)
+	fmt.Fprintf(f, "\tif v < %s {\n", constNames[0])
 	fmt.Fprintf(f, "\t\treturn false\n")
 	fmt.Fprintln(f, "\t}")
-	fmt.Fprintf(f, "\tif v >= %s {\n", maxValName)
+	fmt.Fprintf(f, "\tif v > %s {\n", constNames[len(constNames)-1])
 	fmt.Fprintf(f, "\t\treturn false\n")
 	fmt.Fprintln(f, "\t}")
 	fmt.Fprintf(f, "\treturn true\n")
@@ -96,7 +102,7 @@ const (
 
 // addParams will add parameters to the passed ParamSet
 func addParams(ps *param.PSet) error {
-	goNameRE := regexp.MustCompile("[A-Z][a-zA-Z0-9]*")
+	goNameRE := regexp.MustCompile("^[A-Za-z][a-zA-Z0-9_]*$")
 	ps.Add("type-name",
 		psetter.String{
 			Value: &typeName,
@@ -105,7 +111,10 @@ func addParams(ps *param.PSet) error {
 					"a valid Go identifier"),
 			},
 		},
-		"give the name of the integer type to be created",
+		"give the name of the integer type to be created."+
+			" Note that a name starting with a lowercase letter"+
+			" will be private to the package."+
+			" Also, any name given here will have 'Type' appended.",
 		param.AltName("type"),
 		param.AltName("t"),
 		param.Attrs(param.MustBeSet),
