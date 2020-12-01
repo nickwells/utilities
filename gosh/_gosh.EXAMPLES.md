@@ -55,9 +55,28 @@ gosh -i -w-pln 'strings.ReplaceAll(string(_l.Text()), "mod/pkg", "mod/v2/pkg")' 
 ```
 This changes each line in the two files abc\.go and xyz\.go replacing any
 reference to mod/pkg with mod/v2/pkg\. You might find this useful when you are
-upgrading a Go module which has changed its major version number\. The files
-will be changed and the original contents will be left behind in files called
-abc\.go\.orig and xyz\.go\.orig\.
+upgrading a Go module which has changed its major version number\.
+
+The files will be changed and the original contents will be left behind in files
+called abc\.go\.orig and xyz\.go\.orig\.
+
+\-i sets up the edit\-in\-place behaviour
+
+\-w\-pln writes to the new, edited copy of the file
+
+```sh
+gosh -i -e 'if _fl == 1 {' -w-pln '"// Edited by Gosh!"' -w-pln '' -e '}' -w-pln '_l.Text()' -- abc.go xyz.go 
+```
+This edits the two files abc\.go and xyz\.go adding a comment at the top of each
+file\. It finds the top of the file by checking the built\-in variable \_fl
+which gives the line number in the current file
+
+The files will be changed and the original contents will be left behind in files
+called abc\.go\.orig and xyz\.go\.orig\.
+
+\-i sets up the edit\-in\-place behaviour
+
+\-w\-pln writes to the new, edited copy of the file
 
 ```sh
 gosh -http-handler 'http.FileServer(http.Dir("/tmp/xxx"))'
