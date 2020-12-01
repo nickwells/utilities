@@ -446,7 +446,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.AltName("g"),
 		)
 
-		ps.Add("imports",
+		ps.Add("import",
 			psetter.StrListAppender{
 				Value:  &g.imports,
 				Checks: []check.String{check.StringLenGT(0)},
