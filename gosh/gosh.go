@@ -68,6 +68,8 @@ type Gosh struct {
 
 	baseTempDir string
 	runDir      string
+
+	localModules map[string]string
 }
 
 // NewGosh creates a new instance of the Gosh struct with all the initial

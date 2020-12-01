@@ -1,0 +1,90 @@
+package main
+
+import (
+	"errors"
+	"fmt"
+	"path/filepath"
+	"sort"
+	"strings"
+
+	"github.com/nickwells/filecheck.mod/filecheck"
+	"github.com/nickwells/param.mod/v5/param/psetter"
+)
+
+const ModuleMapSeparator = "=>"
+
+// ModuleMapSetter is a specialised setter for setting entries in a map from
+// module name to directory. The resulting entries will be used to set
+// replace entries in a go.mod file.
+type ModuleMapSetter struct {
+	psetter.ValueReqMandatory
+	Value     *map[string]string
+	Separator string
+}
+
+// SetWithVal (called when a value follows the parameter) splits the value
+// using the Separator. It then checks that the second part of the value is a
+// valid directory and returns an error if not.
+func (s ModuleMapSetter) SetWithVal(_ string, paramVal string) error {
+	parts := strings.SplitN(paramVal, s.Separator, 2)
+
+	if len(parts) != 2 {
+		return fmt.Errorf(
+			"bad value: %q, should be in two parts with %q in between",
+			paramVal, s.Separator)
+	}
+	mod, dir := parts[0], parts[1]
+
+	if dir == "" {
+		return errors.New("the replacement directory is empty")
+	}
+
+	var err error
+	dir, err = filepath.Abs(dir)
+	if err != nil {
+		return fmt.Errorf("bad module replacement directory %q: %w", dir, err)
+	}
+
+	if err := filecheck.DirExists().StatusCheck(dir); err != nil {
+		return fmt.Errorf("bad module replacement directory: %w", err)
+	}
+
+	(*s.Value)[mod] = dir
+	return nil
+}
+
+// AllowedValues returns a string listing the allowed values
+func (s ModuleMapSetter) AllowedValues() string {
+	return "a module name and a replacement directory separated by " +
+		s.Separator
+}
+
+// CurrentValue returns the current setting of the parameter value
+func (s ModuleMapSetter) CurrentValue() string {
+	cv := ""
+
+	keys := make([]string, 0, len(*s.Value))
+	for k := range *s.Value {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	sep := ""
+	for _, k := range keys {
+		cv += sep + fmt.Sprintf("%s%s%v", k, s.Separator, (*s.Value)[k])
+		sep = "\n"
+	}
+
+	return cv
+}
+
+// CheckSetter panics if the setter has not been properly created - if the
+// Value is nil.
+func (s ModuleMapSetter) CheckSetter(name string) {
+	if s.Value == nil {
+		panic(psetter.NilValueMessage(name, "gosh.ModuleMapSetter"))
+	}
+	if *s.Value == nil {
+		*s.Value = make(map[string]string)
+	}
+}

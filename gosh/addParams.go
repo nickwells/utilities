@@ -541,6 +541,19 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.Attrs(param.DontShowInStdUsage),
 		)
 
+		ps.Add("local-module",
+			ModuleMapSetter{
+				Value:     &g.localModules,
+				Separator: "=>",
+			},
+			"give the name and mapping of a local module."+
+				" The name should be the module name"+
+				" and the mapping should be the path to"+
+				" the module directory from your current directory."+
+				" They should be separated by '"+ModuleMapSeparator+"'.",
+			param.Attrs(param.DontShowInStdUsage),
+		)
+
 		ps.AddFinalCheck(func() error {
 			if g.runAsWebserver && g.runInReadLoop {
 				errStr := "gosh cannot run in a read-loop" +

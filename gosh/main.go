@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -198,11 +199,7 @@ func (g *Gosh) createGoFiles() {
 	verbose.Print(intro, ":\tCreating the Go file: ", g.filename, "\n")
 	g.makeFile()
 
-	if os.Getenv("GO111MODULE") != "off" {
-		verbose.Print(intro,
-			":\tRunning 'go mod init gosh' (creates the module files)\n")
-		gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "init", "gosh")
-	}
+	g.initModule()
 }
 
 // makeFile will create the go file and exit if it fails
@@ -270,4 +267,31 @@ func (g *Gosh) tidyModule() {
 
 	verbose.Print(intro, ":\tRunning 'go mod tidy' (populates go.mod)\n")
 	gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "tidy")
+}
+
+// initModule runs go mod init
+func (g *Gosh) initModule() {
+	intro := constantWidthStr("initModule")
+	defer timer.Start(intro, verboseTimer)()
+
+	if os.Getenv("GO111MODULE") == "off" {
+		verbose.Print(intro, ":\tSkipping - GO111MODULES == 'off'\n")
+		return
+	}
+	verbose.Print(intro,
+		":\tRunning 'go mod init gosh' (creates the go.mod etc)\n")
+	gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "init", "gosh")
+
+	keys := []string{}
+	for k := range g.localModules {
+		keys = append(keys, k)
+	}
+	if len(keys) > 0 {
+		verbose.Print(intro, ":\tAdding local modules\n")
+		sort.Strings(keys)
+		for _, k := range keys {
+			gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "edit",
+				"-replace="+k+"="+g.localModules[k])
+		}
+	}
 }
