@@ -42,7 +42,7 @@ func main() {
 	printFile(f)
 }
 
-// prinFile prints the file contents
+// printFile prints the file contents
 func printFile(f io.Writer) {
 	pkgName := gogen.GetPackageOrDie()
 	capitalPkg := strings.Title(pkgName)
