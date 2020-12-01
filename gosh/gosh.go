@@ -171,6 +171,10 @@ var knownVarMap varMap = varMap{
 		typeName: "*bufio.Scanner",
 		desc:     "a buffered scanner used to read the files",
 	},
+	"_fl": {
+		typeName: "int",
+		desc:     "the current line number in the file",
+	},
 	"_fn": {
 		typeName: "string",
 		desc:     "the name of the file (or stdin)",

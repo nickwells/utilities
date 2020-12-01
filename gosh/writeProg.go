@@ -87,6 +87,7 @@ func (g *Gosh) writeGoFileReadLoop() {
 
 		g.gPrint("for _, _fn = range _fns {", tag)
 		g.in()
+		g.gDecl("_fl", "", tag)
 		g.gDecl("_f", "", tag)
 		g.gDecl("_err", "", tag)
 		g.gPrint(`_f, _err = os.Open(_fn)`, tag)
@@ -120,6 +121,7 @@ func (g *Gosh) writeGoFileReadLoop() {
 	g.gDecl("_l", " = bufio.NewScanner(_r)", tag)
 	g.gPrint("for _l.Scan() {", tag)
 	g.in()
+	g.gPrint("_fl++", tag)
 
 	if g.splitLine {
 		tag := tag + " - splitline"
