@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/nickwells/check.mod/check"
 	"github.com/nickwells/filecheck.mod/filecheck"
@@ -328,14 +327,6 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 					"You have given the %q parameter but no filenames have"+
 						" been given (they should be supplied following %q)",
 					"-"+paramNameInPlaceEdit, ps.TerminalParam())
-			}
-
-			if len(ps.Remainder()) != 0 && !g.runInReadLoop {
-				return fmt.Errorf(
-					"You have given filenames but no parameters" +
-						" indicating that they should be read. One of the" +
-						" following should be given: " +
-						strings.Join(g.runInReadloopParamNames(), ", "))
 			}
 
 			return nil

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/location.mod/location"
@@ -23,26 +22,31 @@ func (g *Gosh) AddErr(name string, err error) {
 	g.filesErrMap[name] = append(g.filesErrMap[name], err)
 }
 
-// HandleRemainder processes the filenames. It will populate the filenames in
-// the fileNameHandler and record any errors found.
-//
-// It will first convert any file names that are not absolute into names
-// based at the current working directory. Then it will check that there are
-// no duplicates, that they all exist, that they are all files, that there
-// are no existing files with the same name plus the '.orig' extension. If
-// any of these conditions is not met it will report the error, add it to the
-// ErrMap and return
+// HandleRemainder processes the trailing parameters . If gosh has the
+// 'runInReadLoop' flag set then they are treated as files and added to the
+// filesToRead. Otherwise they are added to the list of args and that is
+// looped over instead.
 func (g *Gosh) HandleRemainder(ps *param.PSet, _ *location.L) {
-	names := ps.Remainder()
+	if g.runInReadLoop {
+		g.populateFilesToRead(ps.Remainder())
+	} else {
+		g.populateArgs(ps.Remainder())
+	}
+}
+
+// populateFilesToRead will populate the filenames in the filesToRead value
+// in the Gosh struct and record any errors found.
+//
+// It will first check that there are no duplicate filess, that they all
+// exist, that they are all files, that there are no existing files with the
+// same name plus the '.orig' extension. If any of these conditions is not
+// met it will report the error, add it to the ErrMap and return.
+
+func (g *Gosh) populateFilesToRead(names []string) {
 	goodNames := make([]string, 0, len(names))
 	dupMap := make(map[string]int)
 
-	for i, n := range names {
-		name, err := filepath.Abs(n)
-		if err != nil {
-			g.AddErr("make file an absolute path", err)
-		}
-
+	for i, name := range names {
 		if firstIdx, exists := dupMap[name]; exists {
 			g.AddErr("duplicate filename",
 				fmt.Errorf(
@@ -58,12 +62,22 @@ func (g *Gosh) HandleRemainder(ps *param.PSet, _ *location.L) {
 			continue
 		}
 
-		if err := origFileProvisos.StatusCheck(name + origExt); err != nil {
-			g.AddErr("original file check", err)
-			continue
+		if g.inPlaceEdit {
+			if err := origFileProvisos.StatusCheck(name + origExt); err != nil {
+				g.AddErr("original file check", err)
+				continue
+			}
 		}
 
 		goodNames = append(goodNames, fmt.Sprintf("%q", name))
 	}
 	g.filesToRead = goodNames
+}
+
+// populateArgs will copy the remainder params into the args list on the Gosh
+// struct. It will quote them as they are copied.
+func (g *Gosh) populateArgs(names []string) {
+	for _, name := range names {
+		g.args = append(g.args, fmt.Sprintf("%q", name))
+	}
 }

@@ -60,6 +60,7 @@ type Gosh struct {
 	formatterSet  bool
 	formatterArgs []string
 
+	args        []string
 	filesToRead []string
 	filesErrMap param.ErrMap
 
@@ -147,6 +148,14 @@ type varInfo struct {
 type varMap map[string]varInfo
 
 var knownVarMap varMap = varMap{
+	"_arg": {
+		typeName: "string",
+		desc:     "the argument",
+	},
+	"_args": {
+		typeName: "[]string",
+		desc:     "the list of arguments",
+	},
 	"_r": {
 		typeName: "io.Reader",
 		desc:     "the reader for the scanner (may be stdin)",

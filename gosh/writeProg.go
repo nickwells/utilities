@@ -61,6 +61,23 @@ func (g *Gosh) writeGoFileImports() {
 	gogen.PrintImports(g.w, g.imports...)
 }
 
+// writeGoArgsLoop writes the statements of the loop over the arguments
+// (if any) into the Go file
+func (g *Gosh) writeGoArgsLoop() {
+	tag := "argloop"
+
+	g.gDecl("_arg", "", tag)
+	g.gDecl("_args",
+		fmt.Sprintf(" = []string{%s}", strings.Join(g.args, ", ")),
+		tag)
+
+	g.gPrint("for _, _arg = range _args {", tag)
+	g.in()
+	g.writeGoFileScript()
+	g.out()
+	g.gPrint("}", tag)
+}
+
 // writeGoFileReadLoop writes the statements of the readloop
 // (if any) into the Go file
 func (g *Gosh) writeGoFileReadLoop() {
@@ -256,6 +273,8 @@ func (g *Gosh) writeGoFile() {
 		g.writeGoFileWebserverInit()
 	} else if g.runInReadLoop {
 		g.writeGoFileReadLoop()
+	} else if len(g.args) > 0 {
+		g.writeGoArgsLoop()
 	} else {
 		g.writeGoFileScript()
 	}
