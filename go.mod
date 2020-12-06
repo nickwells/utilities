@@ -12,7 +12,7 @@ require (
 	github.com/nickwells/gogen.mod v1.6.4
 	github.com/nickwells/location.mod v1.2.14
 	github.com/nickwells/mathutil.mod v1.0.15
-	github.com/nickwells/param.mod/v5 v5.2.3
+	github.com/nickwells/param.mod/v5 v5.2.4
 	github.com/nickwells/testhelper.mod v1.12.1
 	github.com/nickwells/timer.mod v1.1.2
 	github.com/nickwells/twrap.mod v1.4.8

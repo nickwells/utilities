@@ -30,8 +30,8 @@ github.com/nickwells/mathutil.mod v1.0.15 h1:nqK8bfAi3tCAVKiLuZblTpGQkOOJHX028FP
 github.com/nickwells/mathutil.mod v1.0.15/go.mod h1:sim8tWSPTJB3YOtzMSwBWaiQYOHJ9t/gRLIZB2IhUMs=
 github.com/nickwells/param.mod/v5 v5.2.2 h1:SWX+lyGCRjpSDHmTLnNHhl0JzwlXdHfXp3LfUujnWj8=
 github.com/nickwells/param.mod/v5 v5.2.2/go.mod h1:7SKXVZRs95o7teBwnjxEswanT3f8ZckiQd91KTDpwVg=
-github.com/nickwells/param.mod/v5 v5.2.3 h1:ou4qap0uh+tSDEuw9ZmYDjSaD/hrzEJB+JpN5n6lFjM=
-github.com/nickwells/param.mod/v5 v5.2.3/go.mod h1:Dcio86FIc3r7xvr8GhASoGd51Ypfo/F23y8pTQ+E5MU=
+github.com/nickwells/param.mod/v5 v5.2.4 h1:vIKi0/FP6LO17UW/OvGJab/uXHQuCv/foKEFGtQNFys=
+github.com/nickwells/param.mod/v5 v5.2.4/go.mod h1:Dcio86FIc3r7xvr8GhASoGd51Ypfo/F23y8pTQ+E5MU=
 github.com/nickwells/strdist.mod v1.0.17 h1:TEkjkW8pbp5pr52dY65Yj3n9aEyZKDP7ffLz+AQ8GMw=
 github.com/nickwells/strdist.mod v1.0.17/go.mod h1:1mLdRyJHvKbgcAV8JE1fR1IiDOtMUZ1iJ6KxSb5bLSQ=
 github.com/nickwells/strdist.mod v1.0.19 h1:AMII8VZRWhj2qJHFY1y8+i7SP8P+6+242G3BaXo1xvY=
