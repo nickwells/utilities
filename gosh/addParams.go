@@ -443,6 +443,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				Checks: []check.String{check.StringLenGT(0)},
 			},
 			"provide any explicit imports.",
+			param.AltName("imports"),
 			param.AltName("I"),
 		)
 
