@@ -43,6 +43,13 @@ func (g *Gosh) writeGoFilePostScript() {
 	}
 }
 
+// writeGoFileScript writes the script statements into the Go file
+func (g *Gosh) writeGoFileScript() {
+	for _, s := range g.script {
+		g.print(s)
+	}
+}
+
 // writeGoFileImports writes the import statements into the Go file
 func (g *Gosh) writeGoFileImports() {
 	if g.runInReadLoop {
@@ -180,13 +187,6 @@ func (g *Gosh) writeGoFileReadLoop() {
 	}
 }
 
-// writeGoFileScript writes the script statements into the Go file
-func (g *Gosh) writeGoFileScript() {
-	for _, s := range g.script {
-		g.print(s)
-	}
-}
-
 // writeGoFileWebserverInit writes the webserver boilerplate code
 // (if any) into the Go file
 func (g *Gosh) writeGoFileWebserverInit() {
@@ -257,7 +257,8 @@ func (g *Gosh) writeGoFile() {
 	g.gPrint("", "frame")
 	g.gPrint("func main() {", "frame")
 	g.in()
-	g.gPrint(fmt.Sprintf("if err := os.Chdir(%q); err != nil {", g.runDir), "frame")
+	g.gPrint(fmt.Sprintf("if err := os.Chdir(%q); err != nil {", g.runDir),
+		"frame")
 	g.in()
 	g.gPrint(
 		fmt.Sprintf("fmt.Printf(%q, %q, err)",

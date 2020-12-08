@@ -14,30 +14,43 @@ import (
 	"github.com/nickwells/param.mod/v5/param"
 )
 
-var snippetFileCommentIntro = `\s*//\s*snippet:`
+const (
+	snippetCommentStr   = "snippet:"
+	snippetNoteStr      = "Note:"
+	snippetImportStr    = "Import:"
+	snippetExpectStr    = "Expect:"
+	snippetAfterStr     = "ComesAfter:"
+	snippetCommentREStr = `^\s*//\s*` + snippetCommentStr
+	snippetNoteREStr    = snippetCommentREStr + `\s*` + snippetNoteStr + `\s*`
+	snippetImportREStr  = snippetCommentREStr + `\s*` + snippetImportStr + `\s*`
+	snippetExpectREStr  = snippetCommentREStr + `\s*` + snippetExpectStr + `\s*`
+	snippetAfterREStr   = snippetCommentREStr + `\s*` + snippetAfterStr + `\s*`
+)
 
-var snippetFileCommentIntroRE = regexp.MustCompile(
-	snippetFileCommentIntro)
-var snippetFileNoteRE = regexp.MustCompile(
-	snippetFileCommentIntro + `\s*Note:\s*`)
+var snippetCommentRE = regexp.MustCompile(snippetCommentREStr)
+var snippetNoteRE = regexp.MustCompile(snippetNoteREStr)
+var snippetImportRE = regexp.MustCompile(snippetImportREStr)
+var snippetExpectRE = regexp.MustCompile(snippetExpectREStr)
+var snippetAfterRE = regexp.MustCompile(snippetAfterREStr)
 
 // snippetPAF generates the Post-Action func that populates the supplied
 // script with the contents of the snippet file
 func snippetPAF(g *Gosh, sName *string, script *[]string) param.ActionFunc {
 	return func(_ location.L, _ *param.ByName, _ []string) error {
 		if filepath.IsAbs(*sName) {
-			if addSnippet(script, *sName) {
-				return nil
+			fileFound, err := addSnippet(g, script, *sName, *sName)
+			if !fileFound {
+				return fmt.Errorf("Can't read the snippet file %q: %w",
+					*sName, err)
 			}
-			return fmt.Errorf(
-				"The snippet file %q doesn't exist or can't be read",
-				*sName)
+			return err
 		}
 
 		for _, dir := range g.snippetsDirs {
 			fName := filepath.Join(dir, *sName)
-			if addSnippet(script, fName) {
-				return nil
+			fileFound, err := addSnippet(g, script, fName, *sName)
+			if fileFound {
+				return err // Will be nil unless ComesAfter rule is broken
 			}
 		}
 		return fmt.Errorf(
@@ -48,30 +61,71 @@ func snippetPAF(g *Gosh, sName *string, script *[]string) param.ActionFunc {
 	}
 }
 
+// missingSnippets will check that all the expected snippets have been used
+// and will report any that are missing. It returns the count of expected
+// snippets that were not used.
+func missingSnippets(g *Gosh) int {
+	snippetsMissing := 0
+	for snippet, expectedBy := range g.snippetsExpectedBy {
+		if !g.snippetsUsed[snippet] {
+			fmt.Fprintf(os.Stderr,
+				"Missing snippet: %q\n", snippet)
+			fmt.Fprintf(os.Stderr,
+				"\tthis snippet is expected\n\tif snippet %q is used\n",
+				expectedBy)
+			snippetsMissing++
+		}
+	}
+	return snippetsMissing
+}
+
 // addSnippet will try to read the file and if it succeeds it will add the
 // lines from content, one at a time into the script. Snippet comment lines
 // are not added to the script.
-func addSnippet(script *[]string, fName string) bool {
+func addSnippet(g *Gosh, script *[]string, fName, sName string) (bool, error) {
 	content, err := ioutil.ReadFile(fName)
 	if err != nil {
-		return false
+		return false, err
 	}
 
+	g.snippetsUsed[sName] = true
 	addSnippetComment(script, fName)
 	addSnippetComment(script, "BEGIN")
 
 	buf := bytes.NewBuffer(content)
 	scanner := bufio.NewScanner(buf)
 	for scanner.Scan() {
-		if snippetFileCommentIntroRE.FindStringIndex(scanner.Text()) != nil {
+		line := scanner.Text()
+		if snippetCommentRE.FindStringIndex(line) != nil {
+			if loc := snippetImportRE.FindStringIndex(line); loc != nil {
+				importStr := line[loc[1]:]
+				if len(importStr) > 0 {
+					g.imports = append(g.imports, importStr)
+				}
+			} else if loc := snippetExpectRE.FindStringIndex(line); loc != nil {
+				expectSName := strings.TrimSpace(line[loc[1]:])
+				if len(expectSName) > 0 {
+					g.snippetsExpectedBy[expectSName] = sName
+				}
+			} else if loc := snippetAfterRE.FindStringIndex(line); loc != nil {
+				mustFollow := strings.TrimSpace(line[loc[1]:])
+				if len(mustFollow) > 0 {
+					if !g.snippetsUsed[mustFollow] {
+						return true, fmt.Errorf(
+							"If snippet %q is used"+
+								" it must appear after snippet %q",
+							sName, mustFollow)
+					}
+				}
+			}
 			continue
 		}
-		*script = append(*script, scanner.Text())
+		*script = append(*script, line)
 	}
 
 	addSnippetComment(script, "END")
 
-	return true
+	return true, nil
 }
 
 // addSnippetComment writes the message at the end of a snippet comment
@@ -88,7 +142,8 @@ func (g *Gosh) listSnippets() {
 		files, err := ioutil.ReadDir(dir)
 		if err != nil {
 			if !os.IsNotExist(err) {
-				fmt.Printf("Couldn't read the snippets directory: %q: %v\n",
+				fmt.Printf(
+					"Couldn't read the snippets directory: %q:\n\t%v\n\n",
 					dir, err)
 			}
 			continue
@@ -133,19 +188,31 @@ func showFile(loc map[string]string, snippetDir, subDir string, f os.FileInfo) {
 			fmt.Println("\t\t*** Cannot be read ***")
 			return
 		}
-		noteIntro := "Note: "
-		buf := bytes.NewBuffer(content)
-		scanner := bufio.NewScanner(buf)
-		for scanner.Scan() {
-			line := scanner.Text()
-			if loc := snippetFileNoteRE.FindStringIndex(line); loc != nil {
-				fmt.Println("\t\t" + noteIntro + line[loc[1]:])
-				noteIntro = strings.Repeat(" ", len(noteIntro))
-			}
-		}
+		printText(content, "       Note: ", snippetNoteRE)
+		printText(content, "    Imports: ", snippetImportRE)
+		printText(content, "     Expect: ", snippetExpectRE, snippetAfterRE)
+		printText(content, "Must Follow: ", snippetAfterRE)
 	} else if f.IsDir() {
 		readSubDir(loc, snippetDir, name)
 	} else {
 		fmt.Println("\t" + name + " Unexpected file type: " + f.Mode().String())
+	}
+}
+
+// printText will find those lines in the content that match the re and will
+// strip out the re text and print the rest with the first line prefixed by
+// the intro
+func printText(content []byte, intro string, res ...*regexp.Regexp) {
+	blanks := strings.Repeat(" ", len(intro))
+	buf := bytes.NewBuffer(content)
+	scanner := bufio.NewScanner(buf)
+	for scanner.Scan() {
+		line := scanner.Text()
+		for _, re := range res {
+			if loc := re.FindStringIndex(line); loc != nil {
+				fmt.Println("\t\t" + intro + line[loc[1]:])
+				intro = blanks
+			}
+		}
 	}
 }

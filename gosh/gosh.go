@@ -23,7 +23,22 @@ const (
 	goImportsFormatter = "goimports"
 
 	goshCommentIntro = " gosh : "
+
+	goshScriptGlobal = "global"
+	goshScriptBefore = "before"
+	goshScriptExec   = "exec"
+	goshScriptAfter  = "after"
+
+	gosh
 )
+
+// ScriptEntry holds the values describing what should be added to the
+// script. Values can be either a snippet filename or else text to be added
+// verbatim
+type ScriptEntry struct {
+	seType string
+	value  string
+}
 
 // Gosh records all the details needed to build a Gosh program
 type Gosh struct {
@@ -31,11 +46,13 @@ type Gosh struct {
 	indent      int
 	addComments bool
 
-	script       []string
-	beforeScript []string
-	afterScript  []string
+	imports []string
+
+	scripts      map[string][]ScriptEntry
 	globalsList  []string
-	imports      []string
+	beforeScript []string
+	script       []string
+	afterScript  []string
 
 	runInReadLoop bool
 	inPlaceEdit   bool
@@ -64,8 +81,10 @@ type Gosh struct {
 	filesToRead []string
 	filesErrMap param.ErrMap
 
-	snippetsDirs []string
-	showSnippets bool
+	snippetsDirs       []string
+	showSnippets       bool
+	snippetsExpectedBy map[string]string
+	snippetsUsed       map[string]bool
 
 	baseTempDir string
 	runDir      string
@@ -82,6 +101,13 @@ func NewGosh() *Gosh {
 		os.Exit(1)
 	}
 	g := &Gosh{
+		scripts: map[string][]ScriptEntry{
+			goshScriptGlobal: {},
+			goshScriptBefore: {},
+			goshScriptExec:   {},
+			goshScriptAfter:  {},
+		},
+
 		addComments:  true,
 		splitPattern: dfltSplitPattern,
 		formatter:    dfltFormatter,
@@ -92,6 +118,9 @@ func NewGosh() *Gosh {
 		httpHandler: dfltHTTPHandlerName,
 
 		runDir: cwd,
+
+		snippetsExpectedBy: map[string]string{},
+		snippetsUsed:       map[string]bool{},
 	}
 	g.formatterArgs = append(g.formatterArgs, dfltFormatterArg)
 

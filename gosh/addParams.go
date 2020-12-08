@@ -566,13 +566,6 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			return nil
 		})
 
-		ps.AddFinalCheck(func() error {
-			if err := check.StringSliceNoDups(g.imports); err != nil {
-				return fmt.Errorf("bad list of imports: %s", err)
-			}
-			return nil
-		})
-
 		return nil
 	}
 }

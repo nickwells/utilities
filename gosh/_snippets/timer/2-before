@@ -1,12 +1,13 @@
 // snippet: -*- go -*-
 // snippet: Note: This must come second
 // snippet: Note:
-// snippet: Note: Make sure that the simple stats package
-// snippet: Note: "github.com/nickwells/smpls.mod/smpls"
-// snippet: Note: is imported
-// snippet: Note:
 // snippet: Note: Any Go code after this will be timed and reported by the
 // snippet: Note: code in the final snippet
+// snippet: ========================================================
+// snippet: Import: github.com/nickwells/smpls.mod/smpls
+// snippet: Import: time
+// snippet: ComesAfter: timer/1-intro
+// snippet: Expect: timer/3-after
 	for __repeats > 0 {
 		__repeats--
 

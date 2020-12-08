@@ -6,6 +6,8 @@
 // snippet: Note: the timing and what gets reported
 // snippet: Note:
 // snippet: Note: You can add Go code after this to change the default values
+// snippet: Expect: timer/2-before
+// snippet: Expect: timer/3-after
 var __repeats int64 = 1
 var __trials int64 = 1e6
 var __showHist bool

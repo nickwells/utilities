@@ -5,12 +5,13 @@ import (
 )
 
 const (
-	noteInPlaceEdit  = "Gosh - in-place editing"
-	noteFilenames    = "Gosh - filenames"
-	noteVars         = "Gosh - variables"
-	noteSnippets     = "Gosh - snippets"
-	noteSnippetsDirs = "Gosh - snippets directories"
-	noteCodeSections = "Gosh - code sections"
+	noteInPlaceEdit      = "Gosh - in-place editing"
+	noteFilenames        = "Gosh - filenames"
+	noteVars             = "Gosh - variables"
+	noteSnippets         = "Gosh - snippets"
+	noteSnippetsComments = "Gosh - snippets comments"
+	noteSnippetsDirs     = "Gosh - snippets directories"
+	noteCodeSections     = "Gosh - code sections"
 )
 
 // makeSnippetDirList returns a string containing a list of the snippet
@@ -68,21 +69,63 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 				" into your script. gosh will search through a list of"+
 				" directories for a file with the snippet name and insert"+
 				" that into your script."+
-				" See the note '"+noteSnippetsDirs+"' for a list of the"+
-				" default snippets directories."+
+				" See the note"+
+				"\n"+
+				"'"+noteSnippetsDirs+"'"+
+				"\n"+
+				" for a list of the default directories that will be"+
+				" searched for snippets."+
 				" A filename with a full path can also be given."+
 				" Any inserted code is prefixed with a comment showing"+
 				" which file it came from to help with debugging."+
-				"\n\n"+
-				"Any lines in a snippet file starting with '// snippet:' are"+
-				" not copied. Any lines starting with that comment and 'Note:'"+
-				" are reported as documentation when the snippets are listed"+
 				"\n\n"+
 				"A suggested standard is to name any variables that you"+
 				" declare in a snippet file with a leading double"+
 				" underscore. This will ensure that the names neither"+
 				" clash with any gosh-declared variables nor any variables"+
-				" declared by the user.")
+				" declared by the user."+
+				"\n\n"+
+				"It is also suggested that sets of snippets which must be"+
+				" used together should be grouped into their own"+
+				" sub-directory in the snippets directory and named with"+
+				" leading digits to indicate the order that they must be"+
+				" applied.")
+
+		ps.AddNote(noteSnippetsComments,
+			"Any lines in a snippet file starting with"+
+				" '// "+snippetCommentStr+"' are"+
+				" not copied but are treated as comments on the snippet"+
+				" itself."+
+				"\n\n"+
+				"The snippet comments can have some additional meaning"+
+				" as follows. If it is followed by:"+
+				"\n"+
+				"- '"+snippetNoteStr+"'"+
+				" the remainder of the line is reported as documentation"+
+				" when the snippets are listed."+
+				"\n"+
+				"- '"+snippetImportStr+"'"+
+				" the remainder of the line is added to the list of"+
+				" import statements. Note that gosh will format the"+
+				" program it generates with "+goImportsFormatter+
+				" (if available) which should populate the import"+
+				" statement automatically but adding an import comment"+
+				" can ensure that the snippet works even if "+
+				goImportsFormatter+" is not available and can avoid"+
+				" any mismatch"+
+				"\n"+
+				"- '"+snippetExpectStr+"'"+
+				" the remainder of the line records another snippet that"+
+				" is expected to be given if this snippet is used. This"+
+				" allows a chain of snippets to check that all necessary"+
+				" parts have been used and help to ensure correct usage"+
+				" of the snippet chain."+
+				"\n"+
+				"- '"+snippetAfterStr+"'"+
+				" the remainder of the line records another snippet that"+
+				" is expected to appear before this snippet is used. This"+
+				" allows a chain of snippets to check that the"+
+				" parts have been used in the right order.")
 
 		ps.AddNote(noteSnippetsDirs,
 			"By default snippets will be searched for in the following"+

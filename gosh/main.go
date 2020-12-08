@@ -98,6 +98,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	if missingSnippets(g) > 0 {
+		os.Exit(1)
+	}
+
 	if len(g.script) == 0 &&
 		len(g.beforeScript) == 0 &&
 		len(g.afterScript) == 0 &&
