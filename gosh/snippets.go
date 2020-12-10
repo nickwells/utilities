@@ -9,9 +9,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v5/param"
 )
 
 const (
@@ -33,99 +30,153 @@ var snippetImportRE = regexp.MustCompile(snippetImportREStr)
 var snippetExpectRE = regexp.MustCompile(snippetExpectREStr)
 var snippetAfterRE = regexp.MustCompile(snippetAfterREStr)
 
-// snippetPAF generates the Post-Action func that populates the supplied
-// script with the contents of the snippet file
-func snippetPAF(g *Gosh, sName *string, script *[]string) param.ActionFunc {
-	return func(_ location.L, _ *param.ByName, _ []string) error {
-		if filepath.IsAbs(*sName) {
-			fileFound, err := addSnippet(g, script, *sName, *sName)
-			if !fileFound {
-				return fmt.Errorf("Can't read the snippet file %q: %w",
-					*sName, err)
-			}
-			return err
-		}
-
-		for _, dir := range g.snippetsDirs {
-			fName := filepath.Join(dir, *sName)
-			fileFound, err := addSnippet(g, script, fName, *sName)
-			if fileFound {
-				return err // Will be nil unless ComesAfter rule is broken
-			}
-		}
-		return fmt.Errorf(
-			"Cannot find the snippet %q:"+
-				" in any of the snippet directories: \"%s\"",
-			*sName,
-			strings.Join(g.snippetsDirs, `", "`))
-	}
+// snippet records the details of the snippet file
+type snippet struct {
+	name    string
+	path    string
+	text    []string
+	docs    []string
+	expects []string
+	imports []string
+	follows []string
 }
 
-// missingSnippets will check that all the expected snippets have been used
-// and will report any that are missing. It returns the count of expected
-// snippets that were not used.
-func missingSnippets(g *Gosh) int {
-	snippetsMissing := 0
-	for snippet, expectedBy := range g.snippetsExpectedBy {
-		if !g.snippetsUsed[snippet] {
-			fmt.Fprintf(os.Stderr,
-				"Missing snippet: %q\n", snippet)
-			fmt.Fprintf(os.Stderr,
-				"\tthis snippet is expected\n\tif snippet %q is used\n",
-				expectedBy)
-			snippetsMissing++
+// cacheSnippet finds the file for the snippet, parses a snippet object from
+// the file, adds any imports and caches the snippet.  It returns an error if
+// the snippet cannot be created. If the snippet is already in the cache it
+// will skip these steps and return a nil error (the snippet is only cached
+// if no errors have been found).
+func cacheSnippet(g *Gosh, sName string) error {
+	_, ok := g.snippetCache[sName]
+	if ok {
+		return nil
+	}
+
+	var err error
+	var s *snippet
+
+	defer func() {
+		if err == nil {
+			g.imports = append(g.imports, s.imports...)
+			g.snippetCache[sName] = s
+		}
+	}()
+
+	if filepath.IsAbs(sName) {
+		s, err = parseSnippet(sName, sName)
+		if s == nil {
+			return fmt.Errorf("Can't read the snippet file %q: %w",
+				sName, err)
+		}
+
+		return err
+	}
+
+	for _, dir := range g.snippetsDirs {
+		fName := filepath.Join(dir, sName)
+		s, err = parseSnippet(fName, sName)
+		if err == nil {
+			return nil
 		}
 	}
-	return snippetsMissing
+
+	err = fmt.Errorf("snippet %q: is not in any snippet directory: \"%s\"",
+		sName,
+		strings.Join(g.snippetsDirs, `", "`))
+
+	return err
 }
 
-// addSnippet will try to read the file and if it succeeds it will add the
-// lines from content, one at a time into the script. Snippet comment lines
-// are not added to the script.
-func addSnippet(g *Gosh, script *[]string, fName, sName string) (bool, error) {
+// snippetExpand finds the snippet and returns the contents. It returns and
+// error if the snippet is invalid.
+func snippetExpand(g *Gosh, sName string) ([]string, error) {
+	s, ok := g.snippetCache[sName]
+	if !ok {
+		return nil,
+			fmt.Errorf("snippet: %q not found in the snippet cache", sName)
+	}
+
+	g.snippetUsed[sName] = true
+	for _, shouldBeUsed := range s.follows {
+		if !g.snippetUsed[shouldBeUsed] {
+			g.addError("Snippet out of order",
+				fmt.Errorf("snippet %q should appear before snippet %q",
+					shouldBeUsed, sName))
+		}
+	}
+	return s.text, nil
+}
+
+// parseSnippet will try to read the file and if it succeeds it will
+// construct the snippet from content
+func parseSnippet(fName, sName string) (*snippet, error) {
 	content, err := ioutil.ReadFile(fName)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	g.snippetsUsed[sName] = true
-	addSnippetComment(script, fName)
-	addSnippetComment(script, "BEGIN")
+	s := &snippet{
+		name: sName,
+		path: fName,
+	}
+
+	addSnippetComment(&s.text, fName)
+	addSnippetComment(&s.text, "BEGIN")
 
 	buf := bytes.NewBuffer(content)
 	scanner := bufio.NewScanner(buf)
 	for scanner.Scan() {
-		line := scanner.Text()
-		if snippetCommentRE.FindStringIndex(line) != nil {
-			if loc := snippetImportRE.FindStringIndex(line); loc != nil {
-				importStr := line[loc[1]:]
-				if len(importStr) > 0 {
-					g.imports = append(g.imports, importStr)
-				}
-			} else if loc := snippetExpectRE.FindStringIndex(line); loc != nil {
-				expectSName := strings.TrimSpace(line[loc[1]:])
-				if len(expectSName) > 0 {
-					g.snippetsExpectedBy[expectSName] = sName
-				}
-			} else if loc := snippetAfterRE.FindStringIndex(line); loc != nil {
-				mustFollow := strings.TrimSpace(line[loc[1]:])
-				if len(mustFollow) > 0 {
-					if !g.snippetsUsed[mustFollow] {
-						return true, fmt.Errorf(
-							"If snippet %q is used"+
-								" it must appear after snippet %q",
-							sName, mustFollow)
-					}
-				}
+		l := scanner.Text()
+		if snippetCommentRE.FindStringIndex(l) != nil {
+			if addMatchToSlices(l, snippetImportRE, &s.imports) {
+				continue
 			}
-			continue
+			if addMatchToSlices(l, snippetExpectRE, &s.expects) {
+				continue
+			}
+			if addMatchToSlices(l, snippetAfterRE, &s.expects, &s.follows) {
+				continue
+			}
+			if addWholeMatchToSlice(l, snippetNoteRE, &s.docs) {
+				continue
+			}
+		} else {
+			s.text = append(s.text, l)
 		}
-		*script = append(*script, line)
 	}
 
-	addSnippetComment(script, "END")
+	addSnippetComment(&s.text, "END")
 
-	return true, nil
+	return s, nil
+}
+
+// addMatchToSlices tests the string for a match against the regexp. If it
+// matches then the remainder of the string after the matched portion is
+// trimmed of white space. If the resulting string is non-empty it is added
+// to the slices. It returns true if the string matched the regex and false
+// otherwise.
+func addMatchToSlices(s string, re *regexp.Regexp, slcs ...*[]string) bool {
+	if loc := re.FindStringIndex(s); loc != nil {
+		text := strings.TrimSpace(s[loc[1]:])
+		if len(text) > 0 {
+			for _, slc := range slcs {
+				*slc = append(*slc, text)
+			}
+		}
+		return true
+	}
+	return false
+}
+
+// addWholeMatchToSlice behaves as per addMatchToSlices but doesn't trim
+// the line or ignore empty lines
+func addWholeMatchToSlice(s string, re *regexp.Regexp, slc *[]string) bool {
+	if loc := re.FindStringIndex(s); loc != nil {
+		text := s[loc[1]:]
+		*slc = append(*slc, text)
+		return true
+	}
+	return false
 }
 
 // addSnippetComment writes the message at the end of a snippet comment
@@ -160,7 +211,8 @@ func readSubDir(loc map[string]string, snippetDir, subDir string) {
 	name := filepath.Join(snippetDir, subDir)
 	files, err := ioutil.ReadDir(name)
 	if err != nil {
-		fmt.Printf("\tCouldn't read the sub-directory: %q: %v", subDir, err)
+		fmt.Printf("\tCouldn't read the sub-directory: %q:\n\t%v\n\n",
+			subDir, err)
 		return
 	}
 	for _, f := range files {

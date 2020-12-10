@@ -17,11 +17,6 @@ var fileProvisos = filecheck.FileExists()
 // extension '.orig'
 var origFileProvisos = filecheck.IsNew()
 
-// AddErr adds the error to the named error map entry
-func (g *Gosh) AddErr(name string, err error) {
-	g.filesErrMap[name] = append(g.filesErrMap[name], err)
-}
-
 // HandleRemainder processes the trailing parameters . If gosh has the
 // 'runInReadLoop' flag set then they are treated as files and added to the
 // filesToRead. Otherwise they are added to the list of args and that is
@@ -48,7 +43,7 @@ func (g *Gosh) populateFilesToRead(names []string) {
 
 	for i, name := range names {
 		if firstIdx, exists := dupMap[name]; exists {
-			g.AddErr("duplicate filename",
+			g.addError("duplicate filename",
 				fmt.Errorf(
 					"filename %q has been given multiple times,"+
 						" first at %d and again at %d",
@@ -58,13 +53,13 @@ func (g *Gosh) populateFilesToRead(names []string) {
 		dupMap[name] = i
 
 		if err := fileProvisos.StatusCheck(name); err != nil {
-			g.AddErr("file check", err)
+			g.addError("file check", err)
 			continue
 		}
 
 		if g.inPlaceEdit {
 			if err := origFileProvisos.StatusCheck(name + origExt); err != nil {
-				g.AddErr("original file check", err)
+				g.addError("original file check", err)
 				continue
 			}
 		}

@@ -13,9 +13,7 @@ import (
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
-	"github.com/nickwells/param.mod/v5/param/phelp"
 	"github.com/nickwells/timer.mod/timer"
-	"github.com/nickwells/twrap.mod/twrap"
 	"github.com/nickwells/verbose.mod/verbose"
 )
 
@@ -92,26 +90,13 @@ func main() {
 		os.Exit(0)
 	}
 
-	if len(g.filesErrMap) != 0 {
-		twc := twrap.NewTWConfOrPanic(twrap.SetWriter(os.Stderr))
-		phelp.ReportErrors(twc, "gosh", g.filesErrMap)
-		os.Exit(1)
-	}
-
-	if missingSnippets(g) > 0 {
-		os.Exit(1)
-	}
-
-	if len(g.script) == 0 &&
-		len(g.beforeScript) == 0 &&
-		len(g.afterScript) == 0 &&
-		len(g.globalsList) == 0 &&
-		len(g.imports) == 0 {
-		fmt.Fprintln(os.Stderr, "There is no code to run")
-		os.Exit(1)
-	}
+	g.checkSnippets()
+	g.checkScripts()
+	g.reportErrors()
 
 	g.buildGoProgram()
+
+	g.reportErrors()
 
 	g.runGoFile()
 
@@ -248,6 +233,7 @@ func (g *Gosh) buildGoProgram() {
 	verbose.Print(intro, ":\tGo file name: ", g.filename, "\n")
 
 	g.writeGoFile()
+	g.reportErrors()
 
 	g.formatFile()
 

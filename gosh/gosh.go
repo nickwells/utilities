@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/nickwells/param.mod/v5/param"
+	"github.com/nickwells/param.mod/v5/param/phelp"
+	"github.com/nickwells/twrap.mod/twrap"
 	"github.com/nickwells/xdg.mod/xdg"
 )
 
@@ -28,15 +31,16 @@ const (
 	goshScriptBefore = "before"
 	goshScriptExec   = "exec"
 	goshScriptAfter  = "after"
-
-	gosh
 )
 
+type expandFunc func(*Gosh, string) ([]string, error)
+
 // ScriptEntry holds the values describing what should be added to the
-// script. Values can be either a snippet filename or else text to be added
-// verbatim
+// script. The value can be either a snippet filename or else text to be
+// added verbatim; the expand func is set to handle these two cases
+// appropriately.
 type ScriptEntry struct {
-	seType string
+	expand expandFunc
 	value  string
 }
 
@@ -48,11 +52,7 @@ type Gosh struct {
 
 	imports []string
 
-	scripts      map[string][]ScriptEntry
-	globalsList  []string
-	beforeScript []string
-	script       []string
-	afterScript  []string
+	scripts map[string][]ScriptEntry
 
 	runInReadLoop bool
 	inPlaceEdit   bool
@@ -79,12 +79,12 @@ type Gosh struct {
 
 	args        []string
 	filesToRead []string
-	filesErrMap param.ErrMap
+	errMap      param.ErrMap
 
-	snippetsDirs       []string
-	showSnippets       bool
-	snippetsExpectedBy map[string]string
-	snippetsUsed       map[string]bool
+	snippetsDirs []string
+	showSnippets bool
+	snippetUsed  map[string]bool
+	snippetCache map[string]*snippet
 
 	baseTempDir string
 	runDir      string
@@ -108,10 +108,12 @@ func NewGosh() *Gosh {
 			goshScriptAfter:  {},
 		},
 
-		addComments:  true,
-		splitPattern: dfltSplitPattern,
-		formatter:    dfltFormatter,
-		filesErrMap:  make(param.ErrMap),
+		addComments:   true,
+		splitPattern:  dfltSplitPattern,
+		formatter:     dfltFormatter,
+		formatterArgs: []string{dfltFormatterArg},
+
+		errMap: make(param.ErrMap),
 
 		httpPort:    dfltHTTPPort,
 		httpPath:    dfltHTTPPath,
@@ -119,11 +121,17 @@ func NewGosh() *Gosh {
 
 		runDir: cwd,
 
-		snippetsExpectedBy: map[string]string{},
-		snippetsUsed:       map[string]bool{},
+		snippetUsed:  map[string]bool{},
+		snippetCache: map[string]*snippet{},
 	}
-	g.formatterArgs = append(g.formatterArgs, dfltFormatterArg)
 
+	g.setDfltSnippetPath()
+
+	return g
+}
+
+// setDfltSnippetPath populates the snippetsDirs slice with the default value.
+func (g *Gosh) setDfltSnippetPath() {
 	snippetPath := []string{
 		"github.com",
 		"nickwells",
@@ -139,8 +147,64 @@ func NewGosh() *Gosh {
 		g.snippetsDirs = append(g.snippetsDirs,
 			filepath.Join(append(dirs[:1], snippetPath...)...))
 	}
+}
 
-	return g
+// verbatim returns the passed string without any expansion. It is suitable
+// as a ScriptEntry expand func for code to be added directly to the file
+func verbatim(_ *Gosh, s string) ([]string, error) {
+	return []string{s}, nil
+}
+
+// AddScriptEntry adds the script entry to the named script. It panics if the
+// script name is invalid or the expandFunc is nil.
+func (g *Gosh) AddScriptEntry(sName, v string, ef expandFunc) {
+	s, ok := g.scripts[sName]
+	if !ok {
+		panic(fmt.Errorf("the script name is invalid: %q", sName))
+	}
+	if ef == nil {
+		panic(errors.New("the expansion function is nil"))
+	}
+	g.scripts[sName] = append(s, ScriptEntry{expand: ef, value: v})
+}
+
+// addError adds the error to the named error map entry
+func (g *Gosh) addError(name string, err error) {
+	g.errMap[name] = append(g.errMap[name], err)
+}
+
+// checkSnippets will check that all the expected snippets are present.
+func (g *Gosh) checkSnippets() {
+	for sName, s := range g.snippetCache {
+		for _, expected := range s.expects {
+			_, ok := g.snippetCache[expected]
+			if !ok {
+				g.addError(
+					fmt.Sprintf("Missing snippet: %q", expected),
+					fmt.Errorf("expected by: %q", sName))
+			}
+		}
+	}
+}
+
+// checkScripts checks that not all the scripts are empty
+func (g Gosh) checkScripts() {
+	for _, s := range g.scripts {
+		if len(s) > 0 {
+			return
+		}
+	}
+	g.addError("no code", errors.New("There is no code to run"))
+}
+
+// reportErrors checks if the error map is empty and if not it reports the
+// errors and exits.
+func (g *Gosh) reportErrors() {
+	if len(g.errMap) != 0 {
+		twc := twrap.NewTWConfOrPanic(twrap.SetWriter(os.Stderr))
+		phelp.ReportErrors(twc, "gosh", g.errMap)
+		os.Exit(1)
+	}
 }
 
 // in increases the indent level by 1

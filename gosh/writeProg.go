@@ -9,44 +9,23 @@ import (
 	"github.com/nickwells/verbose.mod/verbose"
 )
 
-// writeGoFileGlobals writes any globals into the Go file
-func (g *Gosh) writeGoFileGlobals() {
-	for _, s := range g.globalsList {
-		g.print("")
-		g.print(s)
-	}
-}
-
-// writeGoFilePreScript writes the statements that come before the main
-// script into the Go file
-func (g *Gosh) writeGoFilePreScript() {
-	if len(g.beforeScript) == 0 {
-		return
+// writeScript writes the contents of the named script. It panics if the
+// script name is not found.
+func (g *Gosh) writeScript(scriptName string) {
+	script, ok := g.scripts[scriptName]
+	if !ok {
+		panic(fmt.Errorf("invalid script name: %q", scriptName))
 	}
 
-	for _, s := range g.beforeScript {
-		g.print(s)
-	}
-	g.print("")
-}
-
-// writeGoFilePostScript writes the statements that come after the main
-// script into the Go file
-func (g *Gosh) writeGoFilePostScript() {
-	if len(g.afterScript) == 0 {
-		return
-	}
-
-	g.print("")
-	for _, s := range g.afterScript {
-		g.print(s)
-	}
-}
-
-// writeGoFileScript writes the script statements into the Go file
-func (g *Gosh) writeGoFileScript() {
-	for _, s := range g.script {
-		g.print(s)
+	for _, se := range script {
+		lines, err := se.expand(g, se.value)
+		if err != nil {
+			g.addError("script: "+scriptName, err)
+			continue
+		}
+		for _, s := range lines {
+			g.print(s)
+		}
 	}
 }
 
@@ -80,7 +59,8 @@ func (g *Gosh) writeGoArgsLoop() {
 
 	g.gPrint("for _, _arg = range _args {", tag)
 	g.in()
-	g.writeGoFileScript()
+	g.gPrint("_ = _arg", tag) // force the use of _arg
+	g.writeScript(goshScriptExec)
 	g.out()
 	g.gPrint("}", tag)
 }
@@ -152,7 +132,7 @@ func (g *Gosh) writeGoFileReadLoop() {
 		g.gDecl("_lp", " = _sre.Split(_l.Text(), -1)", tag)
 	}
 
-	g.writeGoFileScript()
+	g.writeScript(goshScriptExec)
 
 	g.out()
 	g.gPrint("}", tag)
@@ -227,7 +207,7 @@ func (g *Gosh) writeGoFileWebserverHandler() {
 	g.gPrint("", "webserver")
 	g.gPrint(g.defaultHandlerFuncDecl()+" {", "webserver")
 	g.in()
-	g.writeGoFileScript()
+	g.writeScript(goshScriptExec)
 	g.out()
 	g.gPrint("}", "webserver")
 }
@@ -252,7 +232,7 @@ func (g *Gosh) writeGoFile() {
 
 	g.writeGoshComment()
 	g.writeGoFileImports()
-	g.writeGoFileGlobals()
+	g.writeScript(goshScriptGlobal)
 
 	g.gPrint("", "frame")
 	g.gPrint("func main() {", "frame")
@@ -268,7 +248,7 @@ func (g *Gosh) writeGoFile() {
 	g.out()
 	g.gPrint("}", "frame")
 
-	g.writeGoFilePreScript()
+	g.writeScript(goshScriptBefore)
 
 	if g.runAsWebserver {
 		g.writeGoFileWebserverInit()
@@ -277,10 +257,10 @@ func (g *Gosh) writeGoFile() {
 	} else if len(g.args) > 0 {
 		g.writeGoArgsLoop()
 	} else {
-		g.writeGoFileScript()
+		g.writeScript(goshScriptExec)
 	}
 
-	g.writeGoFilePostScript()
+	g.writeScript(goshScriptAfter)
 
 	g.out()
 	g.gPrint("}", "frame")

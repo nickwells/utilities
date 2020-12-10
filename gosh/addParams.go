@@ -6,6 +6,7 @@ import (
 
 	"github.com/nickwells/check.mod/check"
 	"github.com/nickwells/filecheck.mod/filecheck"
+	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paction"
 	"github.com/nickwells/param.mod/v5/param/psetter"
@@ -58,6 +59,39 @@ func makeCodeSectionHelpText(name, sect string) string {
 		" in the '" + sect + "' section in the order they are given."
 }
 
+// snippetPAF generates the Post-Action func (PAF) that adds the snippet name
+// to the named script.
+//
+// Note that we pass a pointer to the snippet name rather than the string -
+// this is necessary otherwise we are passing the text value at the point the
+// PAF is being generated not at the point where the parameter value is
+// given.
+func snippetPAF(g *Gosh, sName *string, scriptName string) param.ActionFunc {
+	return func(_ location.L, _ *param.ByName, _ []string) error {
+		err := cacheSnippet(g, *sName)
+		if err != nil {
+			return err
+		}
+
+		g.AddScriptEntry(scriptName, *sName, snippetExpand)
+		return nil
+	}
+}
+
+// scriptPAF generates the Post-Action func (PAF) that adds the text to the
+// named script.
+//
+// Note that we pass a pointer to the text of the code rather than the string
+// - this is necessary otherwise we are passing the text value at the point
+// the PAF is being generated not at the point where the parameter value is
+// given.
+func scriptPAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
+	return func(_ location.L, _ *param.ByName, _ []string) error {
+		g.AddScriptEntry(scriptName, *text, verbatim)
+		return nil
+	}
+}
+
 // addSnippetParams will add the parameters in the "snippet" parameter group
 func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
@@ -99,7 +133,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 			makeSnippetHelpText(execSect),
 			param.AltName("snippet"),
 			param.AltName("e-s"),
-			param.PostAction(snippetPAF(g, &snippetName, &g.script)),
+			param.PostAction(snippetPAF(g, &snippetName, goshScriptExec)),
 			param.SeeAlso(paramNameSnippetDir, paramNameSnippetList),
 		)
 
@@ -110,7 +144,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 			},
 			makeSnippetHelpText(beforeSect),
 			param.AltName("b-s"),
-			param.PostAction(snippetPAF(g, &snippetName, &g.beforeScript)),
+			param.PostAction(snippetPAF(g, &snippetName, goshScriptBefore)),
 		)
 
 		ps.Add("after-snippet",
@@ -120,7 +154,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 			},
 			makeSnippetHelpText(afterSect),
 			param.AltName("a-s"),
-			param.PostAction(snippetPAF(g, &snippetName, &g.afterScript)),
+			param.PostAction(snippetPAF(g, &snippetName, goshScriptAfter)),
 		)
 
 		ps.Add("global-snippet",
@@ -130,7 +164,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 			},
 			makeSnippetHelpText(globalSect),
 			param.AltName("g-s"),
-			param.PostAction(snippetPAF(g, &snippetName, &g.globalsList)),
+			param.PostAction(snippetPAF(g, &snippetName, goshScriptGlobal)),
 		)
 
 		return nil
@@ -217,10 +251,11 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 			),
 		)
 
+		var codeVal string
 		g.runAsWebserverSetters = append(g.runAsWebserverSetters,
 			ps.Add("web-print",
-				psetter.StrListAppender{
-					Value: &g.script,
+				psetter.String{
+					Value: &codeVal,
 					Editor: addPrint{
 						prefixes:    []string{"web-"},
 						paramToCall: webPrintMap,
@@ -237,11 +272,13 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 				param.AltName("web-pln"),
 				param.PostAction(paction.SetBool(&g.runAsWebserver, true)),
 				param.GroupName(paramGroupNameWeb),
+				param.PostAction(scriptPAF(g, &codeVal, goshScriptExec)),
 			),
 		)
 
 		ps.AddFinalCheck(func() error {
-			if len(g.script) > 0 && g.httpHandler != dfltHTTPHandlerName {
+			if len(g.scripts[goshScriptExec]) > 0 &&
+				g.httpHandler != dfltHTTPHandlerName {
 				return errors.New(
 					"You have provided an HTTP handler but also given" +
 						" lines of code to run. These lines of code will" +
@@ -339,18 +376,21 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 // addParams will add parameters to the passed ParamSet
 func addParams(g *Gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
-		ps.Add("exec", psetter.StrListAppender{Value: &g.script},
+		var codeVal string
+
+		ps.Add("exec", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", execSect),
 			param.AltName("e"),
 			// ... and to help our python-speaking friends feel at home
 			// (bash also uses -c)
 			param.AltName("c"),
+			param.PostAction(scriptPAF(g, &codeVal, goshScriptExec)),
 		)
 
 		ps.Add("exec-print",
-			psetter.StrListAppender{
-				Value: &g.script,
+			psetter.String{
+				Value: &codeVal,
 				Editor: addPrint{
 					paramToCall: stdPrintMap,
 					needsVal:    needsValMap,
@@ -363,17 +403,19 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.AltName("p"),
 			param.AltName("pf"),
 			param.AltName("pln"),
+			param.PostAction(scriptPAF(g, &codeVal, goshScriptExec)),
 		)
 
-		ps.Add("before", psetter.StrListAppender{Value: &g.beforeScript},
+		ps.Add("before", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", beforeSect),
 			param.AltName("b"),
+			param.PostAction(scriptPAF(g, &codeVal, goshScriptBefore)),
 		)
 
 		ps.Add("before-print",
-			psetter.StrListAppender{
-				Value: &g.beforeScript,
+			psetter.String{
+				Value: &codeVal,
 				Editor: addPrint{
 					prefixes:    []string{"before-", "b-"},
 					paramToCall: stdPrintMap,
@@ -386,16 +428,19 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.AltName("b-p"),
 			param.AltName("b-pf"),
 			param.AltName("b-pln"),
+			param.PostAction(scriptPAF(g, &codeVal, goshScriptBefore)),
 		)
 
-		ps.Add("after", psetter.StrListAppender{Value: &g.afterScript},
+		ps.Add("after", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", afterSect),
-			param.AltName("a"))
+			param.AltName("a"),
+			param.PostAction(scriptPAF(g, &codeVal, goshScriptAfter)),
+		)
 
 		ps.Add("after-print",
-			psetter.StrListAppender{
-				Value: &g.afterScript,
+			psetter.String{
+				Value: &codeVal,
 				Editor: addPrint{
 					prefixes:    []string{"after-", "a-"},
 					paramToCall: stdPrintMap,
@@ -408,11 +453,12 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.AltName("a-p"),
 			param.AltName("a-pf"),
 			param.AltName("a-pln"),
+			param.PostAction(scriptPAF(g, &codeVal, goshScriptAfter)),
 		)
 
 		ps.Add("w-print",
-			psetter.StrListAppender{
-				Value: &g.script,
+			psetter.String{
+				Value: &codeVal,
 				Editor: addPrint{
 					prefixes:    []string{"w-"},
 					paramToCall: wPrintMap,
@@ -427,14 +473,16 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.AltName("w-p"),
 			param.AltName("w-pf"),
 			param.AltName("w-pln"),
+			param.PostAction(scriptPAF(g, &codeVal, goshScriptExec)),
 		)
 
-		ps.Add("global", psetter.StrListAppender{Value: &g.globalsList},
+		ps.Add("global", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				" For instance, functions that you might want to call from"+
 				" several places, global variables or data types."+
 				makeCodeSectionHelpText("", globalSect),
 			param.AltName("g"),
+			param.PostAction(scriptPAF(g, &codeVal, goshScriptGlobal)),
 		)
 
 		ps.Add("import",
