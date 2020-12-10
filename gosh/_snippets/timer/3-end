@@ -1,0 +1,12 @@
+// snippet -*- go -*-
+// snippet: Note: This captures the timings and reports the results
+// snippet: Import: fmt
+// snippet: ComesAfter: timer/1-init
+// snippet: ComesAfter: timer/2-start
+			__s.Add(float64(time.Since(__start)))
+		}
+		fmt.Println(__s)
+		if __showHist {
+			fmt.Println(__s.Hist())
+		}
+	}

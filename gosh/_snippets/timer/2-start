@@ -1,13 +1,11 @@
 // snippet: -*- go -*-
-// snippet: Note: This must come second
-// snippet: Note:
 // snippet: Note: Any Go code after this will be timed and reported by the
 // snippet: Note: code in the final snippet
 // snippet: ========================================================
 // snippet: Import: github.com/nickwells/smpls.mod/smpls
 // snippet: Import: time
-// snippet: ComesAfter: timer/1-intro
-// snippet: Expect: timer/3-after
+// snippet: ComesAfter: timer/1-init
+// snippet: Expect: timer/3-end
 	for __repeats > 0 {
 		__repeats--
 
