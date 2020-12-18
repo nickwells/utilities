@@ -76,12 +76,10 @@ func (s Status) Report() {
 		reportVal(s.diffErr, "due to diff error", 8)
 	}
 
-	if reportVal(s.compared, "compared", 0) {
-		fmt.Println("\tof which:")
-		reportVal(s.deleted, "deleted", 8)
-		reportVal(s.reverted, "reverted", 8)
-		reportVal(s.kept, "kept", 8)
-	}
+	reportVal(s.compared, "compared", 0)
+	reportVal(s.deleted, "deleted", 0)
+	reportVal(s.reverted, "reverted", 0)
+	reportVal(s.kept, "kept", 0)
 	if s.revertAll {
 		fmt.Printf("Some files were reverted without comparison\n")
 	}
