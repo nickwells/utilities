@@ -6,6 +6,9 @@
 // snippet: Note: You can add Go code after this to change the default values
 // snippet: Expect: timer/2-start
 // snippet: Expect: timer/3-end
+// snippet: Tag: Declares:__repeats  - the number of times to repeat the timing
+// snippet: Tag: Declares:__trials   - the number of trials to time
+// snippet: Tag: Declares:__showHist - set to true to see a histogram of timings
 var __repeats int64 = 1
 var __trials int64 = 1e6
 var __showHist bool

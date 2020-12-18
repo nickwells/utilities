@@ -1,7 +1,10 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/nickwells/param.mod/v5/param"
+	"github.com/nickwells/snippet.mod/snippet"
 )
 
 const (
@@ -13,16 +16,6 @@ const (
 	noteSnippetsDirs     = "Gosh - snippets directories"
 	noteCodeSections     = "Gosh - code sections"
 )
-
-// makeSnippetDirList returns a string containing a list of the snippet
-// directories
-func makeSnippetDirList(g *Gosh) string {
-	text := ""
-	for _, sd := range g.snippetsDirs {
-		text += "\n" + sd
-	}
-	return text
-}
 
 // addNotes will add any notes to the param PSet
 func addNotes(g *Gosh) func(ps *param.PSet) error {
@@ -93,44 +86,68 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 
 		ps.AddNote(noteSnippetsComments,
 			"Any lines in a snippet file starting with"+
-				" '// "+snippetCommentStr+"' are"+
+				" '// "+snippet.CommentStr+"' are"+
 				" not copied but are treated as comments on the snippet"+
 				" itself."+
 				"\n\n"+
-				"The snippet comments can have some additional meaning"+
-				" as follows. If it is followed by:"+
+				"A snippet comment can have additional meaning."+
+				" If it is followed by one of these values then the"+
+				" rest of the line is used as described:"+
+				"\n\n"+
+				"- '"+snippet.NoteStr+"'"+
 				"\n"+
-				"- '"+snippetNoteStr+"'"+
-				" the remainder of the line is reported as documentation"+
+				" this is reported as documentation"+
 				" when the snippets are listed."+
+				"\n\n"+
+				"- '"+snippet.ImportStr+"'"+
 				"\n"+
-				"- '"+snippetImportStr+"'"+
-				" the remainder of the line is added to the list of"+
+				" this is added to the list of"+
 				" import statements. Note that gosh will format the"+
 				" program it generates with "+goImportsFormatter+
 				" (if available) which should populate the import"+
 				" statement automatically but adding an import comment"+
 				" can ensure that the snippet works even if "+
 				goImportsFormatter+" is not available and can avoid"+
-				" any mismatch"+
+				" any mismatch where the formatter finds the wrong package."+
+				"\n\n"+
+				"- '"+snippet.ExpectStr+"'"+
 				"\n"+
-				"- '"+snippetExpectStr+"'"+
-				" the remainder of the line records another snippet that"+
+				" this records another snippet that"+
 				" is expected to be given if this snippet is used. This"+
 				" allows a chain of snippets to check that all necessary"+
 				" parts have been used and help to ensure correct usage"+
 				" of the snippet chain."+
 				"\n"+
-				"- '"+snippetAfterStr+"'"+
-				" the remainder of the line records another snippet that"+
+				"This is enforced by the Gosh command."+
+				"\n\n"+
+				"- '"+snippet.AfterStr+"'"+
+				"\n"+
+				"Records another snippet that"+
 				" is expected to appear before this snippet is used. This"+
 				" allows a chain of snippets to check that the"+
-				" parts have been used in the right order.")
+				" parts have been used in the right order."+
+				"\n"+
+				"This is enforced by the Gosh command."+
+				"\n\n"+
+				"- '"+snippet.TagStr+"'"+
+				"\n"+
+				"Records a documentary tag."+
+				" The text will be split on a ':' and the"+
+				" first part will be used as a tag with the remainder"+
+				" used as a value. These are then reported when the"+
+				" snippets are listed. These have no semantic"+
+				" meaning and are purely for documentary purposes."+
+				" It allows you to give some structure to your snippet"+
+				" documentation if you desire."+
+				"\n"+
+				"Suggested tag names might be 'Author' to document the"+
+				" snippet author or 'Declares' to record a variable"+
+				" that the snippet declares.")
 
 		ps.AddNote(noteSnippetsDirs,
 			"By default snippets will be searched for in the following"+
 				" directories:\n"+
-				makeSnippetDirList(g)+
+				strings.Join(g.snippetDirs, "\n")+
 				"\n\n"+
 				"More directories can be added to the list using the"+
 				" parameter '"+paramNameSnippetDir+"' which will add new"+

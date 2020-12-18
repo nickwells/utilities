@@ -8,9 +8,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/nickwells/errutil.mod/errutil"
 	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/phelp"
-	"github.com/nickwells/twrap.mod/twrap"
+	"github.com/nickwells/snippet.mod/snippet"
 	"github.com/nickwells/xdg.mod/xdg"
 )
 
@@ -79,17 +79,65 @@ type Gosh struct {
 
 	args        []string
 	filesToRead []string
-	errMap      param.ErrMap
+	errMap      *errutil.ErrMap
 
-	snippetsDirs []string
+	snippetDirs  []string
 	showSnippets bool
 	snippetUsed  map[string]bool
-	snippetCache map[string]*snippet
+	snippets     *snippet.Cache
 
 	baseTempDir string
 	runDir      string
 
 	localModules map[string]string
+}
+
+// CacheSnippet will cache the named snippet and copy any imports it requires
+// into the set of imports for the gosh script
+func (g *Gosh) CacheSnippet(sName string) error {
+	s, err := g.snippets.Add(g.snippetDirs, sName)
+
+	if err != nil {
+		return err
+	}
+
+	g.imports = append(g.imports, s.Imports()...)
+	return nil
+}
+
+// snippetExpand will return the snippet text. It also checks that the
+// snippet is being used in the correct order and returns an error if not.
+func snippetExpand(g *Gosh, sName string) ([]string, error) {
+	s, err := g.snippets.Get(sName)
+
+	if err != nil {
+		return nil, err
+	}
+	g.snippetUsed[sName] = true
+	for _, shouldBeUsed := range s.Follows() {
+		if !g.snippetUsed[shouldBeUsed] {
+			g.addError("Snippet out of order",
+				fmt.Errorf("snippet %q should appear before snippet %q",
+					shouldBeUsed, sName))
+		}
+	}
+
+	if len(s.Text()) == 0 {
+		return nil, nil
+	}
+
+	var content []string
+	addSnippetComment(&content, s.Path())
+	addSnippetComment(&content, "BEGIN")
+	content = append(content, s.Text()...)
+	addSnippetComment(&content, "END")
+
+	return content, nil
+}
+
+// addSnippetComment writes the message at the end of a snippet comment
+func addSnippetComment(script *[]string, message string) {
+	*script = append(*script, "//"+goshCommentIntro+"snippet : "+message)
 }
 
 // NewGosh creates a new instance of the Gosh struct with all the initial
@@ -113,7 +161,7 @@ func NewGosh() *Gosh {
 		formatter:     dfltFormatter,
 		formatterArgs: []string{dfltFormatterArg},
 
-		errMap: make(param.ErrMap),
+		errMap: errutil.NewErrMap(),
 
 		httpPort:    dfltHTTPPort,
 		httpPath:    dfltHTTPPath,
@@ -121,8 +169,8 @@ func NewGosh() *Gosh {
 
 		runDir: cwd,
 
-		snippetUsed:  map[string]bool{},
-		snippetCache: map[string]*snippet{},
+		snippetUsed: map[string]bool{},
+		snippets:    &snippet.Cache{},
 	}
 
 	g.setDfltSnippetPath()
@@ -139,12 +187,12 @@ func (g *Gosh) setDfltSnippetPath() {
 		"gosh",
 		"snippets"}
 
-	g.snippetsDirs = []string{
+	g.snippetDirs = []string{
 		filepath.Join(append([]string{xdg.ConfigHome()}, snippetPath...)...),
 	}
 	dirs := xdg.ConfigDirs()
 	if len(dirs) > 0 {
-		g.snippetsDirs = append(g.snippetsDirs,
+		g.snippetDirs = append(g.snippetDirs,
 			filepath.Join(append(dirs[:1], snippetPath...)...))
 	}
 }
@@ -170,25 +218,11 @@ func (g *Gosh) AddScriptEntry(sName, v string, ef expandFunc) {
 
 // addError adds the error to the named error map entry
 func (g *Gosh) addError(name string, err error) {
-	g.errMap[name] = append(g.errMap[name], err)
-}
-
-// checkSnippets will check that all the expected snippets are present.
-func (g *Gosh) checkSnippets() {
-	for sName, s := range g.snippetCache {
-		for _, expected := range s.expects {
-			_, ok := g.snippetCache[expected]
-			if !ok {
-				g.addError(
-					fmt.Sprintf("Missing snippet: %q", expected),
-					fmt.Errorf("expected by: %q", sName))
-			}
-		}
-	}
+	g.errMap.AddError(name, err)
 }
 
 // checkScripts checks that not all the scripts are empty
-func (g Gosh) checkScripts() {
+func (g *Gosh) checkScripts() {
 	for _, s := range g.scripts {
 		if len(s) > 0 {
 			return
@@ -197,12 +231,11 @@ func (g Gosh) checkScripts() {
 	g.addError("no code", errors.New("There is no code to run"))
 }
 
-// reportErrors checks if the error map is empty and if not it reports the
-// errors and exits.
+// reportErrors checks if there are errors to report and if there are it
+// reports them and exits.
 func (g *Gosh) reportErrors() {
-	if len(g.errMap) != 0 {
-		twc := twrap.NewTWConfOrPanic(twrap.SetWriter(os.Stderr))
-		phelp.ReportErrors(twc, "gosh", g.errMap)
+	if errCount, _ := g.errMap.CountErrors(); errCount != 0 {
+		g.errMap.Report(os.Stderr, "gosh")
 		os.Exit(1)
 	}
 }

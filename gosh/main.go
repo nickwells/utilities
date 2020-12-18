@@ -13,6 +13,7 @@ import (
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
+	"github.com/nickwells/snippet.mod/snippet"
 	"github.com/nickwells/timer.mod/timer"
 	"github.com/nickwells/verbose.mod/verbose"
 )
@@ -86,11 +87,12 @@ func main() {
 	ps.Parse()
 
 	if g.showSnippets {
-		g.listSnippets()
+		snippet.List(os.Stdout, g.snippetDirs, g.errMap)
+		g.reportErrors()
 		os.Exit(0)
 	}
 
-	g.checkSnippets()
+	g.snippets.Check(g.errMap)
 	g.checkScripts()
 	g.reportErrors()
 

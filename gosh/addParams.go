@@ -68,7 +68,7 @@ func makeCodeSectionHelpText(name, sect string) string {
 // given.
 func snippetPAF(g *Gosh, sName *string, scriptName string) param.ActionFunc {
 	return func(_ location.L, _ *param.ByName, _ []string) error {
-		err := cacheSnippet(g, *sName)
+		_, err := g.snippets.Add(g.snippetDirs, *sName)
 		if err != nil {
 			return err
 		}
@@ -97,7 +97,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		ps.Add(paramNameSnippetDir,
 			psetter.PathnameListAppender{
-				Value:       &g.snippetsDirs,
+				Value:       &g.snippetDirs,
 				Expectation: filecheck.DirExists(),
 				Prepend:     true,
 			},
@@ -616,14 +616,4 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 
 		return nil
 	}
-}
-
-// runInReadloopParamNames returns a slice of strings, each one the name of a
-// parameter that will set the runInreadLoop flag
-func (g *Gosh) runInReadloopParamNames() []string {
-	rval := make([]string, 0, len(g.runInReadloopSetters))
-	for _, p := range g.runInReadloopSetters {
-		rval = append(rval, fmt.Sprintf("%q", "-"+p.Name()))
-	}
-	return rval
 }
