@@ -12,8 +12,8 @@ const (
 	noteFilenames        = "Gosh - filenames"
 	noteVars             = "Gosh - variables"
 	noteSnippets         = "Gosh - snippets"
-	noteSnippetsComments = "Gosh - snippets comments"
-	noteSnippetsDirs     = "Gosh - snippets directories"
+	noteSnippetsComments = "Gosh - snippet comments"
+	noteSnippetsDirs     = "Gosh - snippet directories"
 	noteCodeSections     = "Gosh - code sections"
 )
 
