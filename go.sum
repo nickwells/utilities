@@ -20,6 +20,7 @@ github.com/nickwells/location.mod v1.2.16 h1:Nq8Irg0sr8gNDLJv0QOjGV/qtOpDw5f5IlU
 github.com/nickwells/location.mod v1.2.16/go.mod h1:uSywXjaNmvOaMju043ohtVQAQ7vPAH4qVYsKGPGknPw=
 github.com/nickwells/mathutil.mod v1.0.16 h1:2MXtrMvrMaRsbxMDrNUW158q0h4mpmk39+tW3z5fRdg=
 github.com/nickwells/mathutil.mod v1.0.16/go.mod h1:aashJ7Zd9+xwzKXDDY5/gEPbG0c0kpBr/FVm+8+tFng=
+github.com/nickwells/param.mod/v5 v5.2.9 h1:P4EbG66NWOy2MUDQgvUCyy7PyIdY8Qqjm9GAOjqo9a4=
 github.com/nickwells/param.mod/v5 v5.2.9/go.mod h1:p6pN3LvFNq5xMHZUm+8ehVUyjBT5TWmJT44J/lNHADo=
 github.com/nickwells/snippet.mod v1.0.0 h1:BoKI34MbN6U5FvPVV0BkdieLtaVINaZzlqHqLroM+as=
 github.com/nickwells/snippet.mod v1.0.0/go.mod h1:R4wuF4yTdC2160gdLpDC2cyLZaru04l1KG2oRXODSSo=

@@ -76,6 +76,7 @@ func (g *Gosh) writeGoFileReadLoop() {
 
 	g.gDecl("_r", " = os.Stdin", tag)
 	g.gDecl("_fn", ` = "standard input"`, tag)
+	g.gDecl("_fl", "", tag)
 
 	if g.splitLine {
 		tag := tag + " - splitline"
@@ -91,10 +92,10 @@ func (g *Gosh) writeGoFileReadLoop() {
 
 		g.gPrint("for _, _fn = range _fns {", tag)
 		g.in()
-		g.gDecl("_fl", "", tag)
 		g.gDecl("_f", "", tag)
 		g.gDecl("_err", "", tag)
 		g.gPrint(`_f, _err = os.Open(_fn)`, tag)
+		g.gPrint(`_fl = 0`, tag)
 		g.gPrint(`if _err != nil {`, tag)
 		g.in()
 		g.gPrintErr(`"Error opening: %q : %v\n", _fn, _err`, tag)
