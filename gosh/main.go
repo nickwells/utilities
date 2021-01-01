@@ -71,7 +71,7 @@ func main() {
 				" the standard input or from a list of files and,"+
 				" optionally, split each line into fields."+
 				"\n\n"+
-				" Alternatively you can quickly generate a simple webserver."+
+				"Alternatively you can quickly generate a simple webserver."+
 				"\n\n"+
 				"It's faster than opening an editor and writing a Go"+
 				" program from scratch especially if there are only a few"+

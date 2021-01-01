@@ -226,8 +226,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 					" listen on. Setting this will also force the script"+
 					" to be run within an http handler function. See the"+
 					" description for the "+paramNameHTTPServer+" parameter"+
-					" for details. If you set this to a value less than"+
-					" 1024 you will need to have superuser privilege.",
+					" for details.",
 				param.PostAction(paction.SetBool(&g.runAsWebserver, true)),
 				param.GroupName(paramGroupNameWeb),
 			),
