@@ -17,6 +17,7 @@ const (
 	paramGroupNameWeb      = "cmd-web"
 
 	paramNameInPlaceEdit = "in-place-edit"
+	paramNameWPrint      = "w-print"
 	paramNameHTTPServer  = "http-server"
 
 	paramNameSnippetDir  = "snippets-dir"
@@ -295,6 +296,8 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 // group
 func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
+		var codeVal string
+
 		ps.AddGroup(paramGroupNameReadloop,
 			"parameters relating to building a script with a read-loop.")
 
@@ -341,8 +344,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 			ps.Add(paramNameInPlaceEdit, psetter.Bool{Value: &g.inPlaceEdit},
 				"read each file given as a residual parameter"+
 					" (after "+ps.TerminalParam()+") and replace its"+
-					" contents with whatever is printed to the '_w' file "+
-					"(you can use the 'w-print...' parameters for this)."+
+					" contents with whatever is printed to the '_w' file."+
 					" The original file will be kept in a copy with the"+
 					" original name and  '.orig' extension. If any of the"+
 					" supplied files already has a '.orig' copy then the"+
@@ -350,7 +352,30 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 				param.AltName("i"),
 				param.PostAction(paction.SetBool(&g.runInReadLoop, true)),
 				param.GroupName(paramGroupNameReadloop),
+				param.SeeAlso(paramNameWPrint),
 			),
+		)
+
+		ps.Add(paramNameWPrint,
+			psetter.String{
+				Value: &codeVal,
+				Editor: addPrint{
+					prefixes:    []string{"w-"},
+					paramToCall: wPrintMap,
+					needsVal:    needsValMap,
+				},
+			},
+			makePrintHelpText(execSect)+
+				makePrintVariantHelpText("_w",
+					"output file used for in-place editing"),
+			param.AltName("w-printf"),
+			param.AltName("w-println"),
+			param.AltName("w-p"),
+			param.AltName("w-pf"),
+			param.AltName("w-pln"),
+			param.PostAction(scriptPAF(g, &codeVal, goshScriptExec)),
+			param.GroupName(paramGroupNameReadloop),
+			param.SeeAlso(paramNameInPlaceEdit),
 		)
 
 		if err := ps.SetNamedRemHandler(g, "filenames"); err != nil {
@@ -453,26 +478,6 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.AltName("a-pf"),
 			param.AltName("a-pln"),
 			param.PostAction(scriptPAF(g, &codeVal, goshScriptAfter)),
-		)
-
-		ps.Add("w-print",
-			psetter.String{
-				Value: &codeVal,
-				Editor: addPrint{
-					prefixes:    []string{"w-"},
-					paramToCall: wPrintMap,
-					needsVal:    needsValMap,
-				},
-			},
-			makePrintHelpText(execSect)+
-				makePrintVariantHelpText("_w",
-					"output file used for in-place editing"),
-			param.AltName("w-printf"),
-			param.AltName("w-println"),
-			param.AltName("w-p"),
-			param.AltName("w-pf"),
-			param.AltName("w-pln"),
-			param.PostAction(scriptPAF(g, &codeVal, goshScriptExec)),
 		)
 
 		ps.Add("global", psetter.String{Value: &codeVal},
