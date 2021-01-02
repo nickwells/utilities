@@ -28,22 +28,28 @@ func addParams(ps *param.PSet) error {
 		param.AltName("do"),
 	)
 
-	ps.Add("generate-args", psetter.StrListAppender{Value: &generateArgs},
+	ps.Add("args-generate", psetter.StrListAppender{Value: &generateArgs},
 		"set the arguments to be given to the go generate command",
+		param.AltName("generate-args"),
 		param.AltName("gen-args"),
+		param.AltName("g-args"),
 		param.PostAction(paction.SetMapIf(actions, generateAct, true,
 			paction.IsACommandLineParam)),
 	)
 
-	ps.Add("install-args", psetter.StrListAppender{Value: &installArgs},
+	ps.Add("args-install", psetter.StrListAppender{Value: &installArgs},
 		"set the arguments to be given to the go install command",
+		param.AltName("install-args"),
 		param.AltName("inst-args"),
+		param.AltName("i-args"),
 		param.PostAction(paction.SetMapIf(actions, installAct, true,
 			paction.IsACommandLineParam)),
 	)
 
-	ps.Add("build-args", psetter.StrListAppender{Value: &buildArgs},
+	ps.Add("args-build", psetter.StrListAppender{Value: &buildArgs},
 		"set the arguments to be given to the go build command",
+		param.AltName("build-args"),
+		param.AltName("b-args"),
 		param.PostAction(paction.SetMapIf(actions, buildAct, true,
 			paction.IsACommandLineParam)),
 	)
