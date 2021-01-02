@@ -1,6 +1,6 @@
 // snippet: -*- go -*-
-// snippet: Note: Any Go code after this will be timed and reported by the
-// snippet: Note: code in the final snippet
+// snippet: Note: Any Go code after this will be timed and
+// snippet: Note: reported by the code in the final snippet
 // snippet: ========================================================
 // snippet: Import: github.com/nickwells/smpls.mod/smpls
 // snippet: Import: time

@@ -1,5 +1,6 @@
 // snippet -*- go -*-
-// snippet: Note: This captures the timings and reports the results
+// snippet: Note: This captures the timings and reports
+// snippet: Note: the results
 // snippet: Import: fmt
 // snippet: ComesAfter: timer/1-init
 // snippet: ComesAfter: timer/2-start
