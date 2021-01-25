@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/timer.mod/timer"
@@ -53,9 +52,11 @@ func (g *Gosh) writeGoArgsLoop() {
 	tag := "argloop"
 
 	g.gDecl("_arg", "", tag)
-	g.gDecl("_args",
-		fmt.Sprintf(" = []string{%s}", strings.Join(g.args, ", ")),
-		tag)
+	g.gDecl("_args", " = []string{", tag)
+	for _, arg := range g.args {
+		g.gPrint(arg+",", tag)
+	}
+	g.gPrint("}", tag)
 
 	g.gPrint("for _, _arg = range _args {", tag)
 	g.in()
@@ -86,9 +87,11 @@ func (g *Gosh) writeGoFileReadLoop() {
 	}
 	if len(g.filesToRead) > 0 {
 		tag := tag + " - filelist"
-		g.gDecl("_fns",
-			fmt.Sprintf(" = []string{%s}", strings.Join(g.filesToRead, ", ")),
-			tag)
+		g.gDecl("_fns", " = []string{", tag)
+		for _, arg := range g.filesToRead {
+			g.gPrint(arg+",", tag)
+		}
+		g.gPrint("}", tag)
 
 		g.gPrint("for _, _fn = range _fns {", tag)
 		g.in()
