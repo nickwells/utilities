@@ -276,7 +276,7 @@ type varMap map[string]varInfo
 var knownVarMap varMap = varMap{
 	"_arg": {
 		typeName: "string",
-		desc:     "the argument",
+		desc:     "the current argument",
 	},
 	"_args": {
 		typeName: "[]string",
@@ -292,7 +292,7 @@ var knownVarMap varMap = varMap{
 	},
 	"_req": {
 		typeName: "*http.Request",
-		desc:     "the request to the seb server",
+		desc:     "the request to the web server",
 	},
 	"_gh": {
 		typeName: dfltHTTPHandlerName,
