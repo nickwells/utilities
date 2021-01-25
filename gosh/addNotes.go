@@ -138,7 +138,7 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 				" snippets are listed. These have no semantic"+
 				" meaning and are purely for documentary purposes."+
 				" It allows you to give some structure to your snippet"+
-				" documentation if you desire."+
+				" documentation."+
 				"\n"+
 				"Suggested tag names might be 'Author' to document the"+
 				" snippet author or 'Declares' to record a variable"+
