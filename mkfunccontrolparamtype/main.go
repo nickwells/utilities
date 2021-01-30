@@ -19,6 +19,8 @@ var typeName string
 var typeDesc string
 var outputFileName string
 var makeFile = true
+var printPreamble = true
+var printIsValid = true
 var forTesting bool
 var constNames []string
 
@@ -47,12 +49,16 @@ func main() {
 
 // printFile writes the contents of the file being generated
 func printFile(f *os.File, ps *param.PSet) {
-	gogen.PrintPreambleOrDie(f, ps)
+	if printPreamble {
+		gogen.PrintPreambleOrDie(f, ps)
 
-	fmt.Fprintln(f)
+		fmt.Fprintln(f)
+	}
 
 	printTypeDeclaration(f)
-	printIsValidFunc(f)
+	if printIsValid {
+		printIsValidFunc(f)
+	}
 }
 
 // printTypeDeclaration writes the type declaration and constant values to
@@ -170,6 +176,25 @@ func addParams(ps *param.PSet) error {
 		"don't create the go file, instead just print the content to"+
 			" standard out. This is useful for debugging or just to "+
 			"see what would have been produced",
+		param.Attrs(param.DontShowInStdUsage),
+	)
+
+	ps.Add("no-preamble",
+		psetter.Bool{
+			Invert: true,
+			Value:  &printPreamble,
+		},
+		"don't print the introductory comment showing that the code"+
+			" was produced by this program",
+		param.Attrs(param.DontShowInStdUsage),
+	)
+
+	ps.Add("no-isvalid",
+		psetter.Bool{
+			Invert: true,
+			Value:  &printIsValid,
+		},
+		"don't print the IsValid method",
 		param.Attrs(param.DontShowInStdUsage),
 	)
 
