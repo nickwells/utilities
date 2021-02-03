@@ -581,14 +581,10 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 
 		ps.Add("local-module",
 			ModuleMapSetter{
-				Value:     &g.localModules,
-				Separator: "=>",
+				Value: &g.localModules,
 			},
-			"give the name and mapping of a local module."+
-				" The name should be the module name"+
-				" and the mapping should be the path to"+
-				" the module directory from your current directory."+
-				" They should be separated by '"+ModuleMapSeparator+"'.",
+			"the name and mapping of a local module."+
+				" This will add a replace directive in the 'go.mod' file.",
 			param.Attrs(param.DontShowInStdUsage),
 		)
 

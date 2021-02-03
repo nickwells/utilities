@@ -11,27 +11,26 @@ import (
 	"github.com/nickwells/param.mod/v5/param/psetter"
 )
 
-const ModuleMapSeparator = "=>"
+const moduleMapSeparator = "=>"
 
 // ModuleMapSetter is a specialised setter for setting entries in a map from
 // module name to directory. The resulting entries will be used to set
 // replace entries in a go.mod file.
 type ModuleMapSetter struct {
 	psetter.ValueReqMandatory
-	Value     *map[string]string
-	Separator string
+	Value *map[string]string
 }
 
 // SetWithVal (called when a value follows the parameter) splits the value
 // using the Separator. It then checks that the second part of the value is a
 // valid directory and returns an error if not.
 func (s ModuleMapSetter) SetWithVal(_ string, paramVal string) error {
-	parts := strings.SplitN(paramVal, s.Separator, 2)
+	parts := strings.SplitN(paramVal, moduleMapSeparator, 2)
 
 	if len(parts) != 2 {
 		return fmt.Errorf(
 			"bad value: %q, should be in two parts with %q in between",
-			paramVal, s.Separator)
+			paramVal, moduleMapSeparator)
 	}
 	mod, dir := parts[0], parts[1]
 
@@ -56,7 +55,12 @@ func (s ModuleMapSetter) SetWithVal(_ string, paramVal string) error {
 // AllowedValues returns a string listing the allowed values
 func (s ModuleMapSetter) AllowedValues() string {
 	return "a module name and a replacement directory separated by " +
-		s.Separator
+		moduleMapSeparator
+}
+
+// ValDescribe returns a brief description of the value
+func (s ModuleMapSetter) ValDescribe() string {
+	return "mod" + moduleMapSeparator + "path"
 }
 
 // CurrentValue returns the current setting of the parameter value
@@ -71,7 +75,7 @@ func (s ModuleMapSetter) CurrentValue() string {
 
 	sep := ""
 	for _, k := range keys {
-		cv += sep + fmt.Sprintf("%s%s%v", k, s.Separator, (*s.Value)[k])
+		cv += sep + fmt.Sprintf("%s%s%v", k, moduleMapSeparator, (*s.Value)[k])
 		sep = "\n"
 	}
 
