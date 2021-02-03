@@ -81,10 +81,9 @@ type Gosh struct {
 	filesToRead []string
 	errMap      *errutil.ErrMap
 
-	snippetDirs  []string
-	showSnippets bool
-	snippetUsed  map[string]bool
-	snippets     *snippet.Cache
+	snippetDirs []string
+	snippetUsed map[string]bool
+	snippets    *snippet.Cache
 
 	baseTempDir string
 	runDir      string

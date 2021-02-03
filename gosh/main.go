@@ -20,7 +20,7 @@ import (
 
 // Created: Wed Sep  4 09:58:54 2019
 
-// constantWidthStr returns the string formatter into a right-justified
+// constantWidthStr returns the string formatted into a right-justified
 // string of a consistent length
 func constantWidthStr(s string) string {
 	return fmt.Sprintf("%18.18s", s)
@@ -44,10 +44,14 @@ var verboseTimer VerboseTimer
 
 func main() {
 	defer timer.Start(constantWidthStr("main"), verboseTimer)()
+
 	g := NewGosh()
+	slp := &snippetListParams{}
+
 	ps := paramset.NewOrDie(
 		verbose.AddParams,
 
+		addSnippetListParams(slp),
 		addSnippetParams(g),
 		addWebParams(g),
 		addReadloopParams(g),
@@ -86,8 +90,19 @@ func main() {
 
 	ps.Parse()
 
-	if g.showSnippets {
-		snippet.List(os.Stdout, g.snippetDirs, g.errMap)
+	if slp.listSnippets {
+		lc, err := snippet.NewListCfg(os.Stdout, g.snippetDirs, g.errMap,
+			snippet.SetConstraints(slp.constraints...),
+			snippet.SetParts(slp.parts...),
+			snippet.SetTags(slp.tags...),
+			snippet.HideIntro(slp.hideIntro))
+		if err != nil {
+			fmt.Fprintln(os.Stderr,
+				"There was a problem configuring the snippet list:")
+			fmt.Fprintln(os.Stderr, "\t", err)
+			os.Exit(1)
+		}
+		lc.List()
 		g.reportErrors()
 		os.Exit(0)
 	}

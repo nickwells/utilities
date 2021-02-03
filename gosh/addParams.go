@@ -20,8 +20,7 @@ const (
 	paramNameWPrint      = "w-print"
 	paramNameHTTPServer  = "http-server"
 
-	paramNameSnippetDir  = "snippets-dir"
-	paramNameSnippetList = "snippets-list"
+	paramNameSnippetDir = "snippets-dir"
 
 	globalSect = "global"
 	beforeSect = "before"
@@ -108,21 +107,12 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 				" the start of the list of snippets directories and so"+
 				" will be searched before any existing directories. This"+
 				" can be given multiple times and each instance will"+
-				" insert another direcory into the list. When finding"+
+				" insert another directory into the list. When finding"+
 				" snippets the directories are searched in order and the"+
 				" first snippet found is used.",
 			param.AltName("snippet-dir"),
 			param.Attrs(param.DontShowInStdUsage),
-		)
-
-		ps.Add(paramNameSnippetList,
-			psetter.Bool{Value: &g.showSnippets},
-			"list all the available snippets and exit, no program is run."+
-				" It will also show any per-snippet documentation and"+
-				" report on any problems detected with the snippets.",
-			param.AltName("show-snippets"),
-			param.AltName("snippet-list"),
-			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
+			param.SeeAlso(paramNameSnippetList),
 		)
 
 		var snippetName string
@@ -134,6 +124,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 			makeSnippetHelpText(execSect),
 			param.AltName("snippet"),
 			param.AltName("e-s"),
+			param.AltName("es"),
 			param.PostAction(snippetPAF(g, &snippetName, goshScriptExec)),
 			param.SeeAlso(paramNameSnippetDir, paramNameSnippetList),
 		)
@@ -145,6 +136,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 			},
 			makeSnippetHelpText(beforeSect),
 			param.AltName("b-s"),
+			param.AltName("bs"),
 			param.PostAction(snippetPAF(g, &snippetName, goshScriptBefore)),
 		)
 
@@ -155,6 +147,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 			},
 			makeSnippetHelpText(afterSect),
 			param.AltName("a-s"),
+			param.AltName("as"),
 			param.PostAction(snippetPAF(g, &snippetName, goshScriptAfter)),
 		)
 
@@ -165,6 +158,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 			},
 			makeSnippetHelpText(globalSect),
 			param.AltName("g-s"),
+			param.AltName("gs"),
 			param.PostAction(snippetPAF(g, &snippetName, goshScriptGlobal)),
 		)
 
@@ -397,7 +391,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 	}
 }
 
-// addParams will add parameters to the passed ParamSet
+// addParams returns a func that will add parameters to the passed ParamSet
 func addParams(g *Gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		var codeVal string
