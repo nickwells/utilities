@@ -95,3 +95,13 @@ gosh -n -e 'if l := len(_l.Text()); l > 80 { ' -pf '"%3d: %s\n", l, _l.Text()' -
 This will read from standard input and print out each line that is longer than
 80 characters\.
 
+```sh
+gosh -snippet-list
+```
+This will list all the available snippets\.
+
+```sh
+gosh -snippet-list -snippet-list-short -snippet-list-part text -snippet-list-constraint iferr
+```
+This will list just the text of the iferr snippet\.
+

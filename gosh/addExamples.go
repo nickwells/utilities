@@ -101,5 +101,15 @@ func addExamples(ps *param.PSet) error {
 		"This will read from standard input and print out each line that"+
 			" is longer than 80 characters.")
 
+	ps.AddExample(`gosh -snippet-list`,
+		"This will list all the available snippets.")
+
+	ps.AddExample(`gosh`+
+		` -snippet-list`+
+		` -snippet-list-short`+
+		` -snippet-list-part text`+
+		` -snippet-list-constraint iferr`,
+		"This will list just the text of the iferr snippet.")
+
 	return nil
 }
