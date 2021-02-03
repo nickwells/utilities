@@ -4,7 +4,7 @@
 // snippet: ========================================================
 // snippet: Import: github.com/nickwells/smpls.mod/smpls
 // snippet: Import: time
-// snippet: ComesAfter: timer/1-init
+// snippet: follows: timer/1-init
 // snippet: Expect: timer/3-end
 	for __repeats > 0 {
 		__repeats--
