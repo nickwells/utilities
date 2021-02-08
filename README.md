@@ -10,27 +10,24 @@ All these tools use the param package to handle command-line flags
 and so they support the standard '-help' parameter which will print out a
 comprehensive usage message.
 
-## gosh
+
+## gosh ![gosh](gosh/_images/gosh.100x100.gif)
 This is a tool for running Go code from the command line.
 
 [See here](gosh/_gosh.DOC.md).
 
-## statfs
-This provides an equivalent to the `df` command but in a form that is easier
-to use in a shell script. The default output is easy for a human to
-understand but with the right flags set it can deliver just the value
-required.
+## findCmpRm
+This finds files with copies, compares them with the copies and optionally
+deletes the old copies.
 
-## sleepuntil
-This provides a way of repeatedly sleeping until a particular time is
-reached.
+[See here](findCmpRm/_findCmpRm.DOC.md)
 
-[See here](sleepuntil/_sleepuntil.DOC.md)
 
-## timeconv
-This provides a way of simply converting the time from one locale to
-another. This can be useful when you are working with colleagues in other
-timezones with different daylight-saving rules.
+## findGoDirs
+This finds Go source directories and optionally performs some useful tasks on
+them or just lists them.
+
+[See here](findGoDirs/_findGoDirs.DOC.md)
 
 ## mkparamfilefunc
 This is intended to be used with go generate to construct functions that can
@@ -60,15 +57,19 @@ This is a tool for generating badges to be inserted into the README.md file
 
 [See here](mkbadge/_mkbadge.DOC.md)
 
-## findCmpRm
-This finds files with copies, compares them with the copies and optionally
-deletes the old copies.
+## statfs
+This provides an equivalent to the Linux `df` command but in a form that is easier
+to use in a shell script. The default output is easy for a human to
+understand but with the right flags set it can deliver just the value
+required.
 
-[See here](findCmpRm/_findCmpRm.DOC.md)
+## sleepuntil
+This provides a way of repeatedly sleeping until a particular time is
+reached.
 
+[See here](sleepuntil/_sleepuntil.DOC.md)
 
-## findGoDirs
-This finds Go source directories and optionally performs some useful tasks on
-them or just lists them.
-
-[See here](findGoDirs/_findGoDirs.DOC.md)
+## timeconv
+This provides a way of simply converting the time from one locale to
+another. This can be useful when you are working with colleagues in other
+timezones with different daylight-saving rules.
