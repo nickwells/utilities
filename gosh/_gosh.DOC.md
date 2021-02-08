@@ -1,5 +1,6 @@
 <!-- Created by mkdoc DO NOT EDIT. -->
 
+![gosh logo](_images/gosh.png)
 # gosh
 
 This allows you to write lines of Go code and have them run for you in a
