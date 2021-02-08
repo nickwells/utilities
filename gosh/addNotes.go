@@ -141,8 +141,9 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 				" documentation."+
 				"\n"+
 				"Suggested tag names might be 'Author' to document the"+
-				" snippet author or 'Declares' to record a variable"+
-				" that the snippet declares.")
+				" snippet author, 'Env' to record an environment variable"+
+				" the snippet uses or 'Declares' to record a variable"+
+				" that it declares.")
 
 		ps.AddNote(noteSnippetsDirs,
 			"By default snippets will be searched for in the following"+
