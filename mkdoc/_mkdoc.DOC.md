@@ -15,5 +15,8 @@ files in the following files \(none of which need to exist\):
 &apos;\_tailDoc\.md&apos;, &apos;\_tailExamples\.md&apos;,
 &apos;\_tailReferences\.md&apos;
 
+You can also give additional text to be printed at the start of the main doc
+file in the following file \(which need not exist\): &apos;\_headDoc\.md&apos;
+
 
 

@@ -45,7 +45,11 @@ func main() {
 				"You can give additional text to be printed at the end of"+
 				" each of the markdown files in the following files"+
 				" (none of which need to exist): '"+
-				docTailFile+"', '"+examplesTailFile+"', '"+refsTailFile+"'"),
+				docTailFile+"', '"+examplesTailFile+"', '"+refsTailFile+"'"+
+				"\n\n"+
+				"You can also give additional text to be printed at the"+
+				" start of the main doc file in the following file"+
+				" (which need not exist): '"+docHeadFile+"'"),
 	)
 
 	ps.Parse()
