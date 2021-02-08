@@ -18,13 +18,12 @@ import (
 // Created: Wed Jun 10 11:29:28 2020
 
 const (
-	prefix = "_"
-
 	examplesSuffix = ".EXAMPLES.md"
 	docSuffix      = ".DOC.md"
 	refsSuffix     = ".REFERENCES.md"
 
 	examplesTailFile = "_tailExamples.md"
+	docHeadFile      = "_headDoc.md"
 	docTailFile      = "_tailDoc.md"
 	refsTailFile     = "_tailReferences.md"
 )
@@ -66,14 +65,16 @@ func main() {
 
 	gogen.ExecGoCmd(gogen.NoCmdIO, "build")
 
-	docFileName := prefix + cmdName + docSuffix
-	docText := getDocPart(cmd, "intro") +
+	prefix := "_" + cmdName
+	docFileName := prefix + docSuffix
+	docText := getText(docHeadFile) +
+		getDocPart(cmd, "intro") +
 		"\n\n" +
 		getText(docTailFile)
 
 	examplesText := getDocPart(cmd, "examples") + getText(examplesTailFile)
 	if examplesText != "" {
-		examplesFileName := prefix + cmdName + examplesSuffix
+		examplesFileName := prefix + examplesSuffix
 		makeFile(examplesFileName, examplesText)
 
 		docText += "\n\n" +
@@ -84,7 +85,7 @@ func main() {
 
 	refsText := getDocPart(cmd, "refs") + getText(refsTailFile)
 	if refsText != "" {
-		refsFileName := prefix + cmdName + refsSuffix
+		refsFileName := prefix + refsSuffix
 		makeFile(refsFileName, refsText)
 
 		docText += "\n\n" +
