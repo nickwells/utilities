@@ -1,0 +1,40 @@
+// snippet: Doc: this runs a ticker function in a separate goroutine
+// snippet: Doc: that will print a dot every tenth of a second, a
+// snippet: Doc: colon every half a second and the second number
+// snippet: Doc: every second. Every ten seconds it prints a new
+// snippet: Doc: line and every minute it prints the minute.
+// snippet: Imports: fmt
+// snippet: Imports: time
+go func() {
+	var interval = 100*time.Millisecond
+
+	var tickPerSec   = int(time.Second/interval)
+	var tickPer10Sec = int(10 * tickPerSec)
+	var tickPerMin   = int(time.Minute/interval)
+
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	var i int = 1
+	for {
+		select {
+			case <- ticker.C:
+				if i%tickPerSec == 0 {
+					fmt.Printf("%02d",
+						(i%tickPerMin)/tickPerSec)
+					if i%tickPer10Sec == 0 {
+						fmt.Println()
+						if i%tickPerMin == 0 {
+							fmt.Printf("%3d\n",
+								i/tickPerMin)
+						}
+					}
+				} else if i%5 == 0 {
+					fmt.Print(":")
+				} else {
+					fmt.Print(".")
+				}
+				i++
+		}
+	}
+}()

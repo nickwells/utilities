@@ -1,0 +1,31 @@
+// snippet: -*- go -*-
+// snippet: Doc: this will set a timer as the program starts and when the
+// snippet: Doc: timer expires it will exit. The duration defaults to 5
+// snippet: Doc: seconds but ths value will be overriden if the GOSH_TTL
+// snippet: Doc: environment variable is set to some value which can be
+// snippet: Doc: parsed into a whole number greater than 0
+// snippet: Imports: os
+// snippet: Imports: strconv
+// snippet: Imports: time
+// snippet: Tag: Declares: __timeToLive a func that sets the exit timer.
+// snippet: Tag:      Env: GOSH_TTL     the time-to-live in seconds
+
+// __timeToLive will set a timer and call os.Exit when it expires. The
+// duration of the timer (in seconds) is set from the GOSH_TTL environment
+// variable (if set and greater than zero) or 5 seconds if not.
+func __timeToLive() {
+	var delay time.Duration = 5
+	v := os.Getenv("GOSH_TTL")
+	if delayEnv, err := strconv.ParseInt(v, 10, 64); err == nil {
+		if delayEnv > 0 {
+			delay = time.Duration(delayEnv)
+		}
+	}
+	time.AfterFunc(delay*time.Second, func() {
+		os.Exit(0)
+	})
+}
+
+func init() {
+	__timeToLive()
+}
