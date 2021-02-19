@@ -1,3 +1,14 @@
+## How to get gosh
+
+To install gosh you should run the following command:
+
+```
+go install github.com/nickwells/utilities/gosh@latest
+```
+
+This will build `gosh` and install it into your `GOPATH bin` directory
+(by default `$HOME/go/bin`).
+
 ## Snippets
 
 You can insert the contents of files into your script. These files are called
@@ -14,12 +25,8 @@ cp -r --suffix=.orig --backup ./_snippets/* <your-snippets-dir>
 ```
 
 Choose one of the available snippets directories to replace the placeholder
-`<your-snippets-dir>` above. These directories are listed in the program
-notes:
-
-```
-gosh -help-show notes
-```
+`<your-snippets-dir>` above. These directories can be listed by passing
+the `snippet-list-dir` parameter.
 
 If you aleady have snippets in your snippets directories the `cp` command
 given above will preserve any that have a clash of names with those given in

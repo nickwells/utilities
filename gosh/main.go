@@ -90,20 +90,27 @@ func main() {
 
 	ps.Parse()
 
-	if slp.listSnippets {
-		lc, err := snippet.NewListCfg(os.Stdout, g.snippetDirs, g.errMap,
-			snippet.SetConstraints(slp.constraints...),
-			snippet.SetParts(slp.parts...),
-			snippet.SetTags(slp.tags...),
-			snippet.HideIntro(slp.hideIntro))
-		if err != nil {
-			fmt.Fprintln(os.Stderr,
-				"There was a problem configuring the snippet list:")
-			fmt.Fprintln(os.Stderr, "\t", err)
-			os.Exit(1)
+	if slp.listSnippets || slp.listDirs {
+		if slp.listSnippets {
+			lc, err := snippet.NewListCfg(os.Stdout, g.snippetDirs, g.errMap,
+				snippet.SetConstraints(slp.constraints...),
+				snippet.SetParts(slp.parts...),
+				snippet.SetTags(slp.tags...),
+				snippet.HideIntro(slp.hideIntro))
+			if err != nil {
+				fmt.Fprintln(os.Stderr,
+					"There was a problem configuring the snippet list:")
+				fmt.Fprintln(os.Stderr, "\t", err)
+				os.Exit(1)
+			}
+			lc.List()
+			g.reportErrors()
 		}
-		lc.List()
-		g.reportErrors()
+		if slp.listDirs {
+			for _, dir := range g.snippetDirs {
+				fmt.Println(dir)
+			}
+		}
 		os.Exit(0)
 	}
 

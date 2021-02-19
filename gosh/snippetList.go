@@ -16,6 +16,7 @@ const (
 // snippetListParams holds the values needed to configure the snippet list
 type snippetListParams struct {
 	listSnippets bool
+	listDirs     bool
 
 	constraints []string
 	parts       []string
@@ -28,7 +29,7 @@ type snippetListParams struct {
 // in the supplied snippetListParams
 func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
-		const snippetListParamGroup = "snippet-list"
+		const snippetListParamGroup = "cmd-snippet-list"
 		ps.AddGroup(snippetListParamGroup,
 			"parameters relating to listing snippets.")
 
@@ -37,6 +38,7 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 			paramNameSnippetListConstraint = "snippet-list-constraint"
 			paramNameSnippetListPart       = "snippet-list-part"
 			paramNameSnippetListTag        = "snippet-list-tag"
+			paramNameSnippetListDir        = "snippet-list-dir"
 		)
 
 		ps.Add(paramNameSnippetList,
@@ -119,6 +121,13 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 			param.GroupName(snippetListParamGroup),
 			param.AltName("sl-t"),
 			param.PostAction(paction.SetBool(&slp.listSnippets, true)),
+			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
+		)
+
+		ps.Add(paramNameSnippetListDir, psetter.Bool{Value: &slp.listDirs},
+			"show the snippet directories",
+			param.GroupName(snippetListParamGroup),
+			param.AltName("sl-d"),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
 
