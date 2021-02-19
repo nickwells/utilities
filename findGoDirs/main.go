@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"sort"
 
@@ -189,7 +189,7 @@ func hasFiles(files []string) bool {
 		return true
 	}
 
-	filesInDir, err := ioutil.ReadDir(".")
+	filesInDir, err := os.ReadDir(".")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Cannot read the directory:", err)
 		return false
@@ -204,7 +204,7 @@ func hasFiles(files []string) bool {
 }
 
 // fileFound will return true if the name is in the list of files
-func fileFound(name string, files []os.FileInfo) bool {
+func fileFound(name string, files []fs.DirEntry) bool {
 	for _, f := range files {
 		if f.Name() == name {
 			return true

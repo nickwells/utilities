@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -132,7 +131,7 @@ func makeFile(filename, contents string) {
 // exit. Otherwise the (possibly empty) string read from the file will be
 // returned.
 func getText(filename string) string {
-	extraText, err := ioutil.ReadFile(filename)
+	extraText, err := os.ReadFile(filename)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		fmt.Fprintln(os.Stderr, "there was a problem reading the file:", err)
 		os.Exit(1)

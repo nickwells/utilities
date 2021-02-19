@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -192,7 +191,7 @@ func (g *Gosh) createGoFiles() {
 	}
 
 	verbose.Print(intro, ":\tCreating the temporary directory\n")
-	d, err := ioutil.TempDir(g.baseTempDir, "gosh-*.d")
+	d, err := os.MkdirTemp(g.baseTempDir, "gosh-*.d")
 	if err != nil {
 		fmt.Fprintln(os.Stderr,
 			"Couldn't create the temporary directory:", err)

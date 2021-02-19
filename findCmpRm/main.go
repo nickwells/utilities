@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"sort"
@@ -202,11 +201,11 @@ func isRedundant(nameOrig string) bool {
 	if info.IsDir() {
 		return true
 	}
-	newContent, err := ioutil.ReadFile(nameNew)
+	newContent, err := os.ReadFile(nameNew)
 	if err != nil {
 		return false
 	}
-	origContent, err := ioutil.ReadFile(nameOrig)
+	origContent, err := os.ReadFile(nameOrig)
 	if err != nil {
 		return false
 	}

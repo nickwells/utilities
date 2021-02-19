@@ -33,7 +33,7 @@ func (g *Gosh) writeGoFileImports() {
 	if g.runInReadLoop {
 		g.imports = append(g.imports, "os", "bufio")
 		if g.inPlaceEdit {
-			g.imports = append(g.imports, "io/ioutil", "path/filepath")
+			g.imports = append(g.imports, "path/filepath")
 		}
 		if g.splitLine {
 			g.imports = append(g.imports, "regexp")
@@ -109,7 +109,7 @@ func (g *Gosh) writeGoFileReadLoop() {
 		if g.inPlaceEdit {
 			tag := tag + " - in-place-edit"
 			g.gDecl("_w", "", tag)
-			g.gPrint(`_w, _err = ioutil.TempFile(`, tag)
+			g.gPrint(`_w, _err = os.CreateTemp(`, tag)
 			g.in()
 			g.gPrint(`filepath.Dir(_fn),`, tag)
 			g.gPrint(`filepath.Base(_fn) + ".*.new")`, tag)
