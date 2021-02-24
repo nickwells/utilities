@@ -59,6 +59,19 @@ func makeCodeSectionHelpText(name, sect string) string {
 		" in the '" + sect + "' section in the order they are given."
 }
 
+// makeShebangFileHelpText makes the fragment of help text describing how
+// the contents of a shebang (#!) file appear in the given section.
+func makeShebangFileHelpText(sect string) string {
+	return "follow this with a file name (which must exist)." +
+		" The contents of the file will appear with others" +
+		" in the '" + sect + "' section in the order they are given." +
+		"\n\n" +
+		"Note that if the first line of the file starts with '#!' then" +
+		" that first line is removed before the rest of the file is copied" +
+		" in. This is to allow gosh to be used as an interpreter in Linux" +
+		" Shebang files."
+}
+
 // snippetPAF generates the Post-Action func (PAF) that adds the snippet name
 // to the named script.
 //
@@ -88,6 +101,25 @@ func snippetPAF(g *Gosh, sName *string, scriptName string) param.ActionFunc {
 func scriptPAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
 	return func(_ location.L, _ *param.ByName, _ []string) error {
 		g.AddScriptEntry(scriptName, *text, verbatim)
+		return nil
+	}
+}
+
+// shebangFilePAF generates the Post-Action func (PAF) that adds the contents
+// of the shebang file to the named script. If the first line starts with
+// '#!' it is removed before adding the rest of the contents.
+//
+// Note that we pass a pointer to the name of the file rather than the string
+// - this is necessary otherwise we are passing the text value at the point
+// the PAF is being generated not at the point where the parameter value is
+// given.
+func shebangFilePAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
+	return func(_ location.L, _ *param.ByName, _ []string) error {
+		contents, err := shebangFileContents(*text)
+		if err != nil {
+			return err
+		}
+		g.AddScriptEntry(scriptName, contents, verbatim)
 		return nil
 	}
 }
@@ -395,6 +427,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 func addParams(g *Gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		var codeVal string
+		var fileName string
 
 		ps.Add("exec", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
@@ -406,10 +439,21 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.PostAction(scriptPAF(g, &codeVal, goshScriptExec)),
 		)
 
+		ps.Add("exec-file",
+			psetter.Pathname{
+				Value:       &fileName,
+				Expectation: filecheck.FileNonEmpty(),
+			},
+			makeShebangFileHelpText(execSect),
+			param.AltName("e-f"),
+			param.PostAction(shebangFilePAF(g, &fileName, goshScriptExec)),
+		)
+
 		ps.Add("exec-print",
 			psetter.String{
 				Value: &codeVal,
 				Editor: addPrint{
+					prefixes:    []string{"exec-"},
 					paramToCall: stdPrintMap,
 					needsVal:    needsValMap,
 				},
@@ -429,6 +473,16 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				makeCodeSectionHelpText("", beforeSect),
 			param.AltName("b"),
 			param.PostAction(scriptPAF(g, &codeVal, goshScriptBefore)),
+		)
+
+		ps.Add("before-file",
+			psetter.Pathname{
+				Value:       &fileName,
+				Expectation: filecheck.FileNonEmpty(),
+			},
+			makeShebangFileHelpText(beforeSect),
+			param.AltName("b-f"),
+			param.PostAction(shebangFilePAF(g, &fileName, goshScriptBefore)),
 		)
 
 		ps.Add("before-print",
@@ -456,6 +510,16 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.PostAction(scriptPAF(g, &codeVal, goshScriptAfter)),
 		)
 
+		ps.Add("after-file",
+			psetter.Pathname{
+				Value:       &fileName,
+				Expectation: filecheck.FileNonEmpty(),
+			},
+			makeShebangFileHelpText(afterSect),
+			param.AltName("a-f"),
+			param.PostAction(shebangFilePAF(g, &fileName, goshScriptAfter)),
+		)
+
 		ps.Add("after-print",
 			psetter.String{
 				Value: &codeVal,
@@ -481,6 +545,16 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				makeCodeSectionHelpText("", globalSect),
 			param.AltName("g"),
 			param.PostAction(scriptPAF(g, &codeVal, goshScriptGlobal)),
+		)
+
+		ps.Add("global-file",
+			psetter.Pathname{
+				Value:       &fileName,
+				Expectation: filecheck.FileNonEmpty(),
+			},
+			makeShebangFileHelpText(globalSect),
+			param.AltName("g-f"),
+			param.PostAction(shebangFilePAF(g, &fileName, goshScriptGlobal)),
 		)
 
 		ps.Add("import",
