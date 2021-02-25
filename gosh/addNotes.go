@@ -15,6 +15,7 @@ const (
 	noteSnippetsComments = "Gosh - snippet comments"
 	noteSnippetsDirs     = "Gosh - snippet directories"
 	noteCodeSections     = "Gosh - code sections"
+	noteShebangScripts   = "Gosh - shebang scripts"
 )
 
 // addNotes will add any notes to the param PSet
@@ -96,12 +97,12 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 				"\n\n"+
 				"- '"+snippet.NoteStr+"'"+
 				"\n"+
-				" this is reported as documentation"+
+				"The following text is reported as documentation"+
 				" when the snippets are listed."+
 				"\n\n"+
 				"- '"+snippet.ImportStr+"'"+
 				"\n"+
-				" this is added to the list of"+
+				"The following text is added to the list of"+
 				" import statements. Note that gosh will format the"+
 				" program it generates with "+goImportsFormatter+
 				" (if available) which should populate the import"+
@@ -112,7 +113,7 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 				"\n\n"+
 				"- '"+snippet.ExpectStr+"'"+
 				"\n"+
-				" this records another snippet that"+
+				"Records another snippet that"+
 				" is expected to be given if this snippet is used. This"+
 				" allows a chain of snippets to check that all necessary"+
 				" parts have been used and help to ensure correct usage"+
@@ -140,10 +141,13 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 				" It allows you to give some structure to your snippet"+
 				" documentation."+
 				"\n"+
-				"Suggested tag names might be 'Author' to document the"+
-				" snippet author, 'Env' to record an environment variable"+
-				" the snippet uses or 'Declares' to record a variable"+
-				" that it declares.")
+				"Suggested tag names might be"+
+				"\n"+
+				"   'Author'   to document the snippet author"+
+				"\n"+
+				"   'Env'      for an environment variable the snippet uses"+
+				"\n"+
+				"   'Declares' for a variable that it declares.")
 
 		ps.AddNote(noteSnippetsDirs,
 			"By default snippets will be searched for in the following"+
@@ -168,6 +172,24 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 				beforeSect+" - code at the start of the program\n"+
 				execSect+"   - code, possibly in a readloop or a web handler\n"+
 				afterSect+"  - code at the end of the program")
+
+		ps.AddNote(noteShebangScripts,
+			"You can use gosh in shebang scripts (executable files"+
+				" starting with '#!'). Follow the '#!'"+
+				" with the full pathname of the gosh command and the"+
+				" parameter '-exec-file' and gosh will construct your Go"+
+				" program from the contents of the rest of the file and"+
+				" run it."+
+				"\n\n"+
+				"The first line should look something like this"+
+				"\n\n"+
+				"#!/path/to/gosh -exec-file"+
+				"\n\n"+
+				"The rest of the file is Go code to be run"+
+				" inside a main() func."+
+				"\n\n"+
+				"Any parameters that you pass to the script will be"+
+				" interpreted by gosh so you can add extra code to be run.")
 
 		return nil
 	}
