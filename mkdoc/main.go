@@ -20,11 +20,13 @@ const (
 	examplesSuffix = ".EXAMPLES.md"
 	docSuffix      = ".DOC.md"
 	refsSuffix     = ".REFERENCES.md"
+	notesSuffix    = ".NOTES.md"
 
 	examplesTailFile = "_tailExamples.md"
 	docHeadFile      = "_headDoc.md"
 	docTailFile      = "_tailDoc.md"
 	refsTailFile     = "_tailReferences.md"
+	notesTailFile    = "_tailNotes.md"
 )
 
 func main() {
@@ -44,7 +46,10 @@ func main() {
 				"You can give additional text to be printed at the end of"+
 				" each of the markdown files in the following files"+
 				" (none of which need to exist): '"+
-				docTailFile+"', '"+examplesTailFile+"', '"+refsTailFile+"'"+
+				docTailFile+"', '"+
+				examplesTailFile+"', '"+
+				refsTailFile+"', '"+
+				notesTailFile+"'"+
 				"\n\n"+
 				"You can also give additional text to be printed at the"+
 				" start of the main doc file in the following file"+
@@ -95,6 +100,17 @@ func main() {
 			"## See Also" +
 			"\n" +
 			"For external references [see here](" + refsFileName + ")\n"
+	}
+
+	notesText := getDocPart(cmd, "notes") + getText(notesTailFile)
+	if notesText != "" {
+		notesFileName := prefix + notesSuffix
+		makeFile(notesFileName, notesText)
+
+		docText += "\n\n" +
+			"## Notes" +
+			"\n" +
+			"For notes [see here](" + notesFileName + ")\n"
 	}
 
 	makeFile(docFileName, docText)
