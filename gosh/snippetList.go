@@ -10,7 +10,12 @@ import (
 )
 
 const (
-	paramNameSnippetList = "snippets-list"
+	paramNameSnippetList           = "snippet-list"
+	paramNameSnippetListShort      = "snippet-list-short"
+	paramNameSnippetListConstraint = "snippet-list-constraint"
+	paramNameSnippetListPart       = "snippet-list-part"
+	paramNameSnippetListTag        = "snippet-list-tag"
+	paramNameSnippetListDir        = "snippet-list-dir"
 )
 
 // snippetListParams holds the values needed to configure the snippet list
@@ -33,21 +38,13 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 		ps.AddGroup(snippetListParamGroup,
 			"parameters relating to listing snippets.")
 
-		const (
-			paramNameSnippetListShort      = "snippet-list-short"
-			paramNameSnippetListConstraint = "snippet-list-constraint"
-			paramNameSnippetListPart       = "snippet-list-part"
-			paramNameSnippetListTag        = "snippet-list-tag"
-			paramNameSnippetListDir        = "snippet-list-dir"
-		)
-
 		ps.Add(paramNameSnippetList,
 			psetter.Bool{Value: &slp.listSnippets},
 			"list all the available snippets and exit, no program is run."+
 				" It will also show any per-snippet documentation and"+
 				" report on any problems detected with the snippets.",
 			param.GroupName(snippetListParamGroup),
-			param.AltName("snippet-list"),
+			param.AltName("snippets-list"),
 			param.AltName("s-l"),
 			param.AltName("sl"),
 			param.SeeAlso(
