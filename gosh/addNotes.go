@@ -1,8 +1,6 @@
 package main
 
 import (
-	"strings"
-
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/snippet.mod/snippet"
 )
@@ -150,12 +148,12 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 				"   'Declares' for a variable that it declares.")
 
 		ps.AddNote(noteSnippetsDirs,
-			"By default snippets will be searched for in the following"+
-				" directories:\n"+
-				strings.Join(g.snippetDirs, "\n")+
+			"By default snippets will be searched for in standard"+
+				" directories. To see the names of the snippet directories"+
+				" use the parameter '-"+paramNameSnippetListDir+"'."+
 				"\n\n"+
 				"More directories can be added to the list using the"+
-				" parameter '"+paramNameSnippetDir+"' which will add new"+
+				" parameter '-"+paramNameSnippetDir+"' which will add new"+
 				" directories to the start of the list."+
 				"\n\n"+
 				"The directories are searched in the order given above and the"+
