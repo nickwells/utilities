@@ -13,7 +13,7 @@ func addReferences(ps *param.PSet) error {
 			"\n\n"+
 			"To get this program:"+
 			"\n\n"+
-			"go get -u github.com/nickwells/utilities/findCmpRm")
+			"go install github.com/nickwells/utilities/findCmpRm@latest")
 
 	return nil
 }
