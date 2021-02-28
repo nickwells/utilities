@@ -13,7 +13,7 @@ original content
 
 To get this program:
 
-go get \-u github\.com/nickwells/utilities/findCmpRm
+go install github\.com/nickwells/utilities/findCmpRm@latest
 ## Alternatives to gosh
 There are some alternatives available which do something similar to `gosh`:
 - [goexec](https://github.com/shurcooL/goexec/) - a command-line tool for executing Go code.

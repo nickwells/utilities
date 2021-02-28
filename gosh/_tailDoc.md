@@ -2,7 +2,7 @@
 
 To install gosh you should run the following command:
 
-```
+``` sh
 go install github.com/nickwells/utilities/gosh@latest
 ```
 
@@ -20,7 +20,7 @@ There are some sample snippets in the `_snippets` directory.
 You can copy them into a snippets directory with the following
 command (on Linux):
 
-```
+``` sh
 cp -r --suffix=.orig --backup ./_snippets/* <your-snippets-dir>
 ```
 
@@ -39,13 +39,13 @@ Printing is a common requirement of a script and so `gosh` offers some
 parameters to make it easier to add print statements to your script. The
 following two scripts are equivalent:
 
-```
+``` sh
 gosh -e 'fmt.Print("Hello, World!")'
 ```
 
 and
 
-```
+``` sh
 gosh -p '"Hello, World!"'
 ```
 

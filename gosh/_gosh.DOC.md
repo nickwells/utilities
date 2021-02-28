@@ -22,6 +22,17 @@ then save the file and edit it just like a regular Go program\.
 
 
 
+## How to get gosh
+
+To install gosh you should run the following command:
+
+``` sh
+go install github.com/nickwells/utilities/gosh@latest
+```
+
+This will build `gosh` and install it into your `GOPATH bin` directory
+(by default `$HOME/go/bin`).
+
 ## Snippets
 
 You can insert the contents of files into your script. These files are called
@@ -33,17 +44,13 @@ There are some sample snippets in the `_snippets` directory.
 You can copy them into a snippets directory with the following
 command (on Linux):
 
-```
+``` sh
 cp -r --suffix=.orig --backup ./_snippets/* <your-snippets-dir>
 ```
 
 Choose one of the available snippets directories to replace the placeholder
-`<your-snippets-dir>` above. These directories are listed in the program
-notes:
-
-```
-gosh -help-show notes
-```
+`<your-snippets-dir>` above. These directories can be listed by passing
+the `snippet-list-dir` parameter.
 
 If you aleady have snippets in your snippets directories the `cp` command
 given above will preserve any that have a clash of names with those given in
@@ -56,13 +63,13 @@ Printing is a common requirement of a script and so `gosh` offers some
 parameters to make it easier to add print statements to your script. The
 following two scripts are equivalent:
 
-```
+``` sh
 gosh -e 'fmt.Print("Hello, World!")'
 ```
 
 and
 
-```
+``` sh
 gosh -p '"Hello, World!"'
 ```
 
@@ -77,3 +84,7 @@ For examples [see here](_gosh.EXAMPLES.md)
 
 ## See Also
 For external references [see here](_gosh.REFERENCES.md)
+
+
+## Notes
+For notes [see here](_gosh.NOTES.md)
