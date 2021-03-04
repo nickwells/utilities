@@ -73,15 +73,14 @@ func main() {
 	}
 
 	cmdName := filepath.Base(cwd)
-	f, err := os.CreateTemp("", "mkdoc.*."+cmdName)
+	dirName, err := os.MkdirTemp("", "mkdoc.*."+cmdName)
 	if err != nil {
 		fmt.Fprintln(os.Stderr,
-			"cannot create the temporary file for the build:", err)
+			"cannot create the temporary directory for the build:", err)
 		os.Exit(1)
 	}
-	defer f.Close() //nolint: staticcheck
-	defer os.Remove(f.Name())
-	cmd := f.Name()
+	defer os.RemoveAll(dirName)
+	cmd := filepath.Join(dirName, cmdName)
 
 	buildCmd := []string{"build", "-o", cmd}
 	buildCmd = append(buildCmd, buildArgs...)
