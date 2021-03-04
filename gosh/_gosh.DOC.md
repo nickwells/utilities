@@ -84,7 +84,3 @@ For examples [see here](_gosh.EXAMPLES.md)
 
 ## See Also
 For external references [see here](_gosh.REFERENCES.md)
-
-
-## Notes
-For notes [see here](_gosh.NOTES.md)
