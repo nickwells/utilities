@@ -299,6 +299,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 				param.PostAction(paction.SetBool(&g.runAsWebserver, true)),
 				param.GroupName(paramGroupNameWeb),
 				param.PostAction(scriptPAF(g, &codeVal, goshScriptExec)),
+				param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 			),
 		)
 
@@ -400,6 +401,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 			param.AltName("w-pf"),
 			param.AltName("w-pln"),
 			param.PostAction(scriptPAF(g, &codeVal, goshScriptExec)),
+			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 			param.GroupName(paramGroupNameReadloop),
 			param.SeeAlso(paramNameInPlaceEdit),
 		)
@@ -466,6 +468,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.AltName("pf"),
 			param.AltName("pln"),
 			param.PostAction(scriptPAF(g, &codeVal, goshScriptExec)),
+			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 		)
 
 		ps.Add("before", psetter.String{Value: &codeVal},
@@ -501,6 +504,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.AltName("b-pf"),
 			param.AltName("b-pln"),
 			param.PostAction(scriptPAF(g, &codeVal, goshScriptBefore)),
+			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 		)
 
 		ps.Add("after", psetter.String{Value: &codeVal},
@@ -536,6 +540,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.AltName("a-pf"),
 			param.AltName("a-pln"),
 			param.PostAction(scriptPAF(g, &codeVal, goshScriptAfter)),
+			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 		)
 
 		ps.Add("global", psetter.String{Value: &codeVal},

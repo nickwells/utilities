@@ -30,8 +30,10 @@ func (g *Gosh) writeScript(scriptName string) {
 
 // writeGoFileImports writes the import statements into the Go file
 func (g *Gosh) writeGoFileImports() {
+	g.imports = append(g.imports, "os") // os.Chdir(...)
+
 	if g.runInReadLoop {
-		g.imports = append(g.imports, "os", "bufio")
+		g.imports = append(g.imports, "bufio")
 		if g.inPlaceEdit {
 			g.imports = append(g.imports, "path/filepath")
 		}
