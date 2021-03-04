@@ -38,11 +38,11 @@ func main() {
 			"This creates markdown documentation for any Go program which"+
 				" uses the param package"+
 				" (github.com/nickwells/param.mod/*/param). It will"+
-				" generate a markdown file containing examples if the"+
-				" program has examples and it will generate a file"+
-				" containing references if the program has references. It"+
+				" generate a markdown file containing examples, references"+
+				" and notes if the"+
+				" program has those sections in its help documentation. It"+
 				" will generate a main doc file which will have links to"+
-				" the examples and references files if they exist. This"+
+				" the examples, references and notes files if they exist. This"+
 				" main doc file should then be linked to from the"+
 				" README.md file."+
 				"\n\n"+
