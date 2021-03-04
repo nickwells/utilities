@@ -12,6 +12,7 @@ import (
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
+	"github.com/nickwells/param.mod/v5/param/psetter"
 )
 
 // Created: Wed Jun 10 11:29:28 2020
@@ -28,6 +29,8 @@ const (
 	refsTailFile     = "_tailReferences.md"
 	notesTailFile    = "_tailNotes.md"
 )
+
+var buildArgs = []string{}
 
 func main() {
 	ps := paramset.NewOrDie(addParams,
@@ -68,10 +71,21 @@ func main() {
 			"cannot retrieve the current directory name:", err)
 		os.Exit(1)
 	}
-	cmdName := filepath.Base(cwd)
-	cmd := filepath.Join(cwd, cmdName)
 
-	gogen.ExecGoCmd(gogen.NoCmdIO, "build")
+	cmdName := filepath.Base(cwd)
+	f, err := os.CreateTemp("", "mkdoc.*."+cmdName)
+	if err != nil {
+		fmt.Fprintln(os.Stderr,
+			"cannot create the temporary file for the build:", err)
+		os.Exit(1)
+	}
+	defer f.Close() //nolint: staticcheck
+	defer os.Remove(f.Name())
+	cmd := f.Name()
+
+	buildCmd := []string{"build", "-o", cmd}
+	buildCmd = append(buildCmd, buildArgs...)
+	gogen.ExecGoCmd(gogen.NoCmdIO, buildCmd...)
 
 	prefix := "_" + cmdName
 	docFileName := prefix + docSuffix
@@ -193,5 +207,14 @@ func getDocPart(cmdPath, part string) string {
 
 // addParams will add parameters to the passed ParamSet
 func addParams(ps *param.PSet) error {
+	ps.Add("build-args",
+		psetter.StrListAppender{
+			Value: &buildArgs,
+		},
+		"arguments to be passed to go build when building the program",
+		param.AltName("build-arg"),
+		param.AltName("build-param"),
+	)
+
 	return nil
 }
