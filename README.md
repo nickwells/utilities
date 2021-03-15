@@ -6,10 +6,6 @@
 # utilities
 Miscellaneous useful commands.
 
-All these tools use the param package to handle command-line flags
-and so they support the standard '-help' parameter which will print out a
-comprehensive usage message.
-
 
 ## gosh ![gosh](gosh/_images/gosh.100x100.gif)
 This is a tool for running Go code from the command line.

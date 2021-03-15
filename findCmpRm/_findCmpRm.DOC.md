@@ -11,6 +11,19 @@ revert the file back to the original contents\.
 
 
 
+## Parameters
+
+This uses the `param` package and so it has access to the help parameters
+which give a comprehensive message describing the usage of the program and
+the parameters you can give. The `-help` parameter on its own will print the
+standard parameters that the program can accept but you can also give
+parameters to show both more or less help, in more or less detail. Other
+standard parameters allow you to explore where parameters have been set and
+where they can be set. The description of the `-help` parameter is a good
+place to start to explore the help available.
+
+The intention of the `param` package is to provide complete documentation
+for the program from the command line.
 
 
 ## Examples
