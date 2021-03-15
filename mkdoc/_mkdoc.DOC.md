@@ -3,20 +3,12 @@
 # mkdoc
 
 This creates markdown documentation for any Go program which uses the param
-package \(github\.com/nickwells/param\.mod/\*/param\)\. It will generate a
-markdown file containing examples if the program has examples and it will
-generate a file containing references if the program has references\. It will
-generate a main doc file which will have links to the examples and references
-files if they exist\. This main doc file should then be linked to from the
-README\.md file\.
-
-You can give additional text to be printed at the end of each of the markdown
-files in the following files \(none of which need to exist\):
-&apos;\_tailDoc\.md&apos;, &apos;\_tailExamples\.md&apos;,
-&apos;\_tailReferences\.md&apos;, &apos;\_tailNotes\.md&apos;
-
-You can also give additional text to be printed at the start of the main doc
-file in the following file \(which need not exist\): &apos;\_headDoc\.md&apos;
+package \(github\.com/nickwells/param\.mod/\*/param\)\. It will generate
+Markdown files containing various sections from the program&apos;s help
+documentation\. On successful completion a brief message giving the text to be
+added to the README\.md file will be printed
 
 
 
+## Notes
+For additional notes [see here](_mkdoc.NOTES.md)
