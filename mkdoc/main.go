@@ -269,6 +269,7 @@ func (pp partParams) generate(cmd string) string {
 	}
 	text += getText(pp.tailFile)
 	if text == "" {
+		_ = os.Remove(pp.filename(cmd))
 		return ""
 	}
 
