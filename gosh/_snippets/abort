@@ -1,7 +1,7 @@
 // snippet: -*- go -*-
 // snippet: Doc: this will set a timer as the program starts and when the
 // snippet: Doc: timer expires it will exit. The duration defaults to 5
-// snippet: Doc: seconds but ths value will be overriden if the GOSH_TTL
+// snippet: Doc: seconds but this value will be overriden if the GOSH_TTL
 // snippet: Doc: environment variable is set to some value which can be
 // snippet: Doc: parsed into a whole number greater than 0
 // snippet: Imports: os
