@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -256,11 +258,79 @@ func (g *Gosh) buildGoProgram() {
 	verbose.Print(intro, ":\tGo file name: ", g.filename, "\n")
 
 	g.writeGoFile()
+	g.editGoProgram()
 	g.reportErrors()
 
 	g.formatFile()
 
 	g.tidyModule()
+}
+
+// checkEditor returns true if the editor is valid - non-empty and is the
+// name of an executable program. If it's non-empty but doesn't yield an
+// executable program an error is added to the error map.
+func (g *Gosh) checkEditor(editor, source string) bool {
+	editor = strings.TrimSpace(editor)
+	if editor == "" {
+		return false
+	}
+
+	var err error
+	if _, err = exec.LookPath(editor); err == nil {
+		g.editor = editor
+		return true
+	}
+	re := regexp.MustCompile(`\s+`)
+	parts := re.Split(editor, -1)
+	if parts[0] == editor {
+		g.addError("bad editor",
+			fmt.Errorf("Cannot find %s (source: %s): %w",
+				editor, source, err))
+		return false
+	}
+
+	editor = parts[0]
+	if _, err = exec.LookPath(editor); err == nil {
+		g.editor = editor
+		g.editorParams = parts[1:]
+		return true
+	}
+	g.addError("bad editor",
+		fmt.Errorf("Cannot find %s (source: %s): %w",
+			editor, source, err))
+	return false
+}
+
+// editGoProgram starts an editor to edit the program
+func (g *Gosh) editGoProgram() {
+	if !g.edit {
+		return
+	}
+	if !g.checkEditor(g.editor, "parameter") {
+		if !g.checkEditor(os.Getenv(envVisual), envVisual) {
+			if !g.checkEditor(os.Getenv(envEditor), envEditor) {
+				g.addError("no editor",
+					errors.New("No editor has been given."+
+						" Possible sources are:"+
+						" the '"+paramNameScriptEditor+"' parameter,"+
+						" the '"+envVisual+"' environment variable"+
+						" or the '"+envEditor+"' environment variable,"+
+						" in that order."))
+				return
+			}
+		}
+	}
+	g.editorParams = append(g.editorParams, g.filename)
+	cmd := exec.Command(g.editor, g.editorParams...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	err := cmd.Run()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Couldn't run the editor: %q\n", cmd.Path)
+		fmt.Fprintf(os.Stderr, "\t%s\n", strings.Join(cmd.Args, " "))
+		fmt.Fprintln(os.Stderr, "\tError:", err)
+		os.Exit(1)
+	}
 }
 
 // tidyModule runs go mod tidy after the file is fully constructed to

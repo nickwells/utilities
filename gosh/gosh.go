@@ -89,6 +89,10 @@ type Gosh struct {
 	runDir      string
 
 	localModules map[string]string
+
+	edit         bool
+	editor       string
+	editorParams []string
 }
 
 // CacheSnippet will cache the named snippet and copy any imports it requires

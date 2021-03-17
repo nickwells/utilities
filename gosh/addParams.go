@@ -22,6 +22,11 @@ const (
 
 	paramNameSnippetDir = "snippets-dir"
 
+	paramNameEditScript   = "edit"
+	paramNameScriptEditor = "editor"
+	envVisual             = "VISUAL"
+	envEditor             = "EDITOR"
+
 	globalSect = "global"
 	beforeSect = "before"
 	execSect   = "exec"
@@ -665,6 +670,29 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			"the name and mapping of a local module."+
 				" This will add a replace directive in the 'go.mod' file.",
 			param.Attrs(param.DontShowInStdUsage),
+		)
+
+		ps.Add(paramNameEditScript, psetter.Bool{Value: &g.edit},
+			"edit the generated code just before running it."+
+				" Setting this parameter will suppress the"+
+				" deletion of the program.",
+			param.PostAction(paction.SetBool(&g.dontClearFile, true)),
+			param.Attrs(param.CommandLineOnly),
+			param.SeeAlso(paramNameScriptEditor),
+		)
+
+		ps.Add(paramNameScriptEditor, psetter.String{Value: &g.editor},
+			"This will give the name of an editor to use for editing"+
+				" your program. Note that this does not force the file to"+
+				" be edited so you can set this in a configuration"+
+				" file."+
+				"\n\n"+
+				"If this parameter is not given or if the resulting"+
+				" program is not executable, the editor will be taken"+
+				" from the environment variables:"+
+				" '"+envVisual+"' and"+
+				" '"+envEditor+"' in that order",
+			param.SeeAlso(paramNameEditScript),
 		)
 
 		ps.AddFinalCheck(func() error {
