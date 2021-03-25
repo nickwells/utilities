@@ -231,6 +231,9 @@ func (g *Gosh) checkScripts() {
 			return
 		}
 	}
+	if g.httpHandler != dfltHTTPHandlerName {
+		return
+	}
 	g.addError("no code", errors.New("There is no code to run"))
 }
 
