@@ -448,6 +448,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				Expectation: filecheck.FileNonEmpty(),
 			},
 			makeShebangFileHelpText(execSect),
+			param.AltName("shebang"),
 			param.AltName("e-f"),
 			param.PostAction(shebangFilePAF(g, &fileName, goshScriptExec)),
 		)
