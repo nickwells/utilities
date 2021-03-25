@@ -1,7 +1,7 @@
 github.com/nickwells/check.mod v1.6.14 h1:IZ9l5/oaiixWX9Hh/kN7/Fw5M8gAT4zQT27vogGoqUk=
 github.com/nickwells/check.mod v1.6.14/go.mod h1:nMe9dKu475IoeuPWyk4RTg6/wp4oMW3A2NoClx4CxGA=
-github.com/nickwells/cli.mod v1.0.23 h1:yuXjTM8bFwd1nfZi6nBao+olRPenOlfoTAAaja/MyWU=
-github.com/nickwells/cli.mod v1.0.23/go.mod h1:kKemskvpkYpJGGqReTFZJMiT96PS59c85MXVD9yufkQ=
+github.com/nickwells/cli.mod v1.0.24 h1:gciKKjPgPksehT0q+oxMcTnGPJszUrBLzDVGeeB4RTo=
+github.com/nickwells/cli.mod v1.0.24/go.mod h1:OYaVlLwh4cAQEkufp4jQ4Zd11LFbZjmIPmch1Kf5m7M=
 github.com/nickwells/col.mod/v2 v2.2.3 h1:kQ04qAOPzrAalV62y1YUbC+3bYLmk3yGEv1fDYSFwyo=
 github.com/nickwells/col.mod/v2 v2.2.3/go.mod h1:mWvXHMCaNcMChCj1yBEe6V6BQ/8UPrr0Km6NtnX9/Nk=
 github.com/nickwells/dirsearch.mod v1.0.27 h1:rDJJlGrOFHT8fRuWgb7S9jQYf9/WcVKNtz84AXIRRyo=
@@ -41,7 +41,9 @@ github.com/nickwells/verbose.mod v1.0.29/go.mod h1:n85zQUYEoleSaktme7c+PSYDVjsg7
 github.com/nickwells/xdg.mod v1.0.5 h1:BkCim2ft//W1dlmh96z39YpIL4dJE7UQ1dDcMHtnfdU=
 github.com/nickwells/xdg.mod v1.0.5/go.mod h1:h8lRJMpY6oXdD6E3jJuolpO9QJE5FcTvUe8eyRzgyQo=
 golang.org/x/sys v0.0.0-20201119102817-f84b799fce68/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20210314195730-07df6a141424 h1:+39ahH47SWi1PhMRAHfIrm8f69HRZ5K2koXH6dmO8TQ=
 golang.org/x/sys v0.0.0-20210314195730-07df6a141424/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d h1:SZxvLBoTP5yHO3Frd4z4vrF+DBX9vMVanchswa69toE=
+golang.org/x/sys v0.0.0-20210324051608-47abb6519492 h1:Paq34FxTluEPvVyayQqMPgHm+vTOrIifmcYxFBx9TLg=
+golang.org/x/sys v0.0.0-20210324051608-47abb6519492/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
+golang.org/x/term v0.0.0-20210317153231-de623e64d2a6 h1:EC6+IGYTjPpRfv9a2b/6Puw0W+hLtAhkV1tPsXhutqs=
+golang.org/x/term v0.0.0-20210317153231-de623e64d2a6/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=

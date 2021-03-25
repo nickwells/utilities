@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/nickwells/check.mod v1.6.14
-	github.com/nickwells/cli.mod v1.0.23
+	github.com/nickwells/cli.mod v1.0.24
 	github.com/nickwells/col.mod/v2 v2.2.3
 	github.com/nickwells/dirsearch.mod v1.0.27
 	github.com/nickwells/english.mod v1.0.13
@@ -22,5 +22,5 @@ require (
 	github.com/nickwells/unitsetter.mod/v3 v3.0.26
 	github.com/nickwells/verbose.mod v1.0.29
 	github.com/nickwells/xdg.mod v1.0.5
-	golang.org/x/sys v0.0.0-20210314195730-07df6a141424
+	golang.org/x/sys v0.0.0-20210324051608-47abb6519492
 )
