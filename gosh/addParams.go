@@ -18,7 +18,6 @@ const (
 
 	paramNameInPlaceEdit = "in-place-edit"
 	paramNameWPrint      = "w-print"
-	paramNameHTTPServer  = "http-server"
 
 	paramNameSnippetDir = "snippets-dir"
 
@@ -210,7 +209,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 			"parameters relating to building a script as a web-server.")
 
 		g.runAsWebserverSetters = append(g.runAsWebserverSetters,
-			ps.Add(paramNameHTTPServer, psetter.Bool{Value: &g.runAsWebserver},
+			ps.Add("http-server", psetter.Bool{Value: &g.runAsWebserver},
 				"run a webserver with the script code being run"+
 					" within an http handler function having the"+
 					" following signature"+
@@ -237,9 +236,8 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 				},
 				"set the port number that the webserver will listen on."+
 					" Setting this will also force the script to be run"+
-					" within an http handler function. See the description"+
-					" for the "+paramNameHTTPServer+" parameter for"+
-					" details. Note that if you set this to a value less"+
+					" within an http handler function."+
+					" Note that if you set this to a value less"+
 					" than 1024 you will need to have superuser privilege.",
 				param.PostAction(paction.SetBool(&g.runAsWebserver, true)),
 				param.GroupName(paramGroupNameWeb),
@@ -256,9 +254,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 				},
 				"set the path name (the pattern) that the webserver will"+
 					" listen on. Setting this will also force the script"+
-					" to be run within an http handler function. See the"+
-					" description for the "+paramNameHTTPServer+" parameter"+
-					" for details.",
+					" to be run within an http handler function.",
 				param.PostAction(paction.SetBool(&g.runAsWebserver, true)),
 				param.GroupName(paramGroupNameWeb),
 			),
