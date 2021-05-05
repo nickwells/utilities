@@ -1,4 +1,4 @@
-## How to get gosh
+## Installation
 
 To install gosh you should run the following command:
 
@@ -9,13 +9,28 @@ go install github.com/nickwells/utilities/gosh@latest
 This will build `gosh` and install it into your `GOPATH bin` directory
 (by default `$HOME/go/bin`).
 
+## Setup
+
+The first thing you'll want to do is to glance at the manual. The `gosh`
+command has built-in documentation; just call it with the `-help` parameter
+(or the `-help-full` parameter for the complete manual).
+
+You don't need to do anything else to use; `gosh` is a single self-contained
+binary but if you use `zsh` and want to set up parameter completion, `gosh`
+can do this; see the help message for the appropriate parameters.
+
+Similarly, you might want to set up the default snippets; see the section
+below for details.
+
 ## Snippets
 
 You can insert the contents of files into your script. These files are called
 snippets and can be kept in standard directories where you don't need to give
 the whole pathname.
 
-There are some sample snippets in the `_snippets` directory.
+There are some sample snippets in the `_snippets` directory which can be
+found in the repository `github.com/nickwells/utilities` under the `gosh`
+subdirectory.
 
 You can copy them into a snippets directory with the following
 command (on Linux):
@@ -25,8 +40,8 @@ cp -r --suffix=.orig --backup ./_snippets/* <your-snippets-dir>
 ```
 
 Choose one of the available snippets directories to replace the placeholder
-`<your-snippets-dir>` above. These directories can be listed by passing
-the `snippet-list-dir` parameter.
+`<your-snippets-dir>` above. These directories can be listed by calling
+`gosh` with the `-snippet-list-dir` parameter.
 
 If you aleady have snippets in your snippets directories the `cp` command
 given above will preserve any that have a clash of names with those given in
