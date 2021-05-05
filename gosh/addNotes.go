@@ -26,13 +26,14 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 				" there are no duplicate filenames. If any of these checks"+
 				" fails the program aborts with an error message."+
 				"\n\n"+
-				"if \"-"+paramNameInPlaceEdit+"\" is given then some"+
+				"If '-"+paramNameInPlaceEdit+"' is given then some"+
 				" filenames must be supplied"+
-				" (after \""+ps.TerminalParam()+"\")."+
+				" (after '"+ps.TerminalParam()+"')."+
 				"\n\n"+
 				" After you have run this edit program you could use the"+
 				" findCmpRm program to check that the changes were as"+
-				" expected")
+				" expected",
+			param.NoteSeeParam(paramNameInPlaceEdit))
 
 		ps.AddNote(noteFilenames,
 			"A list of filenames to be processed can be given"+
@@ -44,7 +45,8 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 				" reading them should be given. See the parameters in"+
 				" group: '"+paramGroupNameReadloop+"'."+
 				"\n\n"+
-				" Note that it is an error if the same name appears twice.")
+				"Note that it is an error if the same file name"+
+				" appears twice.")
 
 		ps.AddNote(noteVars,
 			"gosh will create some variables as it builds the program."+
@@ -61,12 +63,6 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 				" into your script. gosh will search through a list of"+
 				" directories for a file with the snippet name and insert"+
 				" that into your script."+
-				" See the note"+
-				"\n"+
-				"'"+noteSnippetsDirs+"'"+
-				"\n"+
-				" for a list of the default directories that will be"+
-				" searched for snippets."+
 				" A filename with a full path can also be given."+
 				" Any inserted code is prefixed with a comment showing"+
 				" which file it came from to help with debugging."+
@@ -81,7 +77,8 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 				" used together should be grouped into their own"+
 				" sub-directory in the snippets directory and named with"+
 				" leading digits to indicate the order that they must be"+
-				" applied.")
+				" applied.",
+			param.NoteSeeNote(noteSnippetsDirs))
 
 		ps.AddNote(noteSnippetsComments,
 			"Any lines in a snippet file starting with"+
@@ -145,21 +142,19 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 				"\n"+
 				"   'Env'      for an environment variable the snippet uses"+
 				"\n"+
-				"   'Declares' for a variable that it declares.")
+				"   'Declares' for a variable that it declares.",
+			param.NoteSeeNote(noteSnippets))
 
 		ps.AddNote(noteSnippetsDirs,
 			"By default snippets will be searched for in standard"+
-				" directories. To see the names of the snippet directories"+
-				" use the parameter '-"+paramNameSnippetListDir+"'."+
-				"\n\n"+
-				"More directories can be added to the list using the"+
-				" parameter '-"+paramNameSnippetDir+"' which will add new"+
-				" directories to the start of the list."+
+				" directories."+
 				"\n\n"+
 				"The directories are searched in the order given above and the"+
 				" first file matching the name of the snippet will be used."+
 				" Any extra directories, since they are added at the start of"+
-				" the list, will be searched before the default ones.")
+				" the list, will be searched before the default ones.",
+			param.NoteSeeParam(paramNameSnippetListDir, paramNameSnippetDir),
+			param.NoteSeeNote(noteSnippets))
 
 		ps.AddNote(noteCodeSections,
 			"The program that gosh will generate is split up into several"+
@@ -175,19 +170,23 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 			"You can use gosh in shebang scripts (executable files"+
 				" starting with '#!'). Follow the '#!'"+
 				" with the full pathname of the gosh command and the"+
-				" parameter '-exec-file' and gosh will construct your Go"+
+				" parameter '-"+paramNameExecFile+"'"+
+				" and gosh will construct your Go"+
 				" program from the contents of the rest of the file and"+
 				" run it."+
 				"\n\n"+
 				"The first line should look something like this"+
 				"\n\n"+
-				"#!/path/to/gosh -exec-file"+
+				"#!/path/to/gosh -"+paramNameExecFile+
 				"\n\n"+
 				"The rest of the file is Go code to be run"+
 				" inside a main() func."+
 				"\n\n"+
 				"Any parameters that you pass to the script will be"+
-				" interpreted by gosh so you can add extra code to be run.")
+				" interpreted by gosh so you can add extra code to be run.",
+			param.NoteSeeParam(
+				paramNameBeforeFile, paramNameExecFile, paramNameAfterFile,
+				paramNameGlobalFile))
 
 		return nil
 	}

@@ -18,8 +18,11 @@ const (
 
 	paramNameInPlaceEdit = "in-place-edit"
 	paramNameWPrint      = "w-print"
-
-	paramNameSnippetDir = "snippets-dir"
+	paramNameSnippetDir  = "snippets-dir"
+	paramNameExecFile    = "exec-file"
+	paramNameBeforeFile  = "before-file"
+	paramNameAfterFile   = "after-file"
+	paramNameGlobalFile  = "global-file"
 
 	paramNameEditScript   = "edit"
 	paramNameScriptEditor = "editor"
@@ -442,7 +445,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.PostAction(scriptPAF(g, &codeVal, goshScriptExec)),
 		)
 
-		ps.Add("exec-file",
+		ps.Add(paramNameExecFile,
 			psetter.Pathname{
 				Value:       &fileName,
 				Expectation: filecheck.FileNonEmpty(),
@@ -451,6 +454,9 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.AltName("shebang"),
 			param.AltName("e-f"),
 			param.PostAction(shebangFilePAF(g, &fileName, goshScriptExec)),
+			param.SeeAlso(
+				paramNameBeforeFile, paramNameAfterFile, paramNameGlobalFile),
+			param.SeeNote(noteShebangScripts),
 		)
 
 		ps.Add("exec-print",
@@ -480,7 +486,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.PostAction(scriptPAF(g, &codeVal, goshScriptBefore)),
 		)
 
-		ps.Add("before-file",
+		ps.Add(paramNameBeforeFile,
 			psetter.Pathname{
 				Value:       &fileName,
 				Expectation: filecheck.FileNonEmpty(),
@@ -488,6 +494,9 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			makeShebangFileHelpText(beforeSect),
 			param.AltName("b-f"),
 			param.PostAction(shebangFilePAF(g, &fileName, goshScriptBefore)),
+			param.SeeAlso(
+				paramNameExecFile, paramNameAfterFile, paramNameGlobalFile),
+			param.SeeNote(noteShebangScripts),
 		)
 
 		ps.Add("before-print",
@@ -516,7 +525,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.PostAction(scriptPAF(g, &codeVal, goshScriptAfter)),
 		)
 
-		ps.Add("after-file",
+		ps.Add(paramNameAfterFile,
 			psetter.Pathname{
 				Value:       &fileName,
 				Expectation: filecheck.FileNonEmpty(),
@@ -524,6 +533,9 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			makeShebangFileHelpText(afterSect),
 			param.AltName("a-f"),
 			param.PostAction(shebangFilePAF(g, &fileName, goshScriptAfter)),
+			param.SeeAlso(
+				paramNameBeforeFile, paramNameExecFile, paramNameGlobalFile),
+			param.SeeNote(noteShebangScripts),
 		)
 
 		ps.Add("after-print",
@@ -554,7 +566,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.PostAction(scriptPAF(g, &codeVal, goshScriptGlobal)),
 		)
 
-		ps.Add("global-file",
+		ps.Add(paramNameGlobalFile,
 			psetter.Pathname{
 				Value:       &fileName,
 				Expectation: filecheck.FileNonEmpty(),
@@ -562,6 +574,9 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			makeShebangFileHelpText(globalSect),
 			param.AltName("g-f"),
 			param.PostAction(shebangFilePAF(g, &fileName, goshScriptGlobal)),
+			param.SeeAlso(
+				paramNameBeforeFile, paramNameExecFile, paramNameAfterFile),
+			param.SeeNote(noteShebangScripts),
 		)
 
 		ps.Add("import",
