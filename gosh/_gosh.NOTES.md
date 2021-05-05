@@ -26,7 +26,7 @@ some parameter for reading them should be given\. See the parameters in group:
 
 
 
- Note that it is an error if the same name appears twice\.
+Note that it is an error if the same file name appears twice\.
 
 
 ## Gosh \- in\-place editing
@@ -37,13 +37,16 @@ fails the program aborts with an error message\.
 
 
 
-if &quot;\-in\-place\-edit&quot; is given then some filenames must be supplied
-\(after &quot;\-\-&quot;\)\.
+If &apos;\-in\-place\-edit&apos; is given then some filenames must be supplied
+\(after &apos;\-\-&apos;\)\.
 
 
 
  After you have run this edit program you could use the findCmpRm program to
 check that the changes were as expected
+### See Parameter
+* in\-place\-edit
+
 
 
 ## Gosh \- shebang scripts
@@ -68,6 +71,12 @@ The rest of the file is Go code to be run inside a main\(\) func\.
 
 Any parameters that you pass to the script will be interpreted by gosh so you
 can add extra code to be run\.
+### See Parameters
+* after\-file
+* before\-file
+* exec\-file
+* global\-file
+
 
 
 ## Gosh \- snippet comments
@@ -132,18 +141,13 @@ Suggested tag names might be
    &apos;Env&apos;      for an environment variable the snippet uses
 
    &apos;Declares&apos; for a variable that it declares\.
+### See Note
+* Gosh \- snippets
+
 
 
 ## Gosh \- snippet directories
-By default snippets will be searched for in standard directories\. To see the
-names of the snippet directories use the parameter
-&apos;\-snippet\-list\-dir&apos;\.
-
-
-
-More directories can be added to the list using the parameter
-&apos;\-snippets\-dir&apos; which will add new directories to the start of the
-list\.
+By default snippets will be searched for in standard directories\.
 
 
 
@@ -151,18 +155,21 @@ The directories are searched in the order given above and the first file
 matching the name of the snippet will be used\. Any extra directories, since
 they are added at the start of the list, will be searched before the default
 ones\.
+### See Parameters
+* snippet\-list\-dir
+* snippets\-dir
+
+### See Note
+* Gosh \- snippets
+
 
 
 ## Gosh \- snippets
 You can introduce pre\-defined blocks of code \(called snippets\) into your
 script\. gosh will search through a list of directories for a file with the
-snippet name and insert that into your script\. See the note
-
-&apos;Gosh \- snippet directories&apos;
-
- for a list of the default directories that will be searched for snippets\. A
-filename with a full path can also be given\. Any inserted code is prefixed with
-a comment showing which file it came from to help with debugging\.
+snippet name and insert that into your script\. A filename with a full path can
+also be given\. Any inserted code is prefixed with a comment showing which file
+it came from to help with debugging\.
 
 
 
@@ -175,6 +182,9 @@ with any gosh\-declared variables nor any variables declared by the user\.
 It is also suggested that sets of snippets which must be used together should be
 grouped into their own sub\-directory in the snippets directory and named with
 leading digits to indicate the order that they must be applied\.
+### See Note
+* Gosh \- snippet directories
+
 
 
 ## Gosh \- variables
