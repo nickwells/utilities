@@ -11,20 +11,42 @@ import (
 	"github.com/nickwells/param.mod/v5/param/psetter"
 )
 
-const baseGroupName = param.DfltGroupName
+const (
+	baseGroupName = param.DfltGroupName
 
-var fromZone = time.Local
-var toZone = time.Local
-var fromZoneParam *param.ByName
+	dateFmt         = "20060102"
+	timeFmt         = "15:04:05"
+	timestampFormat = "20060102.150405"
+	iso8601Format   = "2006-01-02T15:04:05"
+	httpFormat      = "Mon, 02 Jan 2006 15:04:05 GMT"
+)
 
-const dateFmt = "20060102"
+var (
+	fromZone = time.Local
+	toZone   = time.Local
 
-var inFormat = dateFmt + " 15:04:05"
-var outFormat = inFormat
+	inFormat  = dateFmt + " " + timeFmt
+	outFormat = inFormat
 
-const timestampFormat = "20060102.150405"
-const iso8601Format = "2006-01-02T15:04:05"
-const httpFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
+	useUSDateOrder bool
+	noSecs         bool
+	noCentury      bool
+	showTimezone   bool
+	showAMPM       bool
+	showMonthName  bool
+
+	datePartSep string
+	dtStr       string
+	tStr        string
+
+	fromZoneParam *param.ByName
+	dtParam       *param.ByName
+	tParam        *param.ByName
+
+	fmtFlagCounter paction.Counter
+	fmtCounter     paction.Counter
+	dtCounter      paction.Counter
+)
 
 func setFormatToTimestamp(_ location.L, _ *param.ByName, _ []string) error {
 	outFormat = timestampFormat
@@ -41,23 +63,6 @@ func setFormatToHTTP(_ location.L, _ *param.ByName, _ []string) error {
 	toZone = time.UTC
 	return nil
 }
-
-var fmtCounter paction.Counter
-
-var useUSDateOrder bool
-var noSecs bool
-var noCentury bool
-var showTimezone bool
-var showAMPM bool
-var showMonthName bool
-var datePartSep = ""
-var fmtFlagCounter paction.Counter
-
-var dtStr string
-var dtParam *param.ByName
-var tStr string
-var tParam *param.ByName
-var dtCounter paction.Counter
 
 // addParams will add the parameters for the timeconv program to the set
 // of params

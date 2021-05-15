@@ -35,36 +35,38 @@ type partParams struct {
 	desc       string
 }
 
-var mainPart = partParams{
-	partName: "intro",
-	headFile: "_headDoc.md",
-	tailFile: "_tailDoc.md",
-	suffix:   docSuffix,
-}
-var examplesPart = partParams{
-	partName: "examples",
-	headFile: "_headExamples.md",
-	tailFile: "_tailExamples.md",
-	suffix:   ".EXAMPLES.md",
-	subTitle: "Examples",
-	desc:     "examples",
-}
-var refsPart = partParams{
-	partName: "refs",
-	headFile: "_headReferences.md",
-	tailFile: "_tailReferences.md",
-	suffix:   ".REFERENCES.md",
-	subTitle: "See Also",
-	desc:     "external references",
-}
-var notesPart = partParams{
-	partName: "notes",
-	headFile: "_headNotes.md",
-	tailFile: "_tailNotes.md",
-	suffix:   ".NOTES.md",
-	subTitle: "Notes",
-	desc:     "additional notes",
-}
+var (
+	mainPart = partParams{
+		partName: "intro",
+		headFile: "_headDoc.md",
+		tailFile: "_tailDoc.md",
+		suffix:   docSuffix,
+	}
+	examplesPart = partParams{
+		partName: "examples",
+		headFile: "_headExamples.md",
+		tailFile: "_tailExamples.md",
+		suffix:   ".EXAMPLES.md",
+		subTitle: "Examples",
+		desc:     "examples",
+	}
+	refsPart = partParams{
+		partName: "refs",
+		headFile: "_headReferences.md",
+		tailFile: "_tailReferences.md",
+		suffix:   ".REFERENCES.md",
+		subTitle: "See Also",
+		desc:     "external references",
+	}
+	notesPart = partParams{
+		partName: "notes",
+		headFile: "_headNotes.md",
+		tailFile: "_tailNotes.md",
+		suffix:   ".NOTES.md",
+		subTitle: "Notes",
+		desc:     "additional notes",
+	}
+)
 
 const (
 	paramSnippetModPfx  = "snippet-mod-prefix"
@@ -305,7 +307,6 @@ func makeFile(filename, contents string) {
 		fmt.Fprintln(os.Stderr, "Could not write to the file:", err)
 		os.Exit(1)
 	}
-
 }
 
 // getText reads the text from the file. If err is not nil and isn't

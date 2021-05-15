@@ -15,14 +15,18 @@ import (
 
 // Created: Sat Mar 21 11:18:36 2020
 
-var typeName string
-var typeDesc string
-var outputFileName string
-var makeFile = true
-var printPreamble = true
-var printIsValid = true
-var forTesting bool
-var constNames []string
+var (
+	typeName       string
+	typeDesc       string
+	outputFileName string
+
+	makeFile      = true
+	printPreamble = true
+	printIsValid  = true
+	forTesting    bool
+
+	constNames []string
+)
 
 func main() {
 	ps := paramset.NewOrDie(addParams,
@@ -34,7 +38,7 @@ func main() {
 
 	ps.Parse()
 
-	var f = os.Stdout
+	f := os.Stdout
 	if makeFile {
 		if forTesting {
 			f = gogen.MakeTestFileOrDie(outputFileName)

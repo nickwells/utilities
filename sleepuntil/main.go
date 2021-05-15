@@ -11,31 +11,32 @@ import (
 	"github.com/nickwells/verbose.mod/verbose"
 )
 
-var showTime bool
-
 const dfltShowTimeFmt = "20060102.150405"
 
-var showTimeFmt = dfltShowTimeFmt
+var (
+	absTime time.Time
 
-var useUTC bool
-var doSleep = true
+	showTimeFmt   = dfltShowTimeFmt
+	afterSleepCmd string
+	msg           string
 
-var repeat bool
-var repeatCount int64 = -1
+	showTime bool
+	useUTC   bool
+	doSleep  = true
 
-var afterSleepCmd string
-var msg string
+	repeat bool
 
-var absTime time.Time
+	repeatCount int64 = -1
 
-var offset int64
-var offsetMins int64
+	offset     int64
+	offsetMins int64
 
-var timeMins int64
-var timeSecs int64
-var perDay int64
-var perHour int64
-var perMinute int64
+	timeMins  int64
+	timeSecs  int64
+	perDay    int64
+	perHour   int64
+	perMinute int64
+)
 
 // sleepCalc calculates the time to sleep
 func sleepCalc(durationSecs, offsetSecs int64, now time.Time) time.Duration {
@@ -145,7 +146,7 @@ func main() {
 		sleepToAbsTime()
 		action()
 	} else {
-		var durationSecs = calcDurationSecs()
+		durationSecs := calcDurationSecs()
 
 		for {
 			now := time.Now()

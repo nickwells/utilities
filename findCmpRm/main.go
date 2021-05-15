@@ -23,21 +23,27 @@ import (
 
 // Created: Wed Oct 23 18:05:24 2019
 
-const dfltExtension = ".orig"
-const dfltDir = "."
+const (
+	dfltExtension = ".orig"
+	dfltDir       = "."
+	dfltDiffCmd   = "diff"
+)
 
-var searchSubDirs bool
-var dir string = dfltDir
-var fileExtension string = dfltExtension
-var tidyFiles bool
+var (
+	searchSubDirs bool
+	tidyFiles     bool
+)
 
-const dfltDiffCmd = "diff"
+var (
+	dir           = dfltDir
+	fileExtension = dfltExtension
 
-var diffCmdName = dfltDiffCmd
-var diffCmdParams = []string{}
+	diffCmdName = dfltDiffCmd
+	lessCmdName = "less"
 
-var lessCmdName = "less"
-var lessCmdParams = []string{}
+	diffCmdParams = []string{}
+	lessCmdParams = []string{}
+)
 
 // Status holds counts of various operations on and problems with the files
 type Status struct {

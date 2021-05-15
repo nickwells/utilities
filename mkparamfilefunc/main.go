@@ -23,18 +23,19 @@ const (
 	groupFileNameBase = "setConfigFile"
 )
 
-var mustExist bool
-var mustExistPersonal bool
-var mustExistGlobal bool
+var (
+	mustExist         bool
+	mustExistPersonal bool
+	mustExistGlobal   bool
+	privateFunc       bool
+	makeFile          = true
 
-var whichFuncs = "all"
-var privateFunc bool
-
-var makeFile = true
-var outputFileName = dfltFileName
-var groupName string
-var baseDirPersonal string
-var baseDirGlobal string
+	whichFuncs      = "all"
+	outputFileName  = dfltFileName
+	groupName       string
+	baseDirPersonal string
+	baseDirGlobal   string
+)
 
 func main() {
 	ps := paramset.NewOrDie(
@@ -62,7 +63,7 @@ func main() {
 
 	ps.Parse()
 
-	var f = os.Stdout
+	f := os.Stdout
 	if makeFile {
 		f = gogen.MakeFileOrDie(outputFileName)
 		defer f.Close()

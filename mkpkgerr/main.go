@@ -18,6 +18,7 @@ const (
 )
 
 var makeFile = true
+
 var outputFileName = dfltFileName
 
 func main() {
@@ -30,7 +31,7 @@ func main() {
 
 	ps.Parse()
 
-	var f = os.Stdout
+	f := os.Stdout
 	if makeFile {
 		f = gogen.MakeFileOrDie(outputFileName)
 		defer f.Close()

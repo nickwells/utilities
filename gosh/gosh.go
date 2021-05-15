@@ -99,7 +99,6 @@ type Gosh struct {
 // into the set of imports for the gosh script
 func (g *Gosh) CacheSnippet(sName string) error {
 	s, err := g.snippets.Add(g.snippetDirs, sName)
-
 	if err != nil {
 		return err
 	}
@@ -112,7 +111,6 @@ func (g *Gosh) CacheSnippet(sName string) error {
 // snippet is being used in the correct order and returns an error if not.
 func snippetExpand(g *Gosh, sName string) ([]string, error) {
 	s, err := g.snippets.Get(sName)
-
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +186,8 @@ func (g *Gosh) setDfltSnippetPath() {
 		"nickwells",
 		"utilities",
 		"gosh",
-		"snippets"}
+		"snippets",
+	}
 
 	g.snippetDirs = []string{
 		filepath.Join(append([]string{xdg.ConfigHome()}, snippetPath...)...),
@@ -365,7 +364,7 @@ func (g *Gosh) gDecl(name, initVal, tag string) {
 // suitable for the usage message
 func makeKnownVarList() string {
 	kvl := ""
-	var keys = make([]string, 0, len(knownVarMap))
+	keys := make([]string, 0, len(knownVarMap))
 	maxVarNameLen := 0
 	maxTypeNameLen := 0
 	for k, vi := range knownVarMap {

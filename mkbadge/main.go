@@ -16,6 +16,7 @@ import (
 // Created: Fri Sep 25 18:29:06 2020
 
 var twitterAC string
+
 var noComment bool
 
 func main() {

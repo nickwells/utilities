@@ -59,22 +59,26 @@ func doGoCommand(name, command string, cmdArgs []string) {
 	gogen.ExecGoCmd(gogen.ShowCmdIO, args...)
 }
 
-var dir string = "."
-var actions = make(map[string]bool)
-var actionFuncs = map[string]func(string){
-	printAct:    doPrint,
-	buildAct:    doBuild,
-	installAct:  doInstall,
-	generateAct: doGenerate,
-}
+var (
+	dir string = "."
 
-var generateArgs = []string{}
-var installArgs = []string{}
-var buildArgs = []string{}
+	actions = make(map[string]bool)
 
-var pkgNames []string
-var filesWanted []string
-var filesMissing []string
+	actionFuncs = map[string]func(string){
+		printAct:    doPrint,
+		buildAct:    doBuild,
+		installAct:  doInstall,
+		generateAct: doGenerate,
+	}
+
+	generateArgs = []string{}
+	installArgs  = []string{}
+	buildArgs    = []string{}
+
+	pkgNames     []string
+	filesWanted  []string
+	filesMissing []string
+)
 
 func main() {
 	ps := paramset.NewOrDie(

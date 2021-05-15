@@ -199,14 +199,18 @@ var allowedFields = psetter.AllowedVals{
 	maxNameStr:  "the maximum length of filenames",
 	flagsStr:    "show the mount flags",
 }
+
 var fields = []string{
 	nameStr,
 	avSpStr,
 }
 
 var mult = units.ByteUnit
-var showAsTable bool
-var noLabel bool
+
+var (
+	showAsTable bool
+	noLabel     bool
+)
 
 func addParams(ps *param.PSet) error {
 	unitDetails, err := units.GetUnitDetails(units.Data)
@@ -259,7 +263,7 @@ func makeReport(dirs ...string) *col.Report {
 		}
 	}
 
-	var cols = make([]*col.Col, 0, len(fields))
+	cols := make([]*col.Col, 0, len(fields))
 	var rpt *col.Report
 	h, err := col.NewHeader()
 	if err != nil {

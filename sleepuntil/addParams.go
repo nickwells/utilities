@@ -18,8 +18,10 @@ const (
 	paramNameRepeat = "repeat"
 )
 
-var wakeupActionParamCounter paction.Counter
-var timeParamCounter paction.Counter
+var (
+	wakeupActionParamCounter paction.Counter
+	timeParamCounter         paction.Counter
+)
 
 // addActionParams adds the program parameters to the PSet
 func addActionParams(ps *param.PSet) error {
@@ -103,10 +105,15 @@ func addTimeParams(ps *param.PSet) error {
 	ps.AddGroup(paramGroupNameTime, "specify how long to sleep for.")
 	countTimeParams := timeParamCounter.MakeActionFunc()
 
-	var needAbsTime bool
-	var hasAbsTime bool
-	var absTimeLocation, _ = time.LoadLocation("Local")
+	var (
+		needAbsTime bool
+		hasAbsTime  bool
+	)
+
+	absTimeLocation, _ := time.LoadLocation("Local")
+
 	var absTimeStr string
+
 	const absTimeFormat = "20060102 15:04:05"
 
 	ps.Add("utc", psetter.Bool{Value: &useUTC},
