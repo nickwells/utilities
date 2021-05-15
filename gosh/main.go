@@ -373,8 +373,9 @@ func (g *Gosh) initModule() {
 		verbose.Print(intro, ":\tAdding local modules\n")
 		sort.Strings(keys)
 		for _, k := range keys {
+			importPath := strings.TrimSuffix(k, "/")
 			gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "edit",
-				"-replace="+k+"="+g.localModules[k])
+				"-replace="+importPath+"="+g.localModules[k])
 		}
 	}
 }
