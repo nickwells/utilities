@@ -299,10 +299,6 @@ var knownVarMap varMap = varMap{
 		typeName: "*http.Request",
 		desc:     "the request to the web server",
 	},
-	"_gh": {
-		typeName: dfltHTTPHandlerName,
-		desc:     "the HTTP Handler (providing ServeHTTP)",
-	},
 	"_w": {
 		typeName: "*os.File",
 		desc:     "the file written to if editing in place",
