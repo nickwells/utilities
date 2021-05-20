@@ -8,6 +8,8 @@ import (
 	"github.com/nickwells/verbose.mod/verbose"
 )
 
+const equals = `=======================================================`
+
 // writeScript writes the contents of the named script. It panics if the
 // script name is not found.
 func (g *Gosh) writeScript(scriptName string) {
@@ -15,7 +17,11 @@ func (g *Gosh) writeScript(scriptName string) {
 	if !ok {
 		panic(fmt.Errorf("invalid script name: %q", scriptName))
 	}
+	if len(script) == 0 {
+		return
+	}
 
+	g.print(g.comment("Section start: " + scriptName + " " + equals))
 	for _, se := range script {
 		lines, err := se.expand(g, se.value)
 		if err != nil {
@@ -26,6 +32,7 @@ func (g *Gosh) writeScript(scriptName string) {
 			g.print(s)
 		}
 	}
+	g.print(g.comment("Section end:   " + scriptName + " " + equals))
 }
 
 // writeGoFileImports writes the import statements into the Go file
