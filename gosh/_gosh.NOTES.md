@@ -210,8 +210,6 @@ a single underscore so provided you start all your variable names with a letter
 
 \_fns  \[\]string             the list of names of the files
 
-\_gh   goshHandler          the HTTP Handler \(providing ServeHTTP\)
-
 \_l    \*bufio\.Scanner       a buffered scanner used to read the files
 
 \_lp   \[\]string             the parts of the line \(when split\)
