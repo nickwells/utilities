@@ -42,6 +42,7 @@ func (g *Gosh) writeGoFileImports() {
 
 	if g.runInReadLoop {
 		g.imports = append(g.imports, "bufio")
+		g.imports = append(g.imports, "io")
 		if g.inPlaceEdit {
 			g.imports = append(g.imports, "path/filepath")
 		}
