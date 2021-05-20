@@ -1,11 +1,21 @@
 // snippet: -*- go -*-
-// snippet: Doc: This is for collecting and reporting memory use.
-// snippet: Doc: This finds the current usage and reports it and any
-// snippet: Doc: difference from the previous value.
+// snippet: Doc: The mem/... snippets are for collecting and reporting
+// snippet: Doc: memory use.
+// snippet: Doc:
+// snippet: Doc: This part finds the current usage and reports it along
+// snippet: Doc: with any difference from the previous value.
 // snippet: Imports: fmt
 // snippet: Follows: mem/1-init
 
 runtime.ReadMemStats(&__ms)
-fmt.Printf("Total Alloc: %9d  Diff: %9d\n",
-	__ms.TotalAlloc, __ms.TotalAlloc-__lastTA)
+{
+	fmt.Printf("Total Alloc: %9d  Diff: %9d",
+		__ms.TotalAlloc,
+		__ms.TotalAlloc-__lastTA)
+	percDiff := 100 * float64(__ms.TotalAlloc-__lastTA) / float64(__lastTA)
+	if percDiff > 0.05 {
+		fmt.Printf(" (%+.1f%%)", percDiff)
+	}
+	fmt.Println()
+}
 __lastTA = __ms.TotalAlloc

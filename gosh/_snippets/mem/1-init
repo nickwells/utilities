@@ -1,6 +1,8 @@
 // snippet: -*- go -*-
-// snippet: Doc: This is for collecting and reporting memory use.
-// snippet: Doc: This part sets things up ane performs the initial readings
+// snippet: Doc: The mem/... snippets are for collecting and reporting
+// snippet: Doc: memory use.
+// snippet: Doc:
+// snippet: Doc: This part sets things up and performs the initial readings
 // snippet: Imports: runtime
 // snippet: Expects: mem/2-show
 // snippet: Tag: Declares: __ms     a runtime.MemStats object.
