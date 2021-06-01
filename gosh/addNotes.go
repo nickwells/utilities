@@ -161,10 +161,19 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 				" sections and you can add code to these sections."+
 				" The sections are:"+
 				"\n\n"+
-				globalSect+" - code at global scope, outside of main\n"+
-				beforeSect+" - code at the start of the program\n"+
-				execSect+"   - code, possibly in a readloop or a web handler\n"+
-				afterSect+"  - code at the end of the program")
+				globalSect+"       - code at global scope, outside of main\n"+
+				beforeSect+"       - code at the start of the program\n"+
+				beforeInnerSect+" - code before any inner loop\n"+
+				execSect+"         - code, maybe in a readloop/web handler\n"+
+				afterInnerSect+"  - code after any inner loop\n"+
+				afterSect+"        - code at the end of the program"+
+				"\n\n"+
+				"The ...inner sections are only useful if you have some inner"+
+				" loop - where you are looping over a list of files and"+
+				" reading each one. Otherwise they just appear immediately"+
+				" before or after their corresponding sections. "+
+				beforeInnerSect+" appears after "+beforeSect+
+				" and "+afterInnerSect+" appears before "+afterSect)
 
 		ps.AddNote(noteShebangScripts,
 			"You can use gosh in shebang scripts (executable files"+

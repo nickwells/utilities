@@ -27,10 +27,12 @@ const (
 
 	goshCommentIntro = " gosh : "
 
-	goshScriptGlobal = "global"
-	goshScriptBefore = "before"
-	goshScriptExec   = "exec"
-	goshScriptAfter  = "after"
+	globalSect      = "global"
+	beforeSect      = "before"
+	beforeInnerSect = "before-inner"
+	execSect        = "exec"
+	afterInnerSect  = "after-inner"
+	afterSect       = "after"
 )
 
 type expandFunc func(*Gosh, string) ([]string, error)
@@ -151,10 +153,12 @@ func NewGosh() *Gosh {
 	}
 	g := &Gosh{
 		scripts: map[string][]ScriptEntry{
-			goshScriptGlobal: {},
-			goshScriptBefore: {},
-			goshScriptExec:   {},
-			goshScriptAfter:  {},
+			globalSect:      {},
+			beforeSect:      {},
+			beforeInnerSect: {},
+			execSect:        {},
+			afterInnerSect:  {},
+			afterSect:       {},
 		},
 
 		addComments:   true,
@@ -286,10 +290,6 @@ var knownVarMap varMap = varMap{
 	"_args": {
 		typeName: "[]string",
 		desc:     "the list of arguments",
-	},
-	"_r": {
-		typeName: "io.Reader",
-		desc:     "the reader for the scanner (may be stdin)",
 	},
 	"_rw": {
 		typeName: "http.ResponseWriter",

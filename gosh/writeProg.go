@@ -8,7 +8,18 @@ import (
 	"github.com/nickwells/verbose.mod/verbose"
 )
 
-const equals = `=======================================================`
+const (
+	equals = `=======================================================`
+
+	frameTag = "frame"
+	webTag   = "webserver"
+	argTag   = "argsloop"
+	rlTag    = "readloop"
+
+	splitSfx = " - splitline"
+	filesSfx = " - filelist"
+	ipeSfx   = " - in-place-edit"
+)
 
 // writeScript writes the contents of the named script. It panics if the
 // script name is not found.
@@ -60,7 +71,7 @@ func (g *Gosh) writeGoFileImports() {
 // writeGoArgsLoop writes the statements of the loop over the arguments
 // (if any) into the Go file
 func (g *Gosh) writeGoArgsLoop() {
-	tag := "argloop"
+	tag := argTag
 
 	g.gDecl("_arg", "", tag)
 	g.gDecl("_args", " = []string{", tag)
@@ -69,92 +80,108 @@ func (g *Gosh) writeGoArgsLoop() {
 	}
 	g.gPrint("}", tag)
 
-	g.writeScript(goshScriptBefore)
+	g.writeScript(beforeSect)
+	g.writeScript(beforeInnerSect)
 
 	g.gPrint("for _, _arg = range _args {", tag)
-	g.in()
-	g.gPrint("_ = _arg", tag) // force the use of _arg
-	g.writeScript(goshScriptExec)
-	g.out()
+	{
+		g.in()
+		g.gPrint("_ = _arg", tag) // force the use of _arg
+
+		g.writeScript(execSect)
+
+		g.out()
+	}
 	g.gPrint("}", tag)
+	g.writeScript(afterInnerSect)
+	g.writeScript(afterSect)
 }
 
 // writeGoFileReadLoop writes the statements of the readloop
 // (if any) into the Go file
 func (g *Gosh) writeGoFileReadLoop() {
-	if !g.runInReadLoop {
-		return
-	}
+	tag := rlTag
 
-	tag := "readloop"
-
-	g.gDecl("_r", " = os.Stdin", tag)
 	g.gDecl("_fn", ` = "standard input"`, tag)
 	g.gDecl("_fl", "", tag)
 
 	if g.splitLine {
-		tag := tag + " - splitline"
 		g.gDecl("_sre",
 			fmt.Sprintf(" = regexp.MustCompile(%q)", g.splitPattern),
-			tag)
+			tag+splitSfx)
 	}
 	if len(g.filesToRead) > 0 {
-		tag := tag + " - filelist"
-		g.gDecl("_fns", " = []string{", tag)
-		for _, arg := range g.filesToRead {
-			g.gPrint(arg+",", tag)
-		}
-		g.gPrint("}", tag)
+		g.writeFileNameList(tag + filesSfx)
 	}
 
-	g.writeScript(goshScriptBefore)
+	g.writeScript(beforeSect)
 
 	if len(g.filesToRead) > 0 {
-		g.gPrint("for _, _fn = range _fns {", tag)
+		g.writeOpenFileLoop(tag + filesSfx)
+		g.gDecl("_l", " = bufio.NewScanner(_f)", tag)
+	} else {
+		g.gDecl("_l", " = bufio.NewScanner(os.Stdin)", tag)
+	}
+
+	g.writeScript(beforeInnerSect)
+	g.writeOpenScanLoop(tag)
+
+	g.writeScript(execSect)
+
+	g.writeCloseScanLoop(tag)
+	g.writeScript(afterInnerSect)
+
+	if len(g.filesToRead) > 0 {
+		g.writeCloseFileLoop(tag + filesSfx)
+	}
+	g.writeScript(afterSect)
+}
+
+// writeCloseFileLoop writes the code to close the loop ranging over the file
+// names.
+func (g *Gosh) writeCloseFileLoop(tag string) {
+	g.gPrint(`_f.Close()`, tag)
+	if g.inPlaceEdit {
+		g.writeEndInPlaceEdit(tag + ipeSfx)
+	}
+	g.out()
+	g.gPrint("}", tag)
+}
+
+// writeEndInPlaceEdit writes the code to complete the operation of the
+// in-place edit of the given files.
+func (g *Gosh) writeEndInPlaceEdit(tag string) {
+	g.gPrint(`_w.Close()`, tag)
+	g.gPrint(`if _err := os.Rename(_fn, _fn+"`+origExt+`"); _err != nil {`, tag)
+	{
 		g.in()
-		g.gDecl("_f", "", tag)
-		g.gDecl("_err", "", tag)
-		g.gPrint(`_f, _err = os.Open(_fn)`, tag)
-		g.gPrint(`_fl = 0`, tag)
-		g.gPrint(`if _err != nil {`, tag)
-		g.in()
-		g.gPrintErr(`"Error opening: %q : %v\n", _fn, _err`, tag)
-		g.gPrint(`continue`, tag)
+		g.gPrintErr(`"Error making copy of %q : %v\n", _fn, _err`, tag)
 		g.out()
-		g.gPrint("}", tag)
-		g.gPrint("_r = _f", tag)
-		if g.inPlaceEdit {
-			tag := tag + " - in-place-edit"
-			g.gDecl("_w", "", tag)
-			g.gPrint(`_w, _err = os.CreateTemp(`, tag)
-			g.in()
-			g.gPrint(`filepath.Dir(_fn),`, tag)
-			g.gPrint(`filepath.Base(_fn) + ".*.new")`, tag)
-			g.out()
-			g.gPrint(`if _err != nil {`, tag)
-			g.in()
-			g.gPrintErr(
-				`"Error creating the temp file for %q : %v\n", _fn, _err`,
-				tag)
-			g.gPrint(`_f.Close()`, tag)
-			g.gPrint(`continue`, tag)
-			g.out()
-			g.gPrint("}", tag)
-		}
 	}
+	g.gPrint("}", tag)
+	g.gPrint(`if _err := os.Rename(_w.Name(), _fn); _err != nil {`, tag)
+	{
+		g.in()
+		g.gPrintErr(`"Error recreating %q : %v\n", _fn, _err`, tag)
+		g.out()
+	}
+	g.gPrint("}", tag)
+}
 
-	g.gDecl("_l", " = bufio.NewScanner(_r)", tag)
+// writeOpenScanLoop writes the code to open the loop reading from the scanner.
+func (g *Gosh) writeOpenScanLoop(tag string) {
 	g.gPrint("for _l.Scan() {", tag)
 	g.in()
 	g.gPrint("_fl++", tag)
 
 	if g.splitLine {
-		tag := tag + " - splitline"
-		g.gDecl("_lp", " = _sre.Split(_l.Text(), -1)", tag)
+		g.gDecl("_lp", " = _sre.Split(_l.Text(), -1)", tag+splitSfx)
 	}
+}
 
-	g.writeScript(goshScriptExec)
-
+// writeCloseScanLoop writes the code to close the loop reading from the
+// scanner.
+func (g *Gosh) writeCloseScanLoop(tag string) {
 	g.out()
 	g.gPrint("}", tag)
 	g.gPrint("if _err := _l.Err(); _err != nil {", tag)
@@ -162,45 +189,78 @@ func (g *Gosh) writeGoFileReadLoop() {
 	g.gPrintErr(`"Error reading %q : %v\n", _fn, _err`, tag)
 	g.out()
 	g.gPrint("}", tag)
-	if len(g.filesToRead) > 0 {
-		tag := tag + " - filelist"
-		g.gPrint(`_f.Close()`, tag)
-		if g.inPlaceEdit {
-			tag := tag + " - in-place-edit"
-			g.gPrint(`_w.Close()`, tag)
-			g.gPrint(
-				`if _err := os.Rename(_fn, _fn+"`+origExt+`"); _err != nil {`,
-				tag)
-			g.in()
-			g.gPrintErr(`"Error making copy of %q : %v\n", _fn, _err`, tag)
-			g.out()
-			g.gPrint("}", tag)
-			g.gPrint(
-				`if _err := os.Rename(_w.Name(), _fn); _err != nil {`,
-				tag)
-			g.in()
-			g.gPrintErr(`"Error recreating %q : %v\n", _fn, _err`, tag)
-			g.out()
-			g.gPrint("}", tag)
-		}
-		g.out()
-		g.gPrint("}", tag)
+}
+
+// writeFileNameList writes the declaration and initialisation of the slice
+// of file names.
+func (g *Gosh) writeFileNameList(tag string) {
+	g.gDecl("_fns", " = []string{", tag)
+	for _, arg := range g.filesToRead {
+		g.gPrint(arg+",", tag)
 	}
+	g.gPrint("}", tag)
+}
+
+// writeOpenFileLoop writes the opening of the loop over the list of filenames.
+func (g *Gosh) writeOpenFileLoop(tag string) {
+	g.gPrint("for _, _fn = range _fns {", tag)
+	{
+		g.in()
+		g.gDecl("_f", "", tag)
+		g.gDecl("_err", "", tag)
+		g.gPrint(`_f, _err = os.Open(_fn)`, tag)
+		g.gPrint(`if _err != nil {`, tag)
+		{
+			g.in()
+			g.gPrintErr(`"Error opening: %q : %v\n", _fn, _err`, tag)
+			g.gPrint(`continue`, tag)
+			g.out()
+		}
+		g.gPrint("}", tag)
+		g.gPrint(`_fl = 0`, tag)
+		if g.inPlaceEdit {
+			g.writeInPlaceEditWriter(tag + ipeSfx)
+		}
+	}
+}
+
+// writeInPlaceEditWriter writes the declaration and initialisation of the
+// writer used for in-place editing. It writes code to handle any errors
+// detected.
+func (g *Gosh) writeInPlaceEditWriter(tag string) {
+	g.gDecl("_w", "", tag)
+	g.gPrint(`_w, _err = os.CreateTemp(`, tag)
+	{
+		g.in()
+		g.gPrint(`filepath.Dir(_fn),`, tag)
+		g.gPrint(`filepath.Base(_fn) + ".*.new")`, tag)
+		g.out()
+	}
+	g.gPrint(`if _err != nil {`, tag)
+	{
+		g.in()
+		g.gPrintErr(`"Error creating the temp file for %q : %v\n", _fn, _err`,
+			tag)
+		g.gPrint(`_f.Close()`, tag)
+		g.gPrint(`continue`, tag)
+		g.out()
+	}
+	g.gPrint("}", tag)
 }
 
 // writeGoFileWebserverInit writes the webserver boilerplate code
 // (if any) into the Go file
 func (g *Gosh) writeGoFileWebserverInit() {
-	if !g.runAsWebserver {
-		return
-	}
+	tag := webTag
 
 	g.gPrint(
-		fmt.Sprintf(`http.Handle(%q, %s)`, g.httpPath, g.httpHandlerInstance()),
-		"webserver")
+		fmt.Sprintf(`http.Handle(%q, %s)`,
+			g.httpPath, g.httpHandlerInstance()),
+		tag)
 	g.gPrint(
-		fmt.Sprintf(`log.Fatal(http.ListenAndServe(":%d", nil))`, g.httpPort),
-		"webserver")
+		fmt.Sprintf(`log.Fatal(http.ListenAndServe(":%d", nil))`,
+			g.httpPort),
+		tag)
 }
 
 // httpHandlerInstance returns either the value of the httpHandler (or, if it
@@ -215,22 +275,21 @@ func (g *Gosh) httpHandlerInstance() string {
 // writeGoFileWebserverHandler writes the webserver handler function
 // (if any) into the Go file
 func (g *Gosh) writeGoFileWebserverHandler() {
-	if !g.runAsWebserver {
-		return
-	}
 	if g.httpHandler != dfltHTTPHandlerName {
 		return
 	}
 
-	g.gPrint("", "webserver")
-	g.gPrint("type "+dfltHTTPHandlerName+" struct{}", "webserver")
+	tag := webTag
 
-	g.gPrint("", "webserver")
-	g.gPrint(g.defaultHandlerFuncDecl()+" {", "webserver")
+	g.gPrint("", tag)
+	g.gPrint("type "+dfltHTTPHandlerName+" struct{}", tag)
+
+	g.gPrint("", tag)
+	g.gPrint(g.defaultHandlerFuncDecl()+" {", tag)
 	g.in()
-	g.writeScript(goshScriptExec)
+	g.writeScript(execSect)
 	g.out()
-	g.gPrint("}", "webserver")
+	g.gPrint("}", tag)
 }
 
 // defaultHandlerFuncDecl returns the func declaration for the default HTTP
@@ -249,46 +308,62 @@ func (g *Gosh) writeGoFile() {
 
 	verbose.Print(intro, ": Writing the contents of the Go file\n")
 
-	g.gPrint("package main", "frame")
+	g.gPrint("package main", frameTag)
 
 	g.writeGoshComment()
 	g.writeGoFileImports()
-	g.writeScript(goshScriptGlobal)
+	g.writeScript(globalSect)
 
-	g.gPrint("", "frame")
-	g.gPrint("func main() {", "frame")
-	g.in()
-	g.gPrint(fmt.Sprintf("if err := os.Chdir(%q); err != nil {", g.runDir),
-		"frame")
-	g.in()
-	g.gPrint(
-		fmt.Sprintf("fmt.Printf(%q, %q, err)",
-			"Couldn't change directory to %q: %v\n", g.runDir),
-		"frame")
-	g.gPrint("os.Exit(1)", "frame")
-	g.out()
-	g.gPrint("}", "frame")
+	g.writeMainOpen()
 
 	if g.runAsWebserver {
-		g.writeScript(goshScriptBefore)
+		g.writeScript(beforeSect)
+		g.writeScript(beforeInnerSect)
 		g.writeGoFileWebserverInit()
+		g.writeScript(afterInnerSect)
+		g.writeScript(afterSect)
 	} else if g.runInReadLoop {
 		g.writeGoFileReadLoop()
 	} else if len(g.args) > 0 {
 		g.writeGoArgsLoop()
 	} else {
-		g.writeScript(goshScriptBefore)
-		g.writeScript(goshScriptExec)
+		g.writeScript(beforeSect)
+		g.writeScript(beforeInnerSect)
+		g.writeScript(execSect)
+		g.writeScript(afterInnerSect)
+		g.writeScript(afterSect)
 	}
 
-	g.writeScript(goshScriptAfter)
-
 	g.out()
-	g.gPrint("}", "frame")
+	g.gPrint("}", frameTag)
 
 	if g.runAsWebserver {
 		g.writeGoFileWebserverHandler()
 	}
+}
+
+// writeMainOpen writes the opening of the main func.
+func (g *Gosh) writeMainOpen() {
+	tag := frameTag
+
+	g.gPrint("", tag)
+	g.gPrint("func main() {", tag)
+	g.in()
+	runDirStr := fmt.Sprintf("%q", g.runDir)
+	g.gPrint("if err := os.Chdir("+runDirStr+"); err != nil {", tag)
+	{
+		g.in()
+		g.gPrint("fmt.Fprintf(os.Stderr,", tag)
+		{
+			g.in()
+			g.gPrint(`"Couldn't change directory to %q: %v\n",`, tag)
+			g.gPrint(runDirStr+", err)", tag)
+			g.out()
+		}
+		g.gPrint("os.Exit(1)", tag)
+		g.out()
+	}
+	g.gPrint("}", tag)
 }
 
 // writeGoshComment writes the introductory comment

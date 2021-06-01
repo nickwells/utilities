@@ -43,27 +43,21 @@ func (VerboseTimer) Act(tag string, d time.Duration) {
 
 var verboseTimer VerboseTimer
 
-func main() {
-	defer timer.Start(constantWidthStr("main"), verboseTimer)()
-
-	g := NewGosh()
-	slp := &snippetListParams{}
-
-	ps := paramset.NewOrDie(
+// makeParamSet creates the parameter set ready for argument parsing
+func makeParamSet(g *Gosh, slp *snippetListParams) *param.PSet {
+	return paramset.NewOrDie(
 		verbose.AddParams,
 
 		addSnippetListParams(slp),
 		addSnippetParams(g),
 		addWebParams(g),
 		addReadloopParams(g),
+		addGoshParams(g),
 		addParams(g),
 
 		addNotes(g),
 		addExamples,
 		addReferences,
-
-		SetGlobalConfigFile,
-		SetConfigFile,
 
 		param.SetProgramDescription(
 			"This allows you to write lines of Go code and have them run"+
@@ -88,32 +82,22 @@ func main() {
 				" you need to do more then save the file and edit it just"+
 				" like a regular Go program."),
 	)
+}
+
+func main() {
+	defer timer.Start(constantWidthStr("main"), verboseTimer)()
+
+	g := NewGosh()
+	slp := &snippetListParams{}
+
+	ps := makeParamSet(g, slp)
+
+	SetGlobalConfigFile(ps)
+	SetConfigFile(ps)
 
 	ps.Parse()
 
-	if slp.listSnippets || slp.listDirs {
-		if slp.listSnippets {
-			lc, err := snippet.NewListCfg(os.Stdout, g.snippetDirs, g.errMap,
-				snippet.SetConstraints(slp.constraints...),
-				snippet.SetParts(slp.parts...),
-				snippet.SetTags(slp.tags...),
-				snippet.HideIntro(slp.hideIntro))
-			if err != nil {
-				fmt.Fprintln(os.Stderr,
-					"There was a problem configuring the snippet list:")
-				fmt.Fprintln(os.Stderr, "\t", err)
-				os.Exit(1)
-			}
-			lc.List()
-			g.reportErrors()
-		}
-		if slp.listDirs {
-			for _, dir := range g.snippetDirs {
-				fmt.Println(dir)
-			}
-		}
-		os.Exit(0)
-	}
+	listSnippets(g, slp)
 
 	g.snippets.Check(g.errMap)
 	g.checkScripts()
@@ -126,6 +110,39 @@ func main() {
 	g.runGoFile()
 
 	g.clearFiles()
+}
+
+// listSnippets checks the snippet list parameters and lists the snippet
+// details accordingly. If any listing is done then the program will exit
+// after listing is complete.
+func listSnippets(g *Gosh, slp *snippetListParams) {
+	if !slp.listSnippets && !slp.listDirs {
+		return
+	}
+
+	if slp.listDirs {
+		for _, dir := range g.snippetDirs {
+			fmt.Println(dir)
+		}
+	}
+
+	if slp.listSnippets {
+		lc, err := snippet.NewListCfg(os.Stdout, g.snippetDirs, g.errMap,
+			snippet.SetConstraints(slp.constraints...),
+			snippet.SetParts(slp.parts...),
+			snippet.SetTags(slp.tags...),
+			snippet.HideIntro(slp.hideIntro))
+		if err != nil {
+			fmt.Fprintln(os.Stderr,
+				"There was a problem configuring the snippet list:")
+			fmt.Fprintln(os.Stderr, "\t", err)
+			os.Exit(1)
+		}
+		lc.List()
+		g.reportErrors()
+	}
+
+	os.Exit(0)
 }
 
 // clearFiles removes the created program file, any module files and the

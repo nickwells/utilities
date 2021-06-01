@@ -15,6 +15,7 @@ import (
 const (
 	paramGroupNameReadloop = "cmd-readloop"
 	paramGroupNameWeb      = "cmd-web"
+	paramGroupNameGosh     = "cmd-gosh"
 
 	paramNameInPlaceEdit = "in-place-edit"
 	paramNameWPrint      = "w-print"
@@ -28,11 +29,6 @@ const (
 	paramNameScriptEditor = "editor"
 	envVisual             = "VISUAL"
 	envEditor             = "EDITOR"
-
-	globalSect = "global"
-	beforeSect = "before"
-	execSect   = "exec"
-	afterSect  = "after"
 )
 
 // makeSnippetHelpText returns the standard text for the various snippet
@@ -161,10 +157,8 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 				Checks: []check.String{check.StringLenGT(0)},
 			},
 			makeSnippetHelpText(execSect),
-			param.AltName("snippet"),
-			param.AltName("e-s"),
-			param.AltName("es"),
-			param.PostAction(snippetPAF(g, &snippetName, goshScriptExec)),
+			param.AltNames("snippet", "e-s", "es"),
+			param.PostAction(snippetPAF(g, &snippetName, execSect)),
 			param.SeeAlso(paramNameSnippetDir, paramNameSnippetList),
 		)
 
@@ -174,9 +168,28 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 				Checks: []check.String{check.StringLenGT(0)},
 			},
 			makeSnippetHelpText(beforeSect),
-			param.AltName("b-s"),
-			param.AltName("bs"),
-			param.PostAction(snippetPAF(g, &snippetName, goshScriptBefore)),
+			param.AltNames("b-s", "bs"),
+			param.PostAction(snippetPAF(g, &snippetName, beforeSect)),
+		)
+
+		ps.Add("before-inner-snippet",
+			psetter.String{
+				Value:  &snippetName,
+				Checks: []check.String{check.StringLenGT(0)},
+			},
+			makeSnippetHelpText(beforeInnerSect),
+			param.AltNames("bi-s", "bis"),
+			param.PostAction(snippetPAF(g, &snippetName, beforeInnerSect)),
+		)
+
+		ps.Add("after-inner-snippet",
+			psetter.String{
+				Value:  &snippetName,
+				Checks: []check.String{check.StringLenGT(0)},
+			},
+			makeSnippetHelpText(afterInnerSect),
+			param.AltNames("ai-s", "ais"),
+			param.PostAction(snippetPAF(g, &snippetName, afterInnerSect)),
 		)
 
 		ps.Add("after-snippet",
@@ -185,9 +198,8 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 				Checks: []check.String{check.StringLenGT(0)},
 			},
 			makeSnippetHelpText(afterSect),
-			param.AltName("a-s"),
-			param.AltName("as"),
-			param.PostAction(snippetPAF(g, &snippetName, goshScriptAfter)),
+			param.AltNames("a-s", "as"),
+			param.PostAction(snippetPAF(g, &snippetName, afterSect)),
 		)
 
 		ps.Add("global-snippet",
@@ -196,9 +208,8 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 				Checks: []check.String{check.StringLenGT(0)},
 			},
 			makeSnippetHelpText(globalSect),
-			param.AltName("g-s"),
-			param.AltName("gs"),
-			param.PostAction(snippetPAF(g, &snippetName, goshScriptGlobal)),
+			param.AltNames("g-s", "gs"),
+			param.PostAction(snippetPAF(g, &snippetName, globalSect)),
 		)
 
 		return nil
@@ -295,20 +306,17 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 				makePrintHelpText(execSect)+
 					makePrintVariantHelpText("_rw",
 						"HTTP handler's ResponseWriter"),
-				param.AltName("web-printf"),
-				param.AltName("web-println"),
-				param.AltName("web-p"),
-				param.AltName("web-pf"),
-				param.AltName("web-pln"),
+				param.AltNames("web-printf", "web-println",
+					"web-p", "web-pf", "web-pln"),
 				param.PostAction(paction.SetBool(&g.runAsWebserver, true)),
 				param.GroupName(paramGroupNameWeb),
-				param.PostAction(scriptPAF(g, &codeVal, goshScriptExec)),
+				param.PostAction(scriptPAF(g, &codeVal, execSect)),
 				param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 			),
 		)
 
 		ps.AddFinalCheck(func() error {
-			if len(g.scripts[goshScriptExec]) > 0 &&
+			if len(g.scripts[execSect]) > 0 &&
 				g.httpHandler != dfltHTTPHandlerName {
 				return errors.New(
 					"You have provided an HTTP handler but also given" +
@@ -399,12 +407,8 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 			makePrintHelpText(execSect)+
 				makePrintVariantHelpText("_w",
 					"output file used for in-place editing"),
-			param.AltName("w-printf"),
-			param.AltName("w-println"),
-			param.AltName("w-p"),
-			param.AltName("w-pf"),
-			param.AltName("w-pln"),
-			param.PostAction(scriptPAF(g, &codeVal, goshScriptExec)),
+			param.AltNames("w-printf", "w-println", "w-p", "w-pf", "w-pln"),
+			param.PostAction(scriptPAF(g, &codeVal, execSect)),
 			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 			param.GroupName(paramGroupNameReadloop),
 			param.SeeAlso(paramNameInPlaceEdit),
@@ -442,7 +446,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			// ... and to help our python-speaking friends feel at home
 			// (bash also uses -c)
 			param.AltName("c"),
-			param.PostAction(scriptPAF(g, &codeVal, goshScriptExec)),
+			param.PostAction(scriptPAF(g, &codeVal, execSect)),
 		)
 
 		ps.Add(paramNameExecFile,
@@ -451,9 +455,8 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				Expectation: filecheck.FileNonEmpty(),
 			},
 			makeShebangFileHelpText(execSect),
-			param.AltName("shebang"),
-			param.AltName("e-f"),
-			param.PostAction(shebangFilePAF(g, &fileName, goshScriptExec)),
+			param.AltNames("shebang", "e-f"),
+			param.PostAction(shebangFilePAF(g, &fileName, execSect)),
 			param.SeeAlso(
 				paramNameBeforeFile, paramNameAfterFile, paramNameGlobalFile),
 			param.SeeNote(noteShebangScripts),
@@ -469,13 +472,8 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				},
 			},
 			makePrintHelpText(execSect),
-			param.AltName("print"),
-			param.AltName("printf"),
-			param.AltName("println"),
-			param.AltName("p"),
-			param.AltName("pf"),
-			param.AltName("pln"),
-			param.PostAction(scriptPAF(g, &codeVal, goshScriptExec)),
+			param.AltNames("print", "printf", "println", "p", "pf", "pln"),
+			param.PostAction(scriptPAF(g, &codeVal, execSect)),
 			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 		)
 
@@ -483,7 +481,14 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", beforeSect),
 			param.AltName("b"),
-			param.PostAction(scriptPAF(g, &codeVal, goshScriptBefore)),
+			param.PostAction(scriptPAF(g, &codeVal, beforeSect)),
+		)
+
+		ps.Add("before-inner", psetter.String{Value: &codeVal},
+			"follow this with Go code."+
+				makeCodeSectionHelpText("", beforeInnerSect),
+			param.AltName("bi"),
+			param.PostAction(scriptPAF(g, &codeVal, beforeInnerSect)),
 		)
 
 		ps.Add(paramNameBeforeFile,
@@ -493,7 +498,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			},
 			makeShebangFileHelpText(beforeSect),
 			param.AltName("b-f"),
-			param.PostAction(shebangFilePAF(g, &fileName, goshScriptBefore)),
+			param.PostAction(shebangFilePAF(g, &fileName, beforeSect)),
 			param.SeeAlso(
 				paramNameExecFile, paramNameAfterFile, paramNameGlobalFile),
 			param.SeeNote(noteShebangScripts),
@@ -509,20 +514,40 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				},
 			},
 			makePrintHelpText(beforeSect),
-			param.AltName("before-printf"),
-			param.AltName("before-println"),
-			param.AltName("b-p"),
-			param.AltName("b-pf"),
-			param.AltName("b-pln"),
-			param.PostAction(scriptPAF(g, &codeVal, goshScriptBefore)),
+			param.AltNames("before-printf", "before-println",
+				"b-p", "b-pf", "b-pln"),
+			param.PostAction(scriptPAF(g, &codeVal, beforeSect)),
 			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
+		)
+
+		ps.Add("before-inner-print",
+			psetter.String{
+				Value: &codeVal,
+				Editor: addPrint{
+					prefixes:    []string{"before-inner-", "bi-"},
+					paramToCall: stdPrintMap,
+					needsVal:    needsValMap,
+				},
+			},
+			makePrintHelpText(beforeSect),
+			param.AltNames("before-inner-printf", "before-inner-println",
+				"bi-p", "bi-pf", "bi-pln"),
+			param.PostAction(scriptPAF(g, &codeVal, beforeInnerSect)),
+			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
+		)
+
+		ps.Add("after-inner", psetter.String{Value: &codeVal},
+			"follow this with Go code."+
+				makeCodeSectionHelpText("", afterInnerSect),
+			param.AltName("ai"),
+			param.PostAction(scriptPAF(g, &codeVal, afterInnerSect)),
 		)
 
 		ps.Add("after", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", afterSect),
 			param.AltName("a"),
-			param.PostAction(scriptPAF(g, &codeVal, goshScriptAfter)),
+			param.PostAction(scriptPAF(g, &codeVal, afterSect)),
 		)
 
 		ps.Add(paramNameAfterFile,
@@ -532,10 +557,26 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			},
 			makeShebangFileHelpText(afterSect),
 			param.AltName("a-f"),
-			param.PostAction(shebangFilePAF(g, &fileName, goshScriptAfter)),
+			param.PostAction(shebangFilePAF(g, &fileName, afterSect)),
 			param.SeeAlso(
 				paramNameBeforeFile, paramNameExecFile, paramNameGlobalFile),
 			param.SeeNote(noteShebangScripts),
+		)
+
+		ps.Add("after-inner-print",
+			psetter.String{
+				Value: &codeVal,
+				Editor: addPrint{
+					prefixes:    []string{"after-inner-", "ai-"},
+					paramToCall: stdPrintMap,
+					needsVal:    needsValMap,
+				},
+			},
+			makePrintHelpText(afterInnerSect),
+			param.AltNames("after-inner-printf", "after-inner-println",
+				"ai-p", "ai-pf", "ai-pln"),
+			param.PostAction(scriptPAF(g, &codeVal, afterInnerSect)),
+			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 		)
 
 		ps.Add("after-print",
@@ -548,12 +589,9 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				},
 			},
 			makePrintHelpText(afterSect),
-			param.AltName("after-printf"),
-			param.AltName("after-println"),
-			param.AltName("a-p"),
-			param.AltName("a-pf"),
-			param.AltName("a-pln"),
-			param.PostAction(scriptPAF(g, &codeVal, goshScriptAfter)),
+			param.AltNames("after-printf", "after-println",
+				"a-p", "a-pf", "a-pln"),
+			param.PostAction(scriptPAF(g, &codeVal, afterSect)),
 			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 		)
 
@@ -563,7 +601,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				" several places, global variables or data types."+
 				makeCodeSectionHelpText("", globalSect),
 			param.AltName("g"),
-			param.PostAction(scriptPAF(g, &codeVal, goshScriptGlobal)),
+			param.PostAction(scriptPAF(g, &codeVal, globalSect)),
 		)
 
 		ps.Add(paramNameGlobalFile,
@@ -573,7 +611,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			},
 			makeShebangFileHelpText(globalSect),
 			param.AltName("g-f"),
-			param.PostAction(shebangFilePAF(g, &fileName, goshScriptGlobal)),
+			param.PostAction(shebangFilePAF(g, &fileName, globalSect)),
 			param.SeeAlso(
 				paramNameBeforeFile, paramNameExecFile, paramNameAfterFile),
 			param.SeeNote(noteShebangScripts),
@@ -585,9 +623,49 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				Checks: []check.String{check.StringLenGT(0)},
 			},
 			"provide any explicit imports.",
-			param.AltName("imports"),
-			param.AltName("I"),
+			param.AltNames("imports", "I"),
 		)
+
+		ps.Add("local-module",
+			ModuleMapSetter{
+				Value: &g.localModules,
+			},
+			"the name and mapping of a local module."+
+				" This will add a replace directive in the 'go.mod' file.",
+			param.Attrs(param.DontShowInStdUsage),
+		)
+
+		ps.AddFinalCheck(func() error {
+			if g.runAsWebserver && g.runInReadLoop {
+				errStr := "gosh cannot run in a read-loop" +
+					" and run as a webserver at the same time." +
+					" Parameters set at:"
+				for _, p := range g.runAsWebserverSetters {
+					for _, w := range p.WhereSet() {
+						errStr += "\n\t" + w
+					}
+				}
+				for _, p := range g.runInReadloopSetters {
+					for _, w := range p.WhereSet() {
+						errStr += "\n\t" + w
+					}
+				}
+				return errors.New(errStr)
+			}
+			return nil
+		})
+
+		return nil
+	}
+}
+
+// addGoshParams returns a function that adds the parameters which control
+// the behaviour of the gosh command rather than the program it generates.
+func addGoshParams(g *Gosh) func(ps *param.PSet) error {
+	return func(ps *param.PSet) error {
+		ps.AddGroup(paramGroupNameGosh,
+			"parameters controlling the behaviour of the gosh command"+
+				" rather than the program it generates.")
 
 		const showFileParam = "show-filename"
 		ps.Add(showFileParam, psetter.Bool{Value: &g.showFilename},
@@ -598,7 +676,8 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				" filename you will also want to examine its contents.",
 			param.AltName("show-file"),
 			param.PostAction(paction.SetBool(&g.dontClearFile, true)),
-			param.Attrs(param.DontShowInStdUsage),
+			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
+			param.GroupName(paramGroupNameGosh),
 		)
 
 		ps.Add("set-filename",
@@ -626,7 +705,8 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				" environment variable.",
 			param.AltName("file-name"),
 			param.PostAction(paction.SetBool(&g.dontClearFile, true)),
-			param.Attrs(param.DontShowInStdUsage),
+			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
+			param.GroupName(paramGroupNameGosh),
 		)
 
 		ps.Add("dont-exec", psetter.Bool{Value: &g.dontRun},
@@ -636,12 +716,11 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				" useful if you have completed the work you were using"+
 				" the generated code for and now want to save the file "+
 				" for future use.",
-			param.AltName("dont-run"),
-			param.AltName("no-exec"),
-			param.AltName("no-run"),
+			param.AltNames("dont-run", "no-exec", "no-run"),
 			param.PostAction(paction.SetBool(&g.showFilename, true)),
 			param.PostAction(paction.SetBool(&g.dontClearFile, true)),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
+			param.GroupName(paramGroupNameGosh),
 		)
 
 		ps.Add("formatter", psetter.String{Value: &g.formatter},
@@ -651,6 +730,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				" that if it is found.",
 			param.PostAction(paction.SetBool(&g.formatterSet, true)),
 			param.Attrs(param.DontShowInStdUsage),
+			param.GroupName(paramGroupNameGosh),
 		)
 
 		ps.Add("formatter-args", psetter.StrList{Value: &g.formatterArgs},
@@ -658,11 +738,13 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				" the final argument will always be the name of the"+
 				" generated program.",
 			param.Attrs(param.DontShowInStdUsage),
+			param.GroupName(paramGroupNameGosh),
 		)
 
 		ps.Add("no-comment", psetter.Bool{Value: &g.addComments, Invert: true},
 			"do not generate the end-of-line comments.",
 			param.Attrs(param.DontShowInStdUsage),
+			param.GroupName(paramGroupNameGosh),
 		)
 
 		ps.Add("base-temp-dir",
@@ -673,15 +755,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			"set the directory where the temporary directories in which"+
 				" the gosh program will be generated",
 			param.Attrs(param.DontShowInStdUsage),
-		)
-
-		ps.Add("local-module",
-			ModuleMapSetter{
-				Value: &g.localModules,
-			},
-			"the name and mapping of a local module."+
-				" This will add a replace directive in the 'go.mod' file.",
-			param.Attrs(param.DontShowInStdUsage),
+			param.GroupName(paramGroupNameGosh),
 		)
 
 		ps.Add(paramNameEditScript, psetter.Bool{Value: &g.edit},
@@ -689,8 +763,9 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				" Setting this parameter will suppress the"+
 				" deletion of the program.",
 			param.PostAction(paction.SetBool(&g.dontClearFile, true)),
-			param.Attrs(param.CommandLineOnly),
+			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
 			param.SeeAlso(paramNameScriptEditor),
+			param.GroupName(paramGroupNameGosh),
 		)
 
 		ps.Add(paramNameScriptEditor, psetter.String{Value: &g.editor},
@@ -705,27 +780,9 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				" '"+envVisual+"' and"+
 				" '"+envEditor+"' in that order",
 			param.SeeAlso(paramNameEditScript),
+			param.Attrs(param.DontShowInStdUsage),
+			param.GroupName(paramGroupNameGosh),
 		)
-
-		ps.AddFinalCheck(func() error {
-			if g.runAsWebserver && g.runInReadLoop {
-				errStr := "gosh cannot run in a read-loop" +
-					" and run as a webserver at the same time." +
-					" Parameters set at:"
-				for _, p := range g.runAsWebserverSetters {
-					for _, w := range p.WhereSet() {
-						errStr += "\n\t" + w
-					}
-				}
-				for _, p := range g.runInReadloopSetters {
-					for _, w := range p.WhereSet() {
-						errStr += "\n\t" + w
-					}
-				}
-				return errors.New(errStr)
-			}
-			return nil
-		})
 
 		return nil
 	}
