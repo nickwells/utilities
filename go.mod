@@ -1,6 +1,6 @@
 module github.com/nickwells/utilities
 
-go 1.12
+go 1.16
 
 require (
 	github.com/nickwells/check.mod v1.6.15
