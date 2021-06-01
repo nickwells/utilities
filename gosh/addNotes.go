@@ -36,8 +36,8 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 			param.NoteSeeParam(paramNameInPlaceEdit))
 
 		ps.AddNote(noteFilenames,
-			"A list of filenames to be processed can be given"+
-				" (after "+ps.TerminalParam()+")."+
+			"A list of filenames to be processed can be given at the end"+
+				" of the command line (following "+ps.TerminalParam()+")."+
 				" Each filename will be edited to be an absolute path"+
 				" if it is not already; the current"+
 				" directory will be added at the start of the path."+
