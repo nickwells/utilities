@@ -42,6 +42,7 @@ var (
 type snippet struct {
 	content []byte
 	dirName string
+	name    string
 }
 
 type sSet struct {
@@ -433,16 +434,16 @@ func readSubDir(f fs.FS, names []string, snips *sSet, errs *errutil.ErrMap) {
 
 // addSnippet reads the snippet file and adds it to the snippet set. It
 // records any erros detected.
-func addSnippet(f fs.FS, de fs.DirEntry, names []string, snips *sSet) error {
+func addSnippet(f fs.FS, de fs.DirEntry, names []string, snipSet *sSet) error {
 	s, err := readSnippet(f, de)
 	if err != nil {
 		return err
 	}
 
 	s.dirName = filepath.Join(names...)
-	filename := filepath.Join(s.dirName, de.Name())
-	snips.files[filename] = s
-	snips.names = append(snips.names, filename)
+	s.name = filepath.Join(s.dirName, de.Name())
+	snipSet.files[s.name] = s
+	snipSet.names = append(snipSet.names, s.name)
 	return nil
 }
 
