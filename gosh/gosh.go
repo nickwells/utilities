@@ -409,3 +409,8 @@ func (g *Gosh) gPrintErr(s, tag string) {
 func (g *Gosh) print(s string) {
 	fmt.Fprintln(g.w, g.indentStr()+s)
 }
+
+// printBlank prints a blank line with no comment.
+func (g *Gosh) printBlank() {
+	fmt.Fprintln(g.w)
+}
