@@ -17,6 +17,7 @@ import (
 	"github.com/nickwells/param.mod/v5/param/paction"
 	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/twrap.mod/twrap"
 	"github.com/nickwells/verbose.mod/verbose"
 )
 
@@ -35,6 +36,7 @@ var (
 	action  string = cmpAction
 
 	maxSubDirs int64 = dfltMaxSubDirs
+	noCopy     bool
 )
 
 type snippet struct {
@@ -193,7 +195,8 @@ func installSnippets(from, to fs.FS, toDir string) {
 	)
 
 	var movedAsideFiles []string
-	timestamp := time.Now().Format("20060102-150405.000")
+	var installationFailures []string
+	timestamp := time.Now().Format(".20060102-150405.000")
 	dirExists := filecheck.DirExists()
 	exists := filecheck.Provisos{Existence: filecheck.MustExist}
 	var err error
@@ -216,24 +219,35 @@ func installSnippets(from, to fs.FS, toDir string) {
 				continue
 			}
 			// the snippet exists but it's changed
-			// - move the current snippet aside
+			// - move the current snippet aside (unless no-copy is set)
 			// - write the new snippet
 			diffCount++
-			if exists.StatusCheck(moveAsideName) == nil {
-				moveAsideName += timestamp
-				timestampedCount++
-			}
+			if noCopy {
+				err = os.Remove(fullName)
+				if err != nil {
+					errs.AddError("Remove failure", err)
+					installationFailures = append(installationFailures, fName)
+					continue
+				}
+			} else {
+				if exists.StatusCheck(moveAsideName) == nil {
+					moveAsideName += timestamp
+					timestampedCount++
+				}
 
-			movedAsideFiles = append(movedAsideFiles, moveAsideName)
-			err = os.Rename(fullName, moveAsideName)
-			if err != nil {
-				errs.AddError("Rename failure", err)
-				continue
+				movedAsideFiles = append(movedAsideFiles, moveAsideName)
+				err = os.Rename(fullName, moveAsideName)
+				if err != nil {
+					errs.AddError("Rename failure", err)
+					installationFailures = append(installationFailures, fName)
+					continue
+				}
 			}
 
 			err = writeSnippet(fromS, fullName)
 			if err != nil {
 				errs.AddError("Write failure", err)
+				installationFailures = append(installationFailures, fName)
 				continue
 			}
 
@@ -253,6 +267,7 @@ func installSnippets(from, to fs.FS, toDir string) {
 				err = os.MkdirAll(dirName, 0777)
 				if err != nil {
 					errs.AddError("Mkdir failure", err)
+					installationFailures = append(installationFailures, fName)
 					continue
 				}
 			}
@@ -260,6 +275,7 @@ func installSnippets(from, to fs.FS, toDir string) {
 		err = writeSnippet(fromS, fullName)
 		if err != nil {
 			errs.AddError("Write failure", err)
+			installationFailures = append(installationFailures, fName)
 			continue
 		}
 	}
@@ -268,18 +284,37 @@ func installSnippets(from, to fs.FS, toDir string) {
 	verbose.Println(fmt.Sprintf("\t  Duplicate:%4d", dupCount))
 	verbose.Println(fmt.Sprintf("\t    Changed:%4d", diffCount))
 	verbose.Println(fmt.Sprintf("\tTimestamped:%4d", timestampedCount))
+	verbose.Println(fmt.Sprintf("\t   Failures:%4d", len(installationFailures)))
+
+	twc := twrap.NewTWConfOrPanic()
 
 	if diffCount > 0 {
-		fmt.Printf("%d existing snippets were changed\n", diffCount)
-		fmt.Println(
-			"You should check that you are happy with the changes\n" +
-				"and if so, remove the copies of the original snippet\n" +
-				"files. You might find the 'findCmpRm' tool useful for\n" +
-				"this.")
-		fmt.Println("The copies of the files are:")
-		for _, mafName := range movedAsideFiles {
-			fmt.Println("\t", mafName)
+		if diffCount == 1 {
+			fmt.Println("One snippet was changed")
+		} else {
+			fmt.Printf("%d existing snippets were changed\n", diffCount)
 		}
+		if !noCopy {
+			twc.Wrap("You should check that you are happy with the changes"+
+				" and if so, remove the copies of the original snippet"+
+				" files. You might find the 'findCmpRm' tool useful for"+
+				" this.", 4)
+			fmt.Println()
+			fmt.Println("The copies of the files are:")
+			twc.List(movedAsideFiles, 8)
+
+			if timestampedCount > 0 {
+				twc.Wrap("\nNote that some files have a timestamped copy"+
+					" indicating that there were previous copies kept."+
+					" You should consider cleaning up these old copies.", 4)
+
+			}
+		}
+	}
+
+	if len(installationFailures) > 0 {
+		twc.Wrap("The following files could not be installed", 0)
+		twc.List(installationFailures, 8)
 	}
 	if errCount, _ := errs.CountErrors(); errCount != 0 {
 		errs.Report(os.Stderr, "Installing snippets")
@@ -454,10 +489,14 @@ func addParams(ps *param.PSet) error {
 		},
 		"how many levels of sub-directory are allowed before we assume"+
 			" there is a loop in the directory path",
-		//param.GroupName(groupName),
-		//param.AltNames("altName"),
-		//param.PostAction(action),
 		param.Attrs(param.DontShowInStdUsage),
+	)
+
+	ps.Add("no-copy", psetter.Bool{Value: &noCopy},
+		"this will suppress the copying of existing files which have"+
+			" changed and are being replaced.",
+		param.AltNames("no-backup"),
+		param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 	)
 
 	ps.AddReference("findCmpRm",
