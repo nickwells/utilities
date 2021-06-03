@@ -49,6 +49,16 @@ type sSet struct {
 	names []string
 }
 
+type iLog struct {
+	newCount         int
+	dupCount         int
+	diffCount        int
+	timestampedCount int
+
+	movedAsideFiles []string
+	failedInstalls  []string
+}
+
 //go:embed _snippets
 var snippetsDir embed.FS
 
@@ -187,15 +197,8 @@ func installSnippets(from, to fs.FS, toDir string) {
 				len(toSnippets.names)))
 	}
 
-	var (
-		newCount         = 0
-		dupCount         = 0
-		diffCount        = 0
-		timestampedCount = 0
-	)
+	var stats iLog
 
-	var movedAsideFiles []string
-	var installationFailures []string
 	timestamp := time.Now().Format(".20060102-150405.000")
 	dirExists := filecheck.DirExists()
 	exists := filecheck.Provisos{Existence: filecheck.MustExist}
@@ -215,31 +218,31 @@ func installSnippets(from, to fs.FS, toDir string) {
 			if string(toS.content) == string(fromS.content) {
 				// the exact same snippet already exists
 				// - no further action needed
-				dupCount++
+				stats.dupCount++
 				continue
 			}
 			// the snippet exists but it's changed
 			// - move the current snippet aside (unless no-copy is set)
 			// - write the new snippet
-			diffCount++
+			stats.diffCount++
 			if noCopy {
 				err = os.Remove(fullName)
 				if err != nil {
 					errs.AddError("Remove failure", err)
-					installationFailures = append(installationFailures, fName)
+					stats.failedInstalls = append(stats.failedInstalls, fName)
 					continue
 				}
 			} else {
 				if exists.StatusCheck(moveAsideName) == nil {
 					moveAsideName += timestamp
-					timestampedCount++
+					stats.timestampedCount++
 				}
 
-				movedAsideFiles = append(movedAsideFiles, moveAsideName)
+				stats.movedAsideFiles = append(stats.movedAsideFiles, moveAsideName)
 				err = os.Rename(fullName, moveAsideName)
 				if err != nil {
 					errs.AddError("Rename failure", err)
-					installationFailures = append(installationFailures, fName)
+					stats.failedInstalls = append(stats.failedInstalls, fName)
 					continue
 				}
 			}
@@ -247,7 +250,7 @@ func installSnippets(from, to fs.FS, toDir string) {
 			err = writeSnippet(fromS, fullName)
 			if err != nil {
 				errs.AddError("Write failure", err)
-				installationFailures = append(installationFailures, fName)
+				stats.failedInstalls = append(stats.failedInstalls, fName)
 				continue
 			}
 
@@ -257,7 +260,7 @@ func installSnippets(from, to fs.FS, toDir string) {
 		// - create any necessary directories
 		// - move aside any files with the same name as a directory
 		// - write the new snippet
-		newCount++
+		stats.newCount++
 		if fromS.dirName != "" {
 			if dirExists.StatusCheck(dirName) != nil {
 				// TODO: walk back up the dirName (using filepath.Dir) until
@@ -267,7 +270,7 @@ func installSnippets(from, to fs.FS, toDir string) {
 				err = os.MkdirAll(dirName, 0777)
 				if err != nil {
 					errs.AddError("Mkdir failure", err)
-					installationFailures = append(installationFailures, fName)
+					stats.failedInstalls = append(stats.failedInstalls, fName)
 					continue
 				}
 			}
@@ -275,24 +278,24 @@ func installSnippets(from, to fs.FS, toDir string) {
 		err = writeSnippet(fromS, fullName)
 		if err != nil {
 			errs.AddError("Write failure", err)
-			installationFailures = append(installationFailures, fName)
+			stats.failedInstalls = append(stats.failedInstalls, fName)
 			continue
 		}
 	}
 	verbose.Println("Snippet installation summary")
-	verbose.Println(fmt.Sprintf("\t        New:%4d", newCount))
-	verbose.Println(fmt.Sprintf("\t  Duplicate:%4d", dupCount))
-	verbose.Println(fmt.Sprintf("\t    Changed:%4d", diffCount))
-	verbose.Println(fmt.Sprintf("\tTimestamped:%4d", timestampedCount))
-	verbose.Println(fmt.Sprintf("\t   Failures:%4d", len(installationFailures)))
+	verbose.Println(fmt.Sprintf("\t        New:%4d", stats.newCount))
+	verbose.Println(fmt.Sprintf("\t  Duplicate:%4d", stats.dupCount))
+	verbose.Println(fmt.Sprintf("\t    Changed:%4d", stats.diffCount))
+	verbose.Println(fmt.Sprintf("\tTimestamped:%4d", stats.timestampedCount))
+	verbose.Println(fmt.Sprintf("\t   Failures:%4d", len(stats.failedInstalls)))
 
 	twc := twrap.NewTWConfOrPanic()
 
-	if diffCount > 0 {
-		if diffCount == 1 {
+	if stats.diffCount > 0 {
+		if stats.diffCount == 1 {
 			fmt.Println("One snippet was changed")
 		} else {
-			fmt.Printf("%d existing snippets were changed\n", diffCount)
+			fmt.Printf("%d existing snippets were changed\n", stats.diffCount)
 		}
 		if !noCopy {
 			twc.Wrap("You should check that you are happy with the changes"+
@@ -301,9 +304,9 @@ func installSnippets(from, to fs.FS, toDir string) {
 				" this.", 4)
 			fmt.Println()
 			fmt.Println("The copies of the files are:")
-			twc.List(movedAsideFiles, 8)
+			twc.List(stats.movedAsideFiles, 8)
 
-			if timestampedCount > 0 {
+			if stats.timestampedCount > 0 {
 				twc.Wrap("\nNote that some files have a timestamped copy"+
 					" indicating that there were previous copies kept."+
 					" You should consider cleaning up these old copies.", 4)
@@ -312,9 +315,9 @@ func installSnippets(from, to fs.FS, toDir string) {
 		}
 	}
 
-	if len(installationFailures) > 0 {
+	if len(stats.failedInstalls) > 0 {
 		twc.Wrap("The following files could not be installed", 0)
-		twc.List(installationFailures, 8)
+		twc.List(stats.failedInstalls, 8)
 	}
 	if errCount, _ := errs.CountErrors(); errCount != 0 {
 		errs.Report(os.Stderr, "Installing snippets")
