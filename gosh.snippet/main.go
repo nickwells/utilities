@@ -347,9 +347,9 @@ func writeSnippet(s snippet, name string) error {
 }
 
 // getFSContent ...
-func getFSContent(f fs.FS) (snips sSet, errs *errutil.ErrMap) {
+func getFSContent(f fs.FS) (snipSet sSet, errs *errutil.ErrMap) {
 	errs = errutil.NewErrMap()
-	snips = sSet{
+	snipSet = sSet{
 		files: map[string]snippet{},
 	}
 
@@ -361,10 +361,10 @@ func getFSContent(f fs.FS) (snips sSet, errs *errutil.ErrMap) {
 
 	for _, de := range dirEnts {
 		if de.IsDir() {
-			readSubDir(f, []string{de.Name()}, &snips, errs)
+			readSubDir(f, []string{de.Name()}, &snipSet, errs)
 			continue
 		}
-		err := addSnippet(f, de, []string{}, &snips)
+		err := addSnippet(f, de, []string{}, &snipSet)
 		if err != nil {
 			errs.AddError("addSnippet", err)
 			continue
