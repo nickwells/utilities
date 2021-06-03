@@ -55,8 +55,23 @@ type iLog struct {
 	diffCount        int
 	timestampedCount int
 
-	movedAsideFiles []string
-	failedInstalls  []string
+	renamedFiles []string
+	badInstalls  []string
+
+	errs *errutil.ErrMap
+}
+
+// handleErr checks the error, if it is nil, it returns false, otherwise it
+// adds the error to the error map, records that the file failed to install
+// and returns true.
+func (il *iLog) handleErr(err error, errCat, fName string) bool {
+	if err == nil {
+		return false
+	}
+
+	il.errs.AddError(errCat, err)
+	il.badInstalls = append(il.badInstalls, fName)
+	return true
 }
 
 //go:embed _snippets
@@ -197,7 +212,9 @@ func installSnippets(from, to fs.FS, toDir string) {
 				len(toSnippets.names)))
 	}
 
-	var stats iLog
+	var stats = iLog{
+		errs: errutil.NewErrMap(),
+	}
 
 	timestamp := time.Now().Format(".20060102-150405.000")
 	dirExists := filecheck.DirExists()
@@ -227,9 +244,7 @@ func installSnippets(from, to fs.FS, toDir string) {
 			stats.diffCount++
 			if noCopy {
 				err = os.Remove(fullName)
-				if err != nil {
-					errs.AddError("Remove failure", err)
-					stats.failedInstalls = append(stats.failedInstalls, fName)
+				if stats.handleErr(err, "Remove failure", fName) {
 					continue
 				}
 			} else {
@@ -238,19 +253,15 @@ func installSnippets(from, to fs.FS, toDir string) {
 					stats.timestampedCount++
 				}
 
-				stats.movedAsideFiles = append(stats.movedAsideFiles, moveAsideName)
+				stats.renamedFiles = append(stats.renamedFiles, moveAsideName)
 				err = os.Rename(fullName, moveAsideName)
-				if err != nil {
-					errs.AddError("Rename failure", err)
-					stats.failedInstalls = append(stats.failedInstalls, fName)
+				if stats.handleErr(err, "Rename failure", fName) {
 					continue
 				}
 			}
 
 			err = writeSnippet(fromS, fullName)
-			if err != nil {
-				errs.AddError("Write failure", err)
-				stats.failedInstalls = append(stats.failedInstalls, fName)
+			if stats.handleErr(err, "Write failure", fName) {
 				continue
 			}
 
@@ -268,17 +279,13 @@ func installSnippets(from, to fs.FS, toDir string) {
 				// with the case where you want to create a/b/c/d but a/b/c
 				// is a file
 				err = os.MkdirAll(dirName, 0777)
-				if err != nil {
-					errs.AddError("Mkdir failure", err)
-					stats.failedInstalls = append(stats.failedInstalls, fName)
+				if stats.handleErr(err, "Mkdir failure", fName) {
 					continue
 				}
 			}
 		}
 		err = writeSnippet(fromS, fullName)
-		if err != nil {
-			errs.AddError("Write failure", err)
-			stats.failedInstalls = append(stats.failedInstalls, fName)
+		if stats.handleErr(err, "Write failure", fName) {
 			continue
 		}
 	}
@@ -287,7 +294,7 @@ func installSnippets(from, to fs.FS, toDir string) {
 	verbose.Println(fmt.Sprintf("\t  Duplicate:%4d", stats.dupCount))
 	verbose.Println(fmt.Sprintf("\t    Changed:%4d", stats.diffCount))
 	verbose.Println(fmt.Sprintf("\tTimestamped:%4d", stats.timestampedCount))
-	verbose.Println(fmt.Sprintf("\t   Failures:%4d", len(stats.failedInstalls)))
+	verbose.Println(fmt.Sprintf("\t   Failures:%4d", len(stats.badInstalls)))
 
 	twc := twrap.NewTWConfOrPanic()
 
@@ -304,23 +311,23 @@ func installSnippets(from, to fs.FS, toDir string) {
 				" this.", 4)
 			fmt.Println()
 			fmt.Println("The copies of the files are:")
-			twc.List(stats.movedAsideFiles, 8)
+			twc.List(stats.renamedFiles, 8)
 
 			if stats.timestampedCount > 0 {
 				twc.Wrap("\nNote that some files have a timestamped copy"+
 					" indicating that there were previous copies kept."+
 					" You should consider cleaning up these old copies.", 4)
-
 			}
 		}
 	}
 
-	if len(stats.failedInstalls) > 0 {
-		twc.Wrap("The following files could not be installed", 0)
-		twc.List(stats.failedInstalls, 8)
+	if len(stats.badInstalls) > 0 {
+		twc.Wrap("The following snippets could not be installed", 0)
+		twc.List(stats.badInstalls, 8)
 	}
-	if errCount, _ := errs.CountErrors(); errCount != 0 {
-		errs.Report(os.Stderr, "Installing snippets")
+
+	if errCount, _ := stats.errs.CountErrors(); errCount != 0 {
+		stats.errs.Report(os.Stderr, "Installing snippets")
 		os.Exit(1)
 	}
 }
