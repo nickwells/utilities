@@ -50,7 +50,20 @@ type sSet struct {
 	names []string
 }
 
-type iLog struct {
+// installer holds the details needed to install snippets
+type installer struct {
+	fromSet sSet
+	toSet   sSet
+
+	toDir string
+
+	l logger
+
+	timestamp string
+}
+
+// logger is used to record the progress of the installation
+type logger struct {
 	newCount         int
 	dupCount         int
 	diffCount        int
@@ -65,14 +78,65 @@ type iLog struct {
 // handleErr checks the error, if it is nil, it returns false, otherwise it
 // adds the error to the error map, records that the file failed to install
 // and returns true.
-func (il *iLog) handleErr(err error, errCat, fName string) bool {
+func (l *logger) handleErr(err error, errCat, snippetName string) bool {
 	if err == nil {
 		return false
 	}
 
-	il.errs.AddError(errCat, err)
-	il.badInstalls = append(il.badInstalls, fName)
+	l.errs.AddError(errCat, err)
+	l.badInstalls = append(l.badInstalls, snippetName)
 	return true
+}
+
+// report prints information about the state of the installation
+func (l logger) report() {
+	if verbose.IsOn() {
+		fmt.Println("Snippet installation summary")
+		fmt.Printf("\t        New:%4d\n", l.newCount)
+		fmt.Printf("\t  Duplicate:%4d\n", l.dupCount)
+		fmt.Printf("\t    Changed:%4d\n", l.diffCount)
+		fmt.Printf("\tTimestamped:%4d\n", l.timestampedCount)
+		fmt.Printf("\t   Failures:%4d\n", len(l.badInstalls))
+	}
+
+	twc := twrap.NewTWConfOrPanic()
+
+	if l.diffCount > 0 {
+		if l.diffCount == 1 {
+			fmt.Println("One snippet was changed")
+		} else {
+			fmt.Printf("%d existing snippets were changed\n", l.diffCount)
+		}
+		if !noCopy {
+			twc.Wrap("You should check that you are happy with the changes"+
+				" and if so, remove the copies of the original snippet"+
+				" files. You might find the 'findCmpRm' tool useful for"+
+				" this.", 0)
+			fmt.Println()
+			fmt.Println("The copies of the files are:")
+			twc.List(l.renamedFiles, 8)
+
+			if l.timestampedCount > 0 {
+				twc.Wrap("\nNote that some files have a timestamped copy"+
+					" indicating that there were previous copies kept."+
+					" You should consider cleaning up these old copies.", 0)
+			}
+		}
+	}
+}
+
+// reportErrors prints any errors
+func (l logger) reportErrors() {
+	twc := twrap.NewTWConfOrPanic(twrap.SetWriter(os.Stderr))
+
+	if len(l.badInstalls) > 0 {
+		twc.Wrap("The following snippets could not be installed", 0)
+		twc.List(l.badInstalls, 8)
+	}
+
+	if errCount, _ := l.errs.CountErrors(); errCount != 0 {
+		l.errs.Report(os.Stderr, "Installing snippets")
+	}
 }
 
 //go:embed _snippets
@@ -145,23 +209,15 @@ func createToFS(toDir string) fs.FS {
 func compareSnippets(from, to fs.FS) {
 	verbose.Println("comparing snippets")
 
-	fromSnippets, errs := getFSContent(from)
-	if errCount, _ := errs.CountErrors(); errCount != 0 {
-		errs.Report(os.Stderr, "Snippet source")
-		os.Exit(1)
-	}
+	fromSnippets := getFSContent(from, "Snippet source")
 	if len(fromSnippets.names) == 0 {
 		fmt.Fprintln(os.Stderr, "There are no snippets in the source directory")
 		return
 	}
 
-	toSnippets, errs := getFSContent(to)
-	if errCount, _ := errs.CountErrors(); errCount != 0 {
-		errs.Report(os.Stderr, "Snippet target")
-		os.Exit(1)
-	}
+	toSnippets := getFSContent(to, "Snippet target")
 	if len(toSnippets.names) == 0 {
-		fmt.Println("There are no snippets in the target directory")
+		fmt.Fprintln(os.Stderr, "There are no snippets in the target directory")
 		return
 	}
 
@@ -189,147 +245,94 @@ func compareSnippets(from, to fs.FS) {
 func installSnippets(from, to fs.FS, toDir string) {
 	verbose.Println("Installing snippets into ", toDir)
 
-	fromSnippets, errs := getFSContent(from)
-	if errCount, _ := errs.CountErrors(); errCount != 0 {
-		errs.Report(os.Stderr, "Snippet source")
-		os.Exit(1)
+	inst := &installer{
+		fromSet:   getFSContent(from, "Snippet source"),
+		toSet:     getFSContent(to, "Snippet target"),
+		toDir:     toDir,
+		l:         logger{errs: errutil.NewErrMap()},
+		timestamp: time.Now().Format(".20060102-150405.000"),
 	}
-	if len(fromSnippets.names) == 0 {
+	if len(inst.fromSet.names) == 0 {
 		fmt.Fprintln(os.Stderr, "There are no snippets to install")
 		return
 	}
-	verbose.Println(fmt.Sprintf("%d snippets to install",
-		len(fromSnippets.names)))
+	verbose.Println(
+		fmt.Sprintf("%d snippets to install", len(inst.fromSet.names)))
 
-	toSnippets, errs := getFSContent(to)
-	if errCount, _ := errs.CountErrors(); errCount != 0 {
-		errs.Report(os.Stderr, "Snippet target")
-		os.Exit(1)
-	}
-	if len(toSnippets.names) > 0 {
-		verbose.Println(
-			fmt.Sprintf("%d snippets already in the target directory",
-				len(toSnippets.names)))
+	if len(inst.toSet.names) > 0 {
+		verbose.Println(fmt.Sprintf("snippets in the target directory: %d",
+			len(inst.toSet.names)))
 	}
 
-	var stats = iLog{
-		errs: errutil.NewErrMap(),
-	}
-
-	timestamp := time.Now().Format(".20060102-150405.000")
-	dirExists := filecheck.DirExists()
-	exists := filecheck.Provisos{Existence: filecheck.MustExist}
 	var err error
-	for _, fName := range fromSnippets.names {
-		verbose.Println("\tinstalling ", fName)
-		fromS := fromSnippets.files[fName]
-		toS, ok := toSnippets.files[fName]
+	for _, snippetName := range inst.fromSet.names {
+		verbose.Println("\tinstalling ", snippetName)
+		fromS := inst.fromSet.files[snippetName]
+		toS, toFileExists := inst.toSet.files[snippetName]
 
 		var (
-			dirName       = filepath.Join(toDir, fromS.dirName)
-			fullName      = filepath.Join(toDir, fName)
-			moveAsideName = fullName + ".orig"
+			dirName  = filepath.Join(toDir, fromS.dirName)
+			fileName = filepath.Join(toDir, snippetName)
 		)
 
-		if ok {
+		if toFileExists {
 			if string(toS.content) == string(fromS.content) {
-				// the exact same snippet already exists
-				// - no further action needed
-				stats.dupCount++
+				// duplicate snippet
+				inst.l.dupCount++
 				continue
 			}
-			// the snippet exists but it's changed
-			// - move the current snippet aside (unless no-copy is set)
-			// - write the new snippet
-			stats.diffCount++
-			if noCopy {
-				err = os.Remove(fullName)
-				if stats.handleErr(err, "Remove failure", fName) {
-					continue
-				}
-			} else {
-				if exists.StatusCheck(moveAsideName) == nil {
-					moveAsideName += timestamp
-					stats.timestampedCount++
-				}
-
-				stats.renamedFiles = append(stats.renamedFiles, moveAsideName)
-				err = os.Rename(fullName, moveAsideName)
-				if stats.handleErr(err, "Rename failure", fName) {
-					continue
-				}
+			// changed snippet
+			inst.l.diffCount++
+			if clearFile(snippetName, fileName, inst) {
+				err = writeSnippet(fromS, fileName)
+				inst.l.handleErr(err, "Write failure", snippetName)
 			}
-
-			err = writeSnippet(fromS, fullName)
-			if stats.handleErr(err, "Write failure", fName) {
-				continue
-			}
-
 			continue
 		}
-		// this is a new snippet
-		// - create any necessary directories
-		// - move aside any files with the same name as a directory
-		// - write the new snippet
-		stats.newCount++
+		// new snippet
+		inst.l.newCount++
 		if fromS.dirName != "" {
-			if dirExists.StatusCheck(dirName) != nil {
+			if filecheck.DirExists().StatusCheck(dirName) != nil {
 				// TODO: walk back up the dirName (using filepath.Dir) until
 				// you get to the toDir which you know exists. We're dealing
 				// with the case where you want to create a/b/c/d but a/b/c
 				// is a file
 				err = os.MkdirAll(dirName, 0777)
-				if stats.handleErr(err, "Mkdir failure", fName) {
+				if inst.l.handleErr(err, "Mkdir failure", snippetName) {
 					continue
 				}
 			}
 		}
-		err = writeSnippet(fromS, fullName)
-		if stats.handleErr(err, "Write failure", fName) {
+		err = writeSnippet(fromS, fileName)
+		if inst.l.handleErr(err, "Write failure", snippetName) {
 			continue
 		}
 	}
-	verbose.Println("Snippet installation summary")
-	verbose.Println(fmt.Sprintf("\t        New:%4d", stats.newCount))
-	verbose.Println(fmt.Sprintf("\t  Duplicate:%4d", stats.dupCount))
-	verbose.Println(fmt.Sprintf("\t    Changed:%4d", stats.diffCount))
-	verbose.Println(fmt.Sprintf("\tTimestamped:%4d", stats.timestampedCount))
-	verbose.Println(fmt.Sprintf("\t   Failures:%4d", len(stats.badInstalls)))
 
-	twc := twrap.NewTWConfOrPanic()
+	inst.l.report()
+	inst.l.reportErrors()
+}
 
-	if stats.diffCount > 0 {
-		if stats.diffCount == 1 {
-			fmt.Println("One snippet was changed")
-		} else {
-			fmt.Printf("%d existing snippets were changed\n", stats.diffCount)
-		}
-		if !noCopy {
-			twc.Wrap("You should check that you are happy with the changes"+
-				" and if so, remove the copies of the original snippet"+
-				" files. You might find the 'findCmpRm' tool useful for"+
-				" this.", 4)
-			fmt.Println()
-			fmt.Println("The copies of the files are:")
-			twc.List(stats.renamedFiles, 8)
-
-			if stats.timestampedCount > 0 {
-				twc.Wrap("\nNote that some files have a timestamped copy"+
-					" indicating that there were previous copies kept."+
-					" You should consider cleaning up these old copies.", 4)
-			}
-		}
+// clearFile either moves the file aside or removes it. It updates the
+// installation log and records any errors. It returns true if there were no
+// errors, false otherwise.
+func clearFile(snippetName, fileName string, inst *installer) bool {
+	if noCopy {
+		err := os.Remove(fileName)
+		return !inst.l.handleErr(err, "Remove failure", snippetName)
 	}
 
-	if len(stats.badInstalls) > 0 {
-		twc.Wrap("The following snippets could not be installed", 0)
-		twc.List(stats.badInstalls, 8)
+	exists := filecheck.Provisos{Existence: filecheck.MustExist}
+	copyName := fileName + ".orig"
+
+	if exists.StatusCheck(copyName) == nil {
+		copyName += inst.timestamp
+		inst.l.timestampedCount++
 	}
 
-	if errCount, _ := stats.errs.CountErrors(); errCount != 0 {
-		stats.errs.Report(os.Stderr, "Installing snippets")
-		os.Exit(1)
-	}
+	inst.l.renamedFiles = append(inst.l.renamedFiles, copyName)
+	err := os.Rename(fileName, copyName)
+	return !inst.l.handleErr(err, "Rename failure", snippetName)
 }
 
 // writeSnippet creates the named file and writes the snippet into it
@@ -346,16 +349,23 @@ func writeSnippet(s snippet, name string) error {
 }
 
 // getFSContent ...
-func getFSContent(f fs.FS) (snipSet sSet, errs *errutil.ErrMap) {
-	errs = errutil.NewErrMap()
-	snipSet = sSet{
+func getFSContent(f fs.FS, name string) sSet {
+	errs := errutil.NewErrMap()
+	defer func() {
+		if errCount, _ := errs.CountErrors(); errCount != 0 {
+			errs.Report(os.Stderr, name)
+			os.Exit(1)
+		}
+	}()
+
+	snipSet := sSet{
 		files: map[string]snippet{},
 	}
 
 	dirEnts, err := fs.ReadDir(f, ".")
 	if err != nil {
 		errs.AddError("ReadDir", err)
-		return
+		return snipSet
 	}
 
 	for _, de := range dirEnts {
@@ -369,7 +379,7 @@ func getFSContent(f fs.FS) (snipSet sSet, errs *errutil.ErrMap) {
 			continue
 		}
 	}
-	return
+	return snipSet
 }
 
 // readSnippet reads the snippet contents from the FS
