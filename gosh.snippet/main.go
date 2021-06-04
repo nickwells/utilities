@@ -62,6 +62,17 @@ type installer struct {
 	timestamp string
 }
 
+// newInstaller ...
+func newInstaller(source, target fs.FS, toDir string) *installer {
+	return &installer{
+		srcSet:    getFSContent(source, "Snippet source"),
+		targSet:   getFSContent(target, "Snippet target"),
+		toDir:     toDir,
+		l:         logger{errs: errutil.NewErrMap()},
+		timestamp: time.Now().Format(".20060102-150405.000"),
+	}
+}
+
 // checkSourceSnippets checks that there are some snippets in the source
 // set. If not it reports an error and exits.
 func (inst installer) checkSourceSnippets() {
@@ -232,12 +243,7 @@ func createToFS(toDir string) fs.FS {
 func compareSnippets(source, target fs.FS, toDir string) {
 	verbose.Println("comparing snippets")
 
-	inst := &installer{
-		srcSet:  getFSContent(source, "Snippet source"),
-		targSet: getFSContent(target, "Snippet target"),
-		toDir:   toDir,
-		l:       logger{errs: errutil.NewErrMap()},
-	}
+	inst := newInstaller(source, target, toDir)
 	inst.checkSourceSnippets()
 	inst.reportSnippetCounts()
 
@@ -265,13 +271,7 @@ func compareSnippets(source, target fs.FS, toDir string) {
 func installSnippets(source, target fs.FS, toDir string) {
 	verbose.Println("Installing snippets into ", toDir)
 
-	inst := &installer{
-		srcSet:    getFSContent(source, "Snippet source"),
-		targSet:   getFSContent(target, "Snippet target"),
-		toDir:     toDir,
-		l:         logger{errs: errutil.NewErrMap()},
-		timestamp: time.Now().Format(".20060102-150405.000"),
-	}
+	inst := newInstaller(source, target, toDir)
 	inst.checkSourceSnippets()
 	inst.reportSnippetCounts()
 
