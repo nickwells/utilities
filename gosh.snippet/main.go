@@ -52,14 +52,37 @@ type sSet struct {
 
 // installer holds the details needed to install snippets
 type installer struct {
-	fromSet sSet
-	toSet   sSet
+	srcSet  sSet
+	targSet sSet
 
 	toDir string
 
 	l logger
 
 	timestamp string
+}
+
+// checkSourceSnippets checks that there are some snippets in the source
+// set. If not it reports an error and exits.
+func (inst installer) checkSourceSnippets() {
+	if len(inst.srcSet.names) == 0 {
+		fmt.Fprintln(os.Stderr, "There are no snippets to install")
+		os.Exit(1)
+	}
+}
+
+// reportSnippetCounts reports the number of snippets in the source and
+// target sets if verbose is on.
+func (inst installer) reportSnippetCounts() {
+	if !verbose.IsOn() {
+		return
+	}
+
+	fmt.Printf("       snippets to install:%4d\n", len(inst.srcSet.names))
+	if len(inst.targSet.names) == 0 {
+		return
+	}
+	fmt.Printf("snippets already installed:%4d\n", len(inst.targSet.names))
 }
 
 // logger is used to record the progress of the installation
@@ -172,7 +195,7 @@ func main() {
 
 	switch action {
 	case cmpAction:
-		compareSnippets(fromFS, toFS)
+		compareSnippets(fromFS, toFS, toDir)
 	case installAction:
 		installSnippets(fromFS, toFS, toDir)
 	}
@@ -206,24 +229,21 @@ func createToFS(toDir string) fs.FS {
 
 // compareSnippets compares the snippets in the from directory with those in
 // the to directory reporting any differences.
-func compareSnippets(from, to fs.FS) {
+func compareSnippets(source, target fs.FS, toDir string) {
 	verbose.Println("comparing snippets")
 
-	fromSnippets := getFSContent(from, "Snippet source")
-	if len(fromSnippets.names) == 0 {
-		fmt.Fprintln(os.Stderr, "There are no snippets in the source directory")
-		return
+	inst := &installer{
+		srcSet:  getFSContent(source, "Snippet source"),
+		targSet: getFSContent(target, "Snippet target"),
+		toDir:   toDir,
+		l:       logger{errs: errutil.NewErrMap()},
 	}
+	inst.checkSourceSnippets()
+	inst.reportSnippetCounts()
 
-	toSnippets := getFSContent(to, "Snippet target")
-	if len(toSnippets.names) == 0 {
-		fmt.Fprintln(os.Stderr, "There are no snippets in the target directory")
-		return
-	}
-
-	for _, name := range fromSnippets.names {
-		fromS := fromSnippets.files[name]
-		if toS, ok := toSnippets.files[name]; ok {
+	for _, name := range inst.srcSet.names {
+		fromS := inst.srcSet.files[name]
+		if toS, ok := inst.targSet.files[name]; ok {
 			if string(toS.content) == string(fromS.content) {
 				fmt.Println("Duplicate: ", name)
 			} else {
@@ -233,42 +253,33 @@ func compareSnippets(from, to fs.FS) {
 			fmt.Println("      New: ", name)
 		}
 	}
-	for _, name := range toSnippets.names {
-		if _, ok := fromSnippets.files[name]; !ok {
+	for _, name := range inst.targSet.names {
+		if _, ok := inst.srcSet.files[name]; !ok {
 			fmt.Println("    Extra: ", name)
 		}
 	}
 }
 
-// installSnippets installs the snippets in the from directory into
-// the to directory reporting any differences.
-func installSnippets(from, to fs.FS, toDir string) {
+// installSnippets installs the snippets from the source directory into
+// the target directory, reporting any differences.
+func installSnippets(source, target fs.FS, toDir string) {
 	verbose.Println("Installing snippets into ", toDir)
 
 	inst := &installer{
-		fromSet:   getFSContent(from, "Snippet source"),
-		toSet:     getFSContent(to, "Snippet target"),
+		srcSet:    getFSContent(source, "Snippet source"),
+		targSet:   getFSContent(target, "Snippet target"),
 		toDir:     toDir,
 		l:         logger{errs: errutil.NewErrMap()},
 		timestamp: time.Now().Format(".20060102-150405.000"),
 	}
-	if len(inst.fromSet.names) == 0 {
-		fmt.Fprintln(os.Stderr, "There are no snippets to install")
-		return
-	}
-	verbose.Println(
-		fmt.Sprintf("%d snippets to install", len(inst.fromSet.names)))
-
-	if len(inst.toSet.names) > 0 {
-		verbose.Println(fmt.Sprintf("snippets in the target directory: %d",
-			len(inst.toSet.names)))
-	}
+	inst.checkSourceSnippets()
+	inst.reportSnippetCounts()
 
 	var err error
-	for _, snippetName := range inst.fromSet.names {
+	for _, snippetName := range inst.srcSet.names {
 		verbose.Println("\tinstalling ", snippetName)
-		fromS := inst.fromSet.files[snippetName]
-		toS, toFileExists := inst.toSet.files[snippetName]
+		fromS := inst.srcSet.files[snippetName]
+		toS, toFileExists := inst.targSet.files[snippetName]
 
 		var (
 			dirName  = filepath.Join(toDir, fromS.dirName)
