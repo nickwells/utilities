@@ -448,14 +448,17 @@ func addSnippet(f fs.FS, de fs.DirEntry, names []string, snipSet *sSet) error {
 
 // addParams will add parameters to the passed ParamSet
 func addParams(ps *param.PSet) error {
-	ps.Add("action",
+	const (
+		actionParamName = "action"
+	)
+	ps.Add(actionParamName,
 		psetter.Enum{
 			Value: &action,
 			AllowedVals: psetter.AllowedVals{
 				installAction: "install the default snippets in" +
-					" the given directory",
+					" the target directory",
 				cmpAction: "compare the default snippets with" +
-					" those in the directory",
+					" those in the target directory",
 			},
 		},
 		"what action should be performed",
@@ -464,31 +467,33 @@ func addParams(ps *param.PSet) error {
 	)
 
 	ps.Add("install", psetter.Nil{},
-		"install the snippets",
+		"install the snippets.",
 		param.PostAction(paction.SetString(&action, installAction)),
 		param.Attrs(param.CommandLineOnly),
+		param.SeeAlso(actionParamName),
 	)
 
-	ps.Add("to",
+	ps.Add("target",
 		psetter.Pathname{
 			Value: &toDir,
 			Checks: []check.String{
 				check.StringLenGT(0),
 			},
 		},
-		"set the directory where the snippets are to be copied.",
-		param.AltNames("to-dir", "target", "t"),
+		"set the directory where the snippets are to be copied or compared.",
+		param.AltNames("to", "to-dir", "t"),
 		param.Attrs(param.CommandLineOnly|param.MustBeSet),
 	)
 
-	ps.Add("from",
+	ps.Add("source",
 		psetter.Pathname{
 			Value:       &fromDir,
 			Expectation: filecheck.DirExists(),
 		},
 		"set the directory where the snippets are to be found."+
-			" If this is not set then the default snippet set will be used",
-		param.AltNames("from-dir", "source", "f"),
+			" If this is not set then the standard collection of"+
+			" snippets will be used.",
+		param.AltNames("from", "from-dir", "f"),
 		param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 	)
 
@@ -503,8 +508,12 @@ func addParams(ps *param.PSet) error {
 	)
 
 	ps.Add("no-copy", psetter.Bool{Value: &noCopy},
-		"this will suppress the copying of existing files which have"+
-			" changed and are being replaced.",
+		"suppress the copying of existing files which have"+
+			" changed and are being replaced."+
+			"\n\n"+
+			"NOTE: this deletes files from the target directory"+
+			" which have the same name as files from the source."+
+			" The original files cannot be recovered, no copy is kept.",
 		param.AltNames("no-backup"),
 		param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 	)
@@ -522,6 +531,18 @@ func addParams(ps *param.PSet) error {
 			"This can be found in the same repository as gosh and"+
 			" this command. You can install this with 'go install'"+
 			" in the same way as these commands.")
+
+	ps.AddExample(
+		`snipDir=$HOME/.config/github.com/nickwells/utilities/gosh/snippets
+gosh.snippet -target $snipDir`,
+		"This will compare the standard collection of snippets"+
+			" with those in the target directory")
+
+	ps.AddExample(
+		`snipDir=$HOME/.config/github.com/nickwells/utilities/gosh/snippets
+gosh.snippet -target $snipDir -install`,
+		"This will install the standard collection of snippets"+
+			" into the target directory")
 
 	return nil
 }
