@@ -83,14 +83,13 @@ func main() {
 		verbose.AddParams,
 		addParams,
 		param.SetProgramDescription(
-			"This will install a collection of useful snippets."+
-				" It can also be used to copy snippets from one"+
-				" directory to another"+
-				" or to compare the contents of"+
-				" the source and target directories."+
-				" The default behaviour is to compare the contents"+
-				" of the standard collection of snippets with the"+
-				" contents of the supplied target directory."),
+			"This can install the standard collection of useful snippets."+
+				" It can also be used to install snippets from a"+
+				" directory or to compare two collections of snippets."+
+				"\n\n"+
+				"The default behaviour is to compare the"+
+				" standard collection of snippets with those"+
+				" in the given target directory."),
 	)
 	ps.Parse()
 
