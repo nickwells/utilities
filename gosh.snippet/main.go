@@ -78,7 +78,14 @@ func newInstaller(source, target fs.FS, toDir string) *installer {
 // set. If not it reports an error and exits.
 func (inst installer) checkSourceSnippets() {
 	if len(inst.srcSet.names) == 0 {
-		fmt.Fprintln(os.Stderr, "There are no snippets to install")
+		actName := "unknown action"
+		switch action {
+		case installAction:
+			actName = "install"
+		case cmpAction:
+			actName = "compare"
+		}
+		fmt.Fprintln(os.Stderr, "There are no snippets to "+actName)
 		os.Exit(1)
 	}
 }
