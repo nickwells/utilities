@@ -4,6 +4,7 @@ package main
 
 import (
 	"embed"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -281,10 +282,7 @@ func installSnippets(source, target fs.FS, toDir string) {
 		fromS := inst.srcSet.files[snippetName]
 		toS, toFileExists := inst.targSet.files[snippetName]
 
-		var (
-			dirName  = filepath.Join(toDir, fromS.dirName)
-			fileName = filepath.Join(toDir, snippetName)
-		)
+		fileName := filepath.Join(inst.toDir, snippetName)
 
 		if toFileExists {
 			if string(toS.content) == string(fromS.content) {
@@ -302,17 +300,9 @@ func installSnippets(source, target fs.FS, toDir string) {
 		}
 		// new snippet
 		inst.l.newCount++
-		if fromS.dirName != "" {
-			if filecheck.DirExists().StatusCheck(dirName) != nil {
-				// TODO: walk back up the dirName (using filepath.Dir) until
-				// you get to the toDir which you know exists. We're dealing
-				// with the case where you want to create a/b/c/d but a/b/c
-				// is a file
-				err = os.MkdirAll(dirName, 0777)
-				if inst.l.handleErr(err, "Mkdir failure", snippetName) {
-					continue
-				}
-			}
+		err = inst.makeSubDir(fromS)
+		if inst.l.handleErr(err, "Mkdir failure", snippetName) {
+			continue
 		}
 		err = writeSnippet(fromS, fileName)
 		if inst.l.handleErr(err, "Write failure", snippetName) {
@@ -322,6 +312,41 @@ func installSnippets(source, target fs.FS, toDir string) {
 
 	inst.l.report()
 	inst.l.reportErrors()
+}
+
+// makeSubDir creates the snippet's corresponding sub-directory in the target
+// directory if necessary.
+func (inst *installer) makeSubDir(s snippet) error {
+	if s.dirName == "" {
+		return nil
+	}
+
+	subDirName := filepath.Join(inst.toDir, s.dirName)
+	if filecheck.DirExists().StatusCheck(subDirName) == nil {
+		return nil
+	}
+
+	err := os.MkdirAll(subDirName, 0777)
+	if err == nil {
+		return nil
+	}
+
+	name := subDirName
+	exists := filecheck.Provisos{Existence: filecheck.MustExist}
+	for exists.StatusCheck(name) != nil &&
+		name != inst.toDir {
+		name = filepath.Dir(name)
+	}
+
+	if name == inst.toDir {
+		return err
+	}
+
+	if clearFile(s.name, name, inst) {
+		return os.MkdirAll(subDirName, 0777)
+	}
+
+	return errors.New("Cannot clear the blocking non-dir: " + name)
 }
 
 // clearFile either moves the file aside or removes it. It updates the
