@@ -109,8 +109,10 @@ type logger struct {
 	newCount         int
 	dupCount         int
 	diffCount        int
+	clearCount       int
 	timestampedCount int
 
+	removedFiles []string
 	renamedFiles []string
 	badInstalls  []string
 
@@ -143,19 +145,28 @@ func (l logger) report() {
 
 	twc := twrap.NewTWConfOrPanic()
 
-	if l.diffCount > 0 {
-		if l.diffCount == 1 {
-			fmt.Println("One snippet was changed")
-		} else {
-			fmt.Printf("%d existing snippets were changed\n", l.diffCount)
+	if l.clearCount > 0 {
+		fmt.Printf("Existing snippets cleared:%4d\n", l.clearCount)
+		fmt.Printf("         snippets changed:%4d\n", l.diffCount)
+		if l.timestampedCount > 0 {
+			fmt.Printf("       Timestamped copies:%4d\n", l.timestampedCount)
 		}
-		if !noCopy {
-			twc.Wrap("You should check that you are happy with the changes"+
+
+		if noCopy {
+			twc.Wrap("The following files were removed. Please check that"+
+				" you are happy with this; if not you will need to restore"+
+				" from backups (if available)", 0)
+			fmt.Println()
+			fmt.Println("Removed files:")
+			twc.List(l.removedFiles, 8)
+		} else {
+			twc.Wrap("You should check that you don't want to keep the"+
+				" original files"+
 				" and if so, remove the copies of the original snippet"+
 				" files. You might find the 'findCmpRm' tool useful for"+
 				" this.", 0)
 			fmt.Println()
-			fmt.Println("The copies of the files are:")
+			fmt.Println("Renamed files:")
 			twc.List(l.renamedFiles, 8)
 
 			if l.timestampedCount > 0 {
@@ -360,7 +371,10 @@ func (inst *installer) makeSubDir(s snippet) error {
 // installation log and records any errors. It returns true if there were no
 // errors, false otherwise.
 func clearFile(snippetName, fileName string, inst *installer) bool {
+	inst.l.clearCount++
+
 	if noCopy {
+		inst.l.removedFiles = append(inst.l.removedFiles, fileName)
 		err := os.Remove(fileName)
 		return !inst.l.handleErr(err, "Remove failure", snippetName)
 	}
