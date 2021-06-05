@@ -8,21 +8,32 @@ can add code to these sections\. The sections are:
 
 
 
-global \- code at global scope, outside of main
+global       \- code at global scope, outside of main
 
-before \- code at the start of the program
+before       \- code at the start of the program
 
-exec   \- code, possibly in a readloop or a web handler
+before\-inner \- code before any inner loop
 
-after  \- code at the end of the program
+exec         \- code, maybe in a readloop/web handler
+
+after\-inner  \- code after any inner loop
+
+after        \- code at the end of the program
+
+
+
+The \.\.\.inner sections are only useful if you have some inner loop \- where
+you are looping over a list of files and reading each one\. Otherwise they just
+appear immediately before or after their corresponding sections\. before\-inner
+appears after before and after\-inner appears before after
 
 
 ## Gosh \- filenames
-A list of filenames to be processed can be given \(after \-\-\)\. Each filename
-will be edited to be an absolute path if it is not already; the current
-directory will be added at the start of the path\. If any files are given then
-some parameter for reading them should be given\. See the parameters in group:
-&apos;cmd\-readloop&apos;\.
+A list of filenames to be processed can be given at the end of the command line
+\(following \-\-\)\. Each filename will be edited to be an absolute path if it
+is not already; the current directory will be added at the start of the path\.
+If any files are given then some parameter for reading them should be given\.
+See the parameters in group: &apos;cmd\-readloop&apos;\.
 
 
 
@@ -213,8 +224,6 @@ a single underscore so provided you start all your variable names with a letter
 \_l    \*bufio\.Scanner       a buffered scanner used to read the files
 
 \_lp   \[\]string             the parts of the line \(when split\)
-
-\_r    io\.Reader            the reader for the scanner \(may be stdin\)
 
 \_req  \*http\.Request        the request to the web server
 
