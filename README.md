@@ -12,6 +12,11 @@ This is a tool for running Go code from the command line.
 
 [See here](gosh/_gosh.DOC.md).
 
+## gosh.snippet
+This is for installing the standard gosh snippets.
+
+[See here](gosh.snippet/_gosh.snippet.DOC.md)
+
 ## findCmpRm
 This finds files with copies, compares them with the copies and optionally
 deletes the old copies.
