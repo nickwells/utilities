@@ -92,8 +92,8 @@ func main() {
 
 	ps := makeParamSet(g, slp)
 
-	SetGlobalConfigFile(ps)
-	SetConfigFile(ps)
+	_ = SetGlobalConfigFile(ps)
+	_ = SetConfigFile(ps)
 
 	ps.Parse()
 
