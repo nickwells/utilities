@@ -75,7 +75,7 @@ type Gosh struct {
 	dontClearFile bool
 	dontRun       bool
 	filename      string
-	cleanupPath   string
+	goshDir       string
 
 	formatter     string
 	formatterSet  bool

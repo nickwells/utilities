@@ -65,9 +65,6 @@ func (g *Gosh) writeScript(scriptName string) {
 
 // writeGoFileImports writes the import statements into the Go file
 func (g *Gosh) writeGoFileImports() {
-	g.imports = append(g.imports, "fmt") // fmt.Printf("Couldn't change dir...)
-	g.imports = append(g.imports, "os")  // os.Chdir(...)
-
 	if g.runInReadLoop {
 		g.imports = append(g.imports, "bufio")
 		g.imports = append(g.imports, "io")
@@ -366,28 +363,6 @@ func (g *Gosh) writeMainOpen() {
 	g.gPrint("", tag)
 	g.gPrint("func main() {", tag)
 	g.in()
-	g.gPrint("{", tag)
-	{
-		g.in()
-		runDirStr := fmt.Sprintf("%q", g.runDir)
-		g.gPrint("err := os.Chdir("+runDirStr+")", tag)
-		g.gPrint("if err != nil {", tag)
-		{
-			g.in()
-			g.gPrint("fmt.Fprintf(os.Stderr,", tag)
-			{
-				g.in()
-				g.gPrint(`"Couldn't change directory to %q: %v\n",`, tag)
-				g.gPrint(runDirStr+", err)", tag)
-				g.out()
-			}
-			g.gPrint("os.Exit(1)", tag)
-			g.out()
-		}
-		g.gPrint("}", tag)
-		g.out()
-	}
-	g.gPrint("}", tag)
 }
 
 // writeGoshComment writes the introductory comment

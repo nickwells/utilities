@@ -675,36 +675,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" cleared after execution has successfully completed,"+
 				" the assumption being that if you want to know the"+
 				" filename you will also want to examine its contents.",
-			param.AltName("show-file"),
-			param.PostAction(paction.SetBool(&g.dontClearFile, true)),
-			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
-			param.GroupName(paramGroupNameGosh),
-		)
-
-		ps.Add("set-filename",
-			psetter.String{
-				Value: &g.filename,
-				Checks: []check.String{
-					check.StringLenGT(3),
-					check.StringHasSuffix(".go"),
-					check.StringNot(
-						check.StringHasSuffix("_test.go"),
-						"a string ending with _test.go"+
-							" - the file must not be a test file."),
-				},
-			},
-			"set the filename where the program will be constructed. This will"+
-				" also prevent the generated code from being cleared after"+
-				" execution has successfully completed, the assumption being"+
-				" that if you have set the filename you will want to preserve"+
-				" its contents."+
-				"\n\n"+
-				"This will also have the consequence that the directory is not"+
-				" created and the module is not initialised. This may cause"+
-				" problems depending on your current directory (if you are in"+
-				" a Go module directory) and the setting of the GO111MODULE"+
-				" environment variable.",
-			param.AltName("file-name"),
+			param.AltNames("show-file", "keep"),
 			param.PostAction(paction.SetBool(&g.dontClearFile, true)),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
 			param.GroupName(paramGroupNameGosh),
