@@ -161,7 +161,6 @@ func NewGosh() *Gosh {
 			afterSect:       {},
 		},
 
-		addComments:   true,
 		splitPattern:  dfltSplitPattern,
 		formatter:     dfltFormatter,
 		formatterArgs: []string{dfltFormatterArg},
