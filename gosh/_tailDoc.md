@@ -29,11 +29,12 @@ snippets and can be kept in standard directories where you don't need to give
 the whole pathname.
 
 There are some sample snippets in the `_snippets` directory which can be
-found in the repository `github.com/nickwells/utilities` under the `gosh`
-subdirectory.
+found in the repository `github.com/nickwells/utilities` under the
+`gosh.snippet` subdirectory.
 
-You can copy them into a snippets directory with the following
-command (on Linux):
+The recommended way to install these standard snippets is to use the
+`gosh.snippet` command. Alternatively, you can copy them into a snippets
+directory with the following command (on Linux):
 
 ``` sh
 cp -r --suffix=.orig --backup ./_snippets/* <your-snippets-dir>
