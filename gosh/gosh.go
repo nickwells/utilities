@@ -19,6 +19,8 @@ const (
 	dfltHTTPPath        = "/"
 	dfltHTTPHandlerName = "goshHandler"
 
+	dfltExecName = "G"
+
 	dfltSplitPattern = `\s+`
 
 	dfltFormatter      = "gofmt"
@@ -78,6 +80,7 @@ type Gosh struct {
 	formatter     string
 	formatterSet  bool
 	formatterArgs []string
+	execName      string
 
 	args        []string
 	filesToRead []string
@@ -170,6 +173,8 @@ func NewGosh() *Gosh {
 		httpPort:    dfltHTTPPort,
 		httpPath:    dfltHTTPPath,
 		httpHandler: dfltHTTPHandlerName,
+
+		execName: dfltExecName,
 
 		runDir: cwd,
 

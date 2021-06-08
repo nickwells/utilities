@@ -378,8 +378,8 @@ func (g *Gosh) initModule() {
 		return
 	}
 	verbose.Println(intro,
-		":\tRunning 'go mod init G' (creates the go.mod etc)")
-	gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "init", "G")
+		":\tRunning 'go mod init "+g.execName+"' (creates the go.mod etc)")
+	gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "init", g.execName)
 
 	keys := []string{}
 	for k := range g.localModules {

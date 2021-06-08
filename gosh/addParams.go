@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"regexp"
 
 	"github.com/nickwells/check.mod/check"
 	"github.com/nickwells/filecheck.mod/filecheck"
@@ -704,6 +705,31 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" a Go module directory) and the setting of the GO111MODULE"+
 				" environment variable.",
 			param.AltName("file-name"),
+			param.PostAction(paction.SetBool(&g.dontClearFile, true)),
+			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
+			param.GroupName(paramGroupNameGosh),
+		)
+
+		execNameRE := regexp.MustCompile(`^[a-zA-Z][-a-zA-Z0-9+._]*$`)
+		ps.Add("set-exec-name",
+			psetter.String{
+				Value: &g.execName,
+				Checks: []check.String{
+					check.StringLenBetween(1, 50),
+					check.StringMatchesPattern(execNameRE,
+						"The program name must start with a letter and"+
+							" be followed by zero or more"+
+							" letters, digits,"+
+							" dashes, plus-signs,"+
+							" underscores or dots"),
+				},
+			},
+			"set the name of the program to be generated. This will"+
+				" also prevent the generated code from being cleared after"+
+				" execution has successfully completed, the assumption being"+
+				" that if you have set the program name you will want to"+
+				" preserve it.",
+			param.AltName("program-name"),
 			param.PostAction(paction.SetBool(&g.dontClearFile, true)),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
 			param.GroupName(paramGroupNameGosh),
