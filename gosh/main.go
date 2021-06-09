@@ -194,6 +194,19 @@ func (g *Gosh) formatFile() {
 	}
 }
 
+// chdirInto will attempt to chdir into the given directory and will exit if
+// it can't.
+func (g Gosh) chdirInto(dir string) {
+	verbose.Println(constantWidthStr("chdirInto"), ":\t ", dir)
+
+	err := os.Chdir(dir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Couldn't chdir into %q: %v\n", dir, err)
+		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
+		os.Exit(1)
+	}
+}
+
 // createGoFiles creates the file to hold the program and opens it. If no
 // filename is given then a temporary directory is created, the program files
 // and any module files are created in that directory.
@@ -208,19 +221,12 @@ func (g *Gosh) createGoFiles() {
 	g.goshDir, err = os.MkdirTemp(g.baseTempDir, "gosh-*.d")
 	if err != nil {
 		fmt.Fprintf(os.Stderr,
-			"Couldn't create the temporary directory (%q): %v\n",
+			"Couldn't create the temporary directory %q: %v\n",
 			g.goshDir, err)
 		os.Exit(1)
 	}
 
-	verbose.Println(intro, ":\tChdir'ing into ", g.goshDir)
-	err = os.Chdir(g.goshDir)
-	if err != nil {
-		fmt.Fprintf(os.Stderr,
-			"Couldn't chdir to the temporary directory (%q): %v\n",
-			g.goshDir, err)
-		os.Exit(1)
-	}
+	g.chdirInto(g.goshDir)
 
 	g.filename = filepath.Join(g.goshDir, "gosh.go")
 	verbose.Println(intro, ":\tCreating the Go file: ", g.filename)
@@ -260,15 +266,9 @@ func (g *Gosh) runGoFile() {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	verbose.Println(intro, ":\tChdir'ing back to ", g.runDir)
-	err := os.Chdir(g.runDir)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't chdir back to %q: %v\n", g.runDir, err)
-		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
-		os.Exit(1)
-	}
+	g.chdirInto(g.runDir)
 
-	err = cmd.Run()
+	err := cmd.Run()
 	if err != nil {
 		fmt.Fprintf(os.Stderr,
 			"Couldn't execute the program (%q): %v\n", g.execName, err)
