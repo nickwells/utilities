@@ -7,7 +7,6 @@
 // snippet: Expects: mem/2-show
 // snippet: Tag: Declares: __ms     a runtime.MemStats object.
 // snippet: Tag: Declares: __lastTA the initial TotalAlloc value.
-
 var __ms runtime.MemStats
 runtime.ReadMemStats(&__ms)
 __lastTA := __ms.TotalAlloc

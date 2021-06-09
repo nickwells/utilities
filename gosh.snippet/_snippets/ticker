@@ -1,3 +1,4 @@
+// snippet: -*- go -*-
 // snippet: Doc: this runs a ticker function in a separate goroutine
 // snippet: Doc: that will print a dot every tenth of a second, a
 // snippet: Doc: colon every half a second and the second number

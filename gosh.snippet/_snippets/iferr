@@ -3,7 +3,6 @@
 // snippet: Note: is non-nil it will print the err and exit
 // snippet: Import: fmt
 // snippet: Import: os
-
 if err != nil {
 	fmt.Fprintln(os.Stderr, err)
 	os.Exit(0)

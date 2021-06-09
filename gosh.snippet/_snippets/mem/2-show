@@ -5,8 +5,8 @@
 // snippet: Doc: This part finds the current usage and reports it along
 // snippet: Doc: with any difference from the previous value.
 // snippet: Imports: fmt
+// snippet: Imports: runtime
 // snippet: Follows: mem/1-init
-
 runtime.ReadMemStats(&__ms)
 {
 	fmt.Printf("Total Alloc: %9d  Diff: %9d",

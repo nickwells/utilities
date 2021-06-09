@@ -4,7 +4,6 @@
 // snippet: Doc: long and will be on two lines
 // snippet: Imports: fmt
 // snippet: Imports: strings
-
 {
 	rpt := "----|----"
 	rulerLine1 := ""
