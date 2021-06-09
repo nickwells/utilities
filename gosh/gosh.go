@@ -76,10 +76,8 @@ type Gosh struct {
 	dontRun       bool
 	filename      string
 	goshDir       string
-
-	formatter     string
-	formatterSet  bool
-	formatterArgs []string
+	baseTempDir   string
+	runDir        string
 	execName      string
 
 	args        []string
@@ -90,14 +88,17 @@ type Gosh struct {
 	snippetUsed map[string]bool
 	snippets    *snippet.Cache
 
-	baseTempDir string
-	runDir      string
-
 	localModules map[string]string
 
-	edit         bool
-	editor       string
-	editorParams []string
+	formatter     string
+	formatterSet  bool
+	formatterArgs []string
+
+	edit        bool
+	editRepeat  bool
+	editorParam string
+	editor      string
+	editorArgs  []string
 }
 
 // CacheSnippet will cache the named snippet and copy any imports it requires

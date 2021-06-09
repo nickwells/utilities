@@ -26,7 +26,8 @@ const (
 	paramNameAfterFile   = "after-file"
 	paramNameGlobalFile  = "global-file"
 
-	paramNameEditScript   = "edit"
+	paramNameEditScript   = "edit-program"
+	paramNameEditRepeat   = "edit-repeat"
 	paramNameScriptEditor = "editor"
 	envVisual             = "VISUAL"
 	envEditor             = "EDITOR"
@@ -757,27 +758,34 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add(paramNameEditScript, psetter.Bool{Value: &g.edit},
-			"edit the generated code just before running it."+
-				" Setting this parameter will suppress the"+
-				" deletion of the program.",
-			param.PostAction(paction.SetBool(&g.dontClearFile, true)),
+			"edit the generated code just before running it.",
+			param.AltNames("edit"),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
-			param.SeeAlso(paramNameScriptEditor),
+			param.SeeAlso(paramNameScriptEditor, paramNameEditRepeat),
 			param.GroupName(paramGroupNameGosh),
 		)
 
-		ps.Add(paramNameScriptEditor, psetter.String{Value: &g.editor},
+		ps.Add(paramNameEditRepeat, psetter.Bool{Value: &g.editRepeat},
+			"after the program has run, you will be asked if you want"+
+				" to repeat the edit/build/run loop.",
+			param.PostAction(paction.SetBool(&g.edit, true)),
+			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
+			param.SeeAlso(paramNameScriptEditor, paramNameEditScript),
+			param.GroupName(paramGroupNameGosh),
+		)
+
+		ps.Add(paramNameScriptEditor, psetter.String{Value: &g.editorParam},
 			"This will give the name of an editor to use for editing"+
 				" your program. Note that this does not force the file to"+
 				" be edited so you can set this in a configuration"+
-				" file."+
+				" file. Its validity is only checked though when you use it."+
 				"\n\n"+
 				"If this parameter is not given or if the resulting"+
 				" program is not executable, the editor will be taken"+
 				" from the environment variables:"+
 				" '"+envVisual+"' and"+
 				" '"+envEditor+"' in that order",
-			param.SeeAlso(paramNameEditScript),
+			param.SeeAlso(paramNameEditScript, paramNameEditRepeat),
 			param.Attrs(param.DontShowInStdUsage),
 			param.GroupName(paramGroupNameGosh),
 		)

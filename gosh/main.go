@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nickwells/cli.mod/cli/responder"
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
@@ -103,11 +104,23 @@ func main() {
 	g.checkScripts()
 	g.reportErrors()
 
-	g.buildGoProgram()
-
+	g.setEditor()
 	g.reportErrors()
 
-	g.runGoFile()
+	g.buildGoProgram()
+	g.reportErrors()
+
+	for {
+		g.editGoFile()
+		g.formatFile()
+		g.tidyModule()
+		g.runGoFile()
+
+		if !g.queryEditAgain() {
+			break
+		}
+		g.chdirInto(g.goshDir)
+	}
 
 	g.clearFiles()
 }
@@ -189,6 +202,10 @@ func (g *Gosh) formatFile() {
 		fmt.Fprintln(os.Stderr, "Couldn't format the Go file:", err)
 		fmt.Fprintln(os.Stderr, "\tfilename:", g.filename)
 		fmt.Fprintln(os.Stderr, string(out))
+
+		if g.editRepeat {
+			return
+		}
 		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
 		os.Exit(1)
 	}
@@ -241,8 +258,8 @@ func (g *Gosh) makeFile() {
 	g.w, err = os.Create(g.filename)
 	if err != nil {
 		fmt.Fprintf(os.Stderr,
-			"Couldn't make the Go file (%s): %v", g.filename, err)
-		fmt.Fprintf(os.Stderr, "Gosh directory: %q\n", g.goshDir)
+			"Couldn't create the Go file %q: %v\n", g.filename, err)
+		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
 		os.Exit(1)
 	}
 }
@@ -254,7 +271,13 @@ func (g *Gosh) runGoFile() {
 	defer timer.Start(intro, verboseTimer)()
 
 	verbose.Println(intro, ": Running go build to generate the program")
-	gogen.ExecGoCmd(gogen.ShowCmdIO, "build")
+	if !gogen.ExecGoCmdNoExit(gogen.ShowCmdIO, "build") {
+		if g.editRepeat {
+			return
+		}
+		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
+		os.Exit(1)
+	}
 
 	if g.dontRun {
 		verbose.Println(intro, ": Skipping execution")
@@ -271,10 +294,43 @@ func (g *Gosh) runGoFile() {
 	err := cmd.Run()
 	if err != nil {
 		fmt.Fprintf(os.Stderr,
-			"Couldn't execute the program (%q): %v\n", g.execName, err)
-		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
-		os.Exit(1)
+			"Couldn't execute the program %q: %v\n", g.execName, err)
+		if !g.editRepeat {
+			fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
+			os.Exit(1)
+		}
 	}
+}
+
+// queryEditAgain will prompt the user asking if they want to edit the program
+// again and return true if they reply yes or false if not
+func (g Gosh) queryEditAgain() bool {
+	if !g.editRepeat {
+		return false
+	}
+
+	const indent = 10
+
+	editAgainResp := responder.NewOrPanic(
+		"Edit the program again",
+		map[rune]string{
+			'y': "to edit the file again",
+			'n': "to stop editing and quit",
+			'k': "to stop editing and quit, but keep the program",
+		},
+		responder.SetDefault('y'),
+		responder.SetIndents(0, indent))
+
+	response := editAgainResp.GetResponseOrDie()
+	fmt.Println()
+
+	switch response {
+	case 'y':
+		return true
+	case 'k':
+		g.dontClearFile = true
+	}
+	return false
 }
 
 // buildGoProgram creates the Go file and then writes the code into the it, then
@@ -294,77 +350,81 @@ func (g *Gosh) buildGoProgram() {
 	verbose.Println(intro, ":\tGo file name: ", g.filename)
 
 	g.writeGoFile()
-	g.editGoProgram()
-	g.reportErrors()
-
-	g.formatFile()
-
-	g.tidyModule()
 }
 
-// checkEditor returns true if the editor is valid - non-empty and is the
+// setEditor returns true if the editor is valid - non-empty and is the
 // name of an executable program. If it's non-empty but doesn't yield an
 // executable program an error is added to the error map.
-func (g *Gosh) checkEditor(editor, source string) bool {
-	editor = strings.TrimSpace(editor)
-	if editor == "" {
-		return false
-	}
-
-	var err error
-	if _, err = exec.LookPath(editor); err == nil {
-		g.editor = editor
-		return true
-	}
-	re := regexp.MustCompile(`\s+`)
-	parts := re.Split(editor, -1)
-	if parts[0] == editor {
-		g.addError("bad editor",
-			fmt.Errorf("Cannot find %s (source: %s): %w",
-				editor, source, err))
-		return false
-	}
-
-	editor = parts[0]
-	if _, err = exec.LookPath(editor); err == nil {
-		g.editor = editor
-		g.editorParams = parts[1:]
-		return true
-	}
-	g.addError("bad editor",
-		fmt.Errorf("Cannot find %s (source: %s): %w",
-			editor, source, err))
-	return false
-}
-
-// editGoProgram starts an editor to edit the program
-func (g *Gosh) editGoProgram() {
+func (g *Gosh) setEditor() {
 	if !g.edit {
 		return
 	}
-	if !g.checkEditor(g.editor, "parameter") {
-		if !g.checkEditor(os.Getenv(envVisual), envVisual) {
-			if !g.checkEditor(os.Getenv(envEditor), envEditor) {
-				g.addError("no editor",
-					errors.New("No editor has been given."+
-						" Possible sources are:"+
-						" the '"+paramNameScriptEditor+"' parameter,"+
-						" the '"+envVisual+"' environment variable"+
-						" or the '"+envEditor+"' environment variable,"+
-						" in that order."))
-				return
-			}
+
+	for _, trialEditor := range []struct {
+		editor string
+		source string
+	}{
+		{g.editorParam, "parameter"},
+		{os.Getenv(envVisual), "Environment variable: " + envVisual},
+		{os.Getenv(envEditor), "Environment variable: " + envEditor},
+	} {
+		editor := strings.TrimSpace(trialEditor.editor)
+		if editor == "" {
+			continue
 		}
+
+		var err error
+		if _, err = exec.LookPath(editor); err == nil {
+			g.editor = editor
+			return
+		}
+		re := regexp.MustCompile(`\s+`)
+		parts := re.Split(editor, -1)
+		if parts[0] == editor {
+			g.addError("bad editor",
+				fmt.Errorf("Cannot find %s (source: %s): %w",
+					editor, trialEditor.source, err))
+			continue
+		}
+
+		editor = parts[0]
+		if _, err = exec.LookPath(editor); err == nil {
+			g.editor = editor
+			g.editorArgs = parts[1:]
+			return
+		}
+		g.addError("bad editor",
+			fmt.Errorf("Cannot find %s (source: %s): %w",
+				editor, trialEditor.source, err))
+		continue
 	}
-	g.editorParams = append(g.editorParams, g.filename)
-	cmd := exec.Command(g.editor, g.editorParams...)
+
+	g.addError("no editor",
+		errors.New("No editor has been given."+
+			" Possible sources are:"+
+			"\n    the '"+paramNameScriptEditor+"' parameter,"+
+			"\n    the '"+envVisual+"' environment variable"+
+			"\n or the '"+envEditor+"' environment variable,"+
+			"\nin that order."))
+}
+
+// editGoFile starts an editor to edit the program
+func (g *Gosh) editGoFile() {
+	if !g.edit {
+		return
+	}
+
+	g.editorArgs = append(g.editorArgs, g.filename)
+	cmd := exec.Command(g.editor, g.editorArgs...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Couldn't run the editor: %q\n", cmd.Path)
 		fmt.Fprintf(os.Stderr, "\t%s\n", strings.Join(cmd.Args, " "))
 		fmt.Fprintln(os.Stderr, "\tError:", err)
+		fmt.Println("Gosh directory:", g.goshDir)
 		os.Exit(1)
 	}
 }
