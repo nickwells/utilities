@@ -187,7 +187,7 @@ func (l logger) reportErrors() {
 		twc.List(l.badInstalls, 8)
 	}
 
-	if errCount, _ := l.errs.CountErrors(); errCount != 0 {
+	if l.errs.HasErrors() {
 		l.errs.Report(os.Stderr, "Installing snippets")
 	}
 }

@@ -248,7 +248,7 @@ func (g *Gosh) checkScripts() {
 // reportErrors checks if there are errors to report and if there are it
 // reports them and exits.
 func (g *Gosh) reportErrors() {
-	if errCount, _ := g.errMap.CountErrors(); errCount != 0 {
+	if g.errMap.HasErrors() {
 		g.errMap.Report(os.Stderr, "gosh")
 		os.Exit(1)
 	}
