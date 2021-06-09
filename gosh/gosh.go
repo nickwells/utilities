@@ -99,6 +99,8 @@ type Gosh struct {
 	editorParam string
 	editor      string
 	editorArgs  []string
+
+	buildArgs []string
 }
 
 // CacheSnippet will cache the named snippet and copy any imports it requires

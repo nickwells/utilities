@@ -270,8 +270,11 @@ func (g *Gosh) runGoFile() {
 	intro := constantWidthStr("runGoFile")
 	defer timer.Start(intro, verboseTimer)()
 
-	verbose.Println(intro, ": Running go build to generate the program")
-	if !gogen.ExecGoCmdNoExit(gogen.ShowCmdIO, "build") {
+	buildCmd := []string{"build"}
+	buildCmd = append(buildCmd, g.buildArgs...)
+	verbose.Println(intro, ": Running go "+strings.Join(buildCmd, " ")+
+		" to generate the program")
+	if !gogen.ExecGoCmdNoExit(gogen.ShowCmdIO, buildCmd...) {
 		if g.editRepeat {
 			return
 		}
