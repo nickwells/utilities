@@ -25,7 +25,7 @@ import (
 // constantWidthStr returns the string formatted into a right-justified
 // string of a consistent length
 func constantWidthStr(s string) string {
-	return fmt.Sprintf("%18.18s", s)
+	return fmt.Sprintf("%24.24s", s)
 }
 
 // VerboseTimer used in conjunction with the timer and verbose packages this
@@ -163,14 +163,13 @@ func listSnippets(g *Gosh, slp *snippetListParams) {
 func (g *Gosh) clearFiles() {
 	intro := constantWidthStr("clearFiles")
 	defer timer.Start(intro, verboseTimer)()
+	verbose.Println(intro, ": Cleaning-up the Go files")
 
 	if g.dontClearFile {
-		verbose.Println(intro, ": Skipping")
+		verbose.Println(intro, ":\tSkipping")
 		fmt.Println("Gosh directory:", g.goshDir)
 		return
 	}
-
-	verbose.Println(intro, ": Cleaning-up the Go files")
 
 	err := os.RemoveAll(g.goshDir)
 	if err != nil {
@@ -184,8 +183,8 @@ func (g *Gosh) clearFiles() {
 func (g *Gosh) formatFile() {
 	intro := constantWidthStr("formatFile")
 	defer timer.Start(intro, verboseTimer)()
-
 	verbose.Println(intro, ": Formatting the Go file")
+
 	if !g.formatterSet {
 		if _, err := exec.LookPath(goImportsFormatter); err == nil {
 			g.formatter = goImportsFormatter
@@ -194,9 +193,8 @@ func (g *Gosh) formatFile() {
 	}
 
 	g.formatterArgs = append(g.formatterArgs, g.filename)
-	verbose.Println(intro, ":\tCommand: ",
-		g.formatter, " ",
-		strings.Join(g.formatterArgs, " "))
+	verbose.Println(intro,
+		":\tCommand: ", g.formatter, " ", strings.Join(g.formatterArgs, " "))
 	out, err := exec.Command(g.formatter, g.formatterArgs...).CombinedOutput()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't format the Go file:", err)
@@ -214,7 +212,7 @@ func (g *Gosh) formatFile() {
 // chdirInto will attempt to chdir into the given directory and will exit if
 // it can't.
 func (g Gosh) chdirInto(dir string) {
-	verbose.Println(constantWidthStr("chdirInto"), ":\t ", dir)
+	verbose.Println(constantWidthStr("chdirInto"), ":\t", dir)
 
 	err := os.Chdir(dir)
 	if err != nil {
@@ -269,11 +267,12 @@ func (g *Gosh) makeFile() {
 func (g *Gosh) runGoFile() {
 	intro := constantWidthStr("runGoFile")
 	defer timer.Start(intro, verboseTimer)()
+	verbose.Println(intro, ": Running the program")
 
 	buildCmd := []string{"build"}
 	buildCmd = append(buildCmd, g.buildArgs...)
-	verbose.Println(intro, ": Running go "+strings.Join(buildCmd, " ")+
-		" to generate the program")
+	verbose.Println(intro, ":\tBuilding the program")
+	verbose.Println(intro, ":\tCommand: go "+strings.Join(buildCmd, " "))
 	if !gogen.ExecGoCmdNoExit(gogen.ShowCmdIO, buildCmd...) {
 		if g.editRepeat {
 			return
@@ -283,16 +282,17 @@ func (g *Gosh) runGoFile() {
 	}
 
 	if g.dontRun {
-		verbose.Println(intro, ": Skipping execution")
+		verbose.Println(intro, ":\tSkipping execution")
 		return
 	}
 
+	g.chdirInto(g.runDir)
+
+	verbose.Println(intro, ":\tExecuting the program: ", g.execName)
 	cmd := exec.Command(filepath.Join(g.goshDir, g.execName))
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
-	g.chdirInto(g.runDir)
 
 	err := cmd.Run()
 	if err != nil {
@@ -348,9 +348,9 @@ func (g *Gosh) buildGoProgram() {
 	defer g.w.Close()
 
 	if g.showFilename {
-		fmt.Println(g.filename)
+		fmt.Println("Gosh filename:", g.filename)
 	}
-	verbose.Println(intro, ":\tGo file name: ", g.filename)
+	verbose.Println(intro, ":\tGosh filename: ", g.filename)
 
 	g.writeGoFile()
 }
@@ -416,8 +416,13 @@ func (g *Gosh) editGoFile() {
 	if !g.edit {
 		return
 	}
+	intro := constantWidthStr("editGoFile")
+	defer timer.Start(intro, verboseTimer)()
+	verbose.Println(intro, ": editing the program")
 
 	g.editorArgs = append(g.editorArgs, g.filename)
+	verbose.Println(intro,
+		":\tCommand: "+g.editor+" "+strings.Join(g.editorArgs, " "))
 	cmd := exec.Command(g.editor, g.editorArgs...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -437,6 +442,7 @@ func (g *Gosh) editGoFile() {
 func (g *Gosh) tidyModule() {
 	intro := constantWidthStr("tidyModule")
 	defer timer.Start(intro, verboseTimer)()
+	verbose.Println(intro, ": tidying and populating the module files")
 
 	if os.Getenv("GO111MODULE") == "off" {
 		verbose.Println(intro, ":\tSkipping - GO111MODULES == 'off'")
@@ -447,7 +453,8 @@ func (g *Gosh) tidyModule() {
 		return
 	}
 
-	verbose.Println(intro, ":\tRunning 'go mod tidy' (populates go.mod)")
+	verbose.Println(intro, ":\tTidying the module (populates go.mod etc)")
+	verbose.Println(intro, ":\tCommand: go mod tidy)")
 	gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "tidy")
 }
 
@@ -455,13 +462,14 @@ func (g *Gosh) tidyModule() {
 func (g *Gosh) initModule() {
 	intro := constantWidthStr("initModule")
 	defer timer.Start(intro, verboseTimer)()
+	verbose.Println(intro, ": initialising the module files")
 
 	if os.Getenv("GO111MODULE") == "off" {
 		verbose.Println(intro, ":\tSkipping - GO111MODULES == 'off'")
 		return
 	}
-	verbose.Println(intro,
-		":\tRunning 'go mod init "+g.execName+"' (creates the go.mod etc)")
+	verbose.Println(intro, ":\tInitialising the go.mod file etc")
+	verbose.Println(intro, ":\tCommand: go mod init "+g.execName)
 	gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "init", g.execName)
 
 	keys := []string{}
@@ -473,6 +481,9 @@ func (g *Gosh) initModule() {
 		sort.Strings(keys)
 		for _, k := range keys {
 			importPath := strings.TrimSuffix(k, "/")
+			verbose.Println(intro,
+				":\t\tReplacing "+importPath+
+					" with "+g.localModules[k])
 			gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "edit",
 				"-replace="+importPath+"="+g.localModules[k])
 		}
