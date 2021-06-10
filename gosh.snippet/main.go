@@ -9,9 +9,11 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/nickwells/check.mod/check"
+	"github.com/nickwells/english.mod/english"
 	"github.com/nickwells/errutil.mod/errutil"
 	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/param.mod/v5/param"
@@ -132,8 +134,19 @@ func (l *logger) handleErr(err error, errCat, snippetName string) bool {
 	return true
 }
 
+// trimPrefix returns a slice with the same entries as in vals but with the
+// prefix removed from each entry.
+func trimPrefix(vals []string, prefix string) []string {
+	rval := make([]string, 0, len(vals))
+
+	for _, v := range vals {
+		rval = append(rval, strings.TrimPrefix(v, prefix))
+	}
+	return rval
+}
+
 // report prints information about the state of the installation
-func (l logger) report() {
+func (l logger) report(dir string) {
 	if verbose.IsOn() {
 		fmt.Println("Snippet installation summary")
 		fmt.Printf("\t        New:%4d\n", l.newCount)
@@ -157,8 +170,13 @@ func (l logger) report() {
 				" you are happy with this; if not you will need to restore"+
 				" from backups (if available)", 0)
 			fmt.Println()
-			fmt.Println("Removed files:")
-			twc.List(l.removedFiles, 8)
+			fmt.Println(len(l.removedFiles),
+				english.Plural("file", len(l.removedFiles)),
+				"removed")
+			fmt.Println("in", dir)
+			twc.List(
+				trimPrefix(l.removedFiles, dir+string(filepath.Separator)),
+				8)
 		} else {
 			twc.Wrap("You should check that you don't want to keep the"+
 				" original files"+
@@ -166,8 +184,13 @@ func (l logger) report() {
 				" files. You might find the 'findCmpRm' tool useful for"+
 				" this.", 0)
 			fmt.Println()
-			fmt.Println("Renamed files:")
-			twc.List(l.renamedFiles, 8)
+			fmt.Println(len(l.renamedFiles),
+				english.Plural("file", len(l.renamedFiles)),
+				"renamed")
+			fmt.Println("in", dir)
+			twc.List(
+				trimPrefix(l.renamedFiles, dir+string(filepath.Separator)),
+				8)
 
 			if l.timestampedCount > 0 {
 				twc.Wrap("\nNote that some files have a timestamped copy"+
@@ -328,7 +351,7 @@ func installSnippets(source, target fs.FS, toDir string) {
 		}
 	}
 
-	inst.l.report()
+	inst.l.report(inst.toDir)
 	inst.l.reportErrors()
 }
 
