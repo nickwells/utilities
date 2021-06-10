@@ -13,7 +13,7 @@ func addParams(ps *param.PSet) error {
 
 	ps.Add("dir",
 		psetter.Pathname{
-			Value:       &dir,
+			Value:       &searchDir,
 			Expectation: filecheck.DirExists(),
 		},
 		"give the name of the directory to search for files"+

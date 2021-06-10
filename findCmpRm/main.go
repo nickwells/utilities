@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"os/exec"
 	"sort"
@@ -35,7 +36,7 @@ var (
 )
 
 var (
-	dir           = dfltDir
+	searchDir     = dfltDir
 	fileExtension = dfltExtension
 
 	diffCmdName = dfltDiffCmd
@@ -140,16 +141,26 @@ func (s *Status) cmpRmFiles(filenames []string) {
 		return
 	}
 
-	maxNameLen := getMaxNameLen(filenames)
-	s.indent = maxNameLen + 2
+	shortNames := make([]string, 0, len(filenames))
+	for _, fn := range filenames {
+		shortNames = append(shortNames,
+			strings.TrimPrefix(fn, searchDir+string(os.PathSeparator)))
+	}
+
+	maxNameLen := getMaxNameLen(shortNames)
+	digits := int(math.Ceil(math.Log10(float64(len(filenames) + 1))))
+	nameFormat := fmt.Sprintf("    (%%%dd / %%%dd) %%%d.%ds: ",
+		digits, digits, maxNameLen, maxNameLen)
+	s.indent = len(fmt.Sprintf(nameFormat, 0, 0, ""))
 
 	fmt.Println(len(filenames),
 		english.Plural("file", len(filenames)),
-		"found:")
-	s.twc.IdxNoRptPathList(filenames, 4)
+		"found")
+	fmt.Println("in", searchDir)
+	s.twc.IdxNoRptPathList(shortNames, 8)
 
 fileLoop:
-	for _, nameOrig := range filenames {
+	for i, nameOrig := range filenames {
 		nameNew := strings.TrimSuffix(nameOrig, fileExtension)
 		if s.revertAll {
 			s.revertFile(nameOrig, nameNew)
@@ -160,7 +171,7 @@ fileLoop:
 			continue
 		}
 
-		fmt.Printf("%*.*s: ", maxNameLen, maxNameLen, nameOrig)
+		fmt.Printf(nameFormat, i+1, len(filenames), shortNames[i])
 
 		if err := s.fileOK(nameNew); err != nil {
 			fmt.Println("Ignoring due to:", err)
@@ -436,7 +447,7 @@ func getFiles() []string {
 	if searchSubDirs {
 		findFunc = dirsearch.FindRecurse
 	}
-	entries, errs := findFunc(dir,
+	entries, errs := findFunc(searchDir,
 		check.FileInfoName(check.StringHasSuffix(fileExtension)),
 		check.FileInfoIsRegular)
 
