@@ -136,7 +136,7 @@ func snippetExpand(g *Gosh, sName string) ([]string, error) {
 	}
 
 	var content []string
-	addSnippetComment(&content, "BEGIN")
+	addSnippetComment(&content, "BEGIN "+sName)
 	content = append(content, "// "+s.Path())
 	content = append(content, s.Text()...)
 	addSnippetComment(&content, "END")
