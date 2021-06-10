@@ -31,7 +31,7 @@ const (
 )
 
 var (
-	searchSubDirs bool
+	searchSubDirs = true
 	tidyFiles     bool
 )
 

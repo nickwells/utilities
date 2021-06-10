@@ -9,24 +9,36 @@ import (
 
 // addParams will add parameters to the passed ParamSet
 func addParams(ps *param.PSet) error {
-	const recurseParam = "recursive"
+	const noRecurseParam = "dont-recurse"
 
 	ps.Add("dir",
 		psetter.Pathname{
 			Value:       &searchDir,
 			Expectation: filecheck.DirExists(),
 		},
-		"give the name of the directory to search for files"+
-			"\nNote that only the directory itself is searched,"+
-			" sub-directories are ignored unless"+
-			" the "+recurseParam+" parameter is also given",
-		param.AltName("d"),
+		"give the name of the directory to search for files."+
+			"\nNote that both the directory and its,"+
+			" sub-directories are searched unless"+
+			" the "+noRecurseParam+" parameter is also given.",
+		param.AltNames("search-dir", "d"),
 	)
 
-	ps.Add(recurseParam, psetter.Bool{Value: &searchSubDirs},
+	ps.Add(noRecurseParam, psetter.Bool{Value: &searchSubDirs, Invert: true},
+		"this makes the command only search the given directory,"+
+			" it will not recursively search sub-directories.",
+		param.AltNames("no-recurse", "no-rec", "no-r"),
+		param.Attrs(param.DontShowInStdUsage),
+	)
+
+	ps.Add("recursive", psetter.Bool{Value: &searchSubDirs},
 		"this makes the command search sub-directories for matching"+
-			" files not just the given directory",
-		param.AltName("r"),
+			" files, not just the given directory."+
+			"\n\n"+
+			"Note: this is already the default behaviour so this"+
+			" parameter is redundant but it is kept for backwards"+
+			" compatibility.",
+		param.AltNames("r"),
+		param.Attrs(param.DontShowInStdUsage),
 	)
 
 	ps.Add("extension",
@@ -34,18 +46,18 @@ func addParams(ps *param.PSet) error {
 			Value:  &fileExtension,
 			Checks: []check.String{check.StringLenGT(0)},
 		},
-		"give the extension for the files to search for",
+		"give the extension for the files to search for.",
 		param.AltName("e"),
 	)
 
 	ps.Add("tidy", psetter.Bool{Value: &tidyFiles},
 		"this makes the command tidy any redundant files."+
 			"\n\n"+
-			" Redundant"+
-			" means files where there is no F corresponding to the F.orig"+
-			" or where the F corresponding to the F.orig is"+
+			"Redundant means files where"+
+			"\n - there is no F corresponding to the F.orig file"+
+			"\n - or the F corresponding to the F.orig is"+
 			" a directory not a file"+
-			" or where F is identical to F.orig."+
+			"\n - or F is identical to F.orig."+
 			"\n\n"+
 			" Tidy means to remove the F.orig file.",
 	)
@@ -66,9 +78,8 @@ func addParams(ps *param.PSet) error {
 			Value:  &diffCmdParams,
 			Checks: []check.StringSlice{check.StringSliceLenGT(0)},
 		},
-		"give any parameters to be supplied to the diff command",
-		param.AltName("diff-params"),
-		param.AltName("diff-args"),
+		"give any parameters to be supplied to the diff command.",
+		param.AltNames("diff-params", "diff-args"),
 		param.Attrs(param.DontShowInStdUsage),
 	)
 
@@ -78,7 +89,7 @@ func addParams(ps *param.PSet) error {
 			Checks: []check.String{check.StringLenGT(0)},
 		},
 		"give the name of the command to use for paginating the"+
-			" differences calculated by the diff command",
+			" differences calculated by the diff command.",
 		param.AltName("less"),
 		param.Attrs(param.DontShowInStdUsage),
 	)
@@ -88,9 +99,8 @@ func addParams(ps *param.PSet) error {
 			Value:  &lessCmdParams,
 			Checks: []check.StringSlice{check.StringSliceLenGT(0)},
 		},
-		"give any parameters to be supplied to the less command",
-		param.AltName("less-params"),
-		param.AltName("less-args"),
+		"give any parameters to be supplied to the less command.",
+		param.AltNames("less-params", "less-args"),
 		param.Attrs(param.DontShowInStdUsage),
 	)
 
