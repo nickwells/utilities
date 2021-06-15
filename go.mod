@@ -10,7 +10,7 @@ require (
 	github.com/nickwells/english.mod v1.0.14
 	github.com/nickwells/errutil.mod v1.2.1
 	github.com/nickwells/filecheck.mod v1.1.11
-	github.com/nickwells/gogen.mod v1.8.1
+	github.com/nickwells/gogen.mod v1.9.0
 	github.com/nickwells/location.mod v1.2.19
 	github.com/nickwells/mathutil.mod v1.0.19
 	github.com/nickwells/param.mod/v5 v5.9.2
@@ -22,5 +22,5 @@ require (
 	github.com/nickwells/unitsetter.mod/v3 v3.0.33
 	github.com/nickwells/verbose.mod v1.0.36
 	github.com/nickwells/xdg.mod v1.0.5
-	golang.org/x/sys v0.0.0-20210608053332-aa57babbf139
+	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1
 )
