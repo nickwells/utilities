@@ -14,11 +14,13 @@ func BenchmarkShebangRx(b *testing.B) {
 		for _, inWant := range inWants {
 			got := re.ReplaceAll(inWant[0], nil)
 			if !bytes.Equal(got, inWant[1]) {
-				b.Fatalf("%q: got %q, wanted %q", string(inWant[0]), string(got), string(inWant[1]))
+				b.Fatalf("%q: got %q, wanted %q",
+					string(inWant[0]), string(got), string(inWant[1]))
 			}
 		}
 	}
 }
+
 func BenchmarkShebangRxEach(b *testing.B) {
 	inWants := mkBytes(shebangTests)
 	b.ResetTimer()
@@ -27,11 +29,13 @@ func BenchmarkShebangRxEach(b *testing.B) {
 			re := regexp.MustCompile("^#![^\n]*(\n|$)")
 			got := re.ReplaceAll(inWant[0], nil)
 			if !bytes.Equal(got, inWant[1]) {
-				b.Fatalf("%q: got %q, wanted %q", string(inWant[0]), string(got), string(inWant[1]))
+				b.Fatalf("%q: got %q, wanted %q",
+					string(inWant[0]), string(got), string(inWant[1]))
 			}
 		}
 	}
 }
+
 func BenchmarkShebangBytes(b *testing.B) {
 	inWants := mkBytes(shebangTests)
 	b.ResetTimer()
@@ -39,11 +43,13 @@ func BenchmarkShebangBytes(b *testing.B) {
 		for _, inWant := range inWants {
 			got := shebangRemove(inWant[0])
 			if !bytes.Equal(got, inWant[1]) {
-				b.Fatalf("%q: got %q, wanted %q", string(inWant[0]), string(got), string(inWant[1]))
+				b.Fatalf("%q: got %q, wanted %q",
+					string(inWant[0]), string(got), string(inWant[1]))
 			}
 		}
 	}
 }
+
 func mkBytes(m map[string]string) [][2][]byte {
 	arr := make([][2][]byte, 0, len(m))
 	for k, v := range m {
