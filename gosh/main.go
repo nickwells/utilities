@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -387,8 +386,7 @@ func (g *Gosh) setEditor() {
 			g.editor = editor
 			return
 		}
-		re := regexp.MustCompile(`\s+`)
-		parts := re.Split(editor, -1)
+		parts := strings.Fields(editor)
 		if parts[0] == editor {
 			g.addError("bad editor",
 				fmt.Errorf("Cannot find %s (source: %s): %w",

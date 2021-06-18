@@ -1,8 +1,8 @@
 package main
 
 import (
+	"bytes"
 	"os"
-	"regexp"
 )
 
 // shebangFileContents this will read the contents of the file removing any
@@ -13,8 +13,16 @@ func shebangFileContents(fileName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	re := regexp.MustCompile("^#![^\n]*(\n|$)")
-	content = re.ReplaceAll(content, []byte{})
 
-	return string(content), nil
+	return string(shebangRemove(content)), nil
+}
+
+func shebangRemove(content []byte) []byte {
+	if !bytes.HasPrefix(content, []byte("#!")) {
+		return content
+	}
+	if i := bytes.IndexByte(content, '\n'); i > 1 {
+		return content[i+1:]
+	}
+	return content[:0]
 }
