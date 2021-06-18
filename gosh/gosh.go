@@ -93,6 +93,7 @@ type Gosh struct {
 	formatter     string
 	formatterSet  bool
 	formatterArgs []string
+	dontFormat    bool
 
 	edit        bool
 	editRepeat  bool

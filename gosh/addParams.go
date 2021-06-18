@@ -7,6 +7,7 @@ import (
 
 	"github.com/nickwells/check.mod/check"
 	"github.com/nickwells/filecheck.mod/filecheck"
+	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paction"
@@ -25,6 +26,12 @@ const (
 	paramNameBeforeFile  = "before-file"
 	paramNameAfterFile   = "after-file"
 	paramNameGlobalFile  = "global-file"
+
+	paramNameImport = "import"
+
+	paramNameDontFormat = "dont-format"
+
+	paramNameSetGoCmd = "set-go-cmd"
 
 	paramNameEditScript   = "edit-program"
 	paramNameEditRepeat   = "edit-repeat"
@@ -619,7 +626,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.SeeNote(noteShebangScripts),
 		)
 
-		ps.Add("import",
+		ps.Add(paramNameImport,
 			psetter.StrListAppender{
 				Value:  &g.imports,
 				Checks: []check.String{check.StringLenGT(0)},
@@ -721,6 +728,19 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.GroupName(paramGroupNameGosh),
 		)
 
+		goCmdName := gogen.GetGoCmdName()
+		ps.Add(paramNameSetGoCmd, psetter.String{Value: &goCmdName},
+			"the name of the Go command to use."+
+				" Note that it must be an executable program either"+
+				" in your PATH or else as a pathname",
+			param.PostAction(
+				func(_ location.L, _ *param.ByName, _ []string) error {
+					return gogen.SetGoCmdName(goCmdName)
+				}),
+			param.Attrs(param.DontShowInStdUsage),
+			param.GroupName(paramGroupNameGosh),
+		)
+
 		ps.Add("formatter", psetter.String{Value: &g.formatter},
 			"the name of the formatter command to run. If the default"+
 				" value is not replaced then this program shall look"+
@@ -737,6 +757,24 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" generated program.",
 			param.Attrs(param.DontShowInStdUsage),
 			param.GroupName(paramGroupNameGosh),
+		)
+
+		ps.Add(paramNameDontFormat, psetter.Bool{Value: &g.dontFormat},
+			"don't format the generated code - this prevents the"+
+				" generated code from being run through the formatter."+
+				"\n\n"+
+				"This can be useful with shebang scripts where you"+
+				" want the marginal performance improvement. An"+
+				" additional advantage is that the script will run"+
+				" successfully even if you don't have access to"+
+				" goimports."+
+				"\n\n"+
+				"Note that you will have to give any imports on the"+
+				" command line using the "+paramNameImport+" parameter.",
+			param.AltNames("dont-fmt", "no-format", "no-fmt"),
+			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
+			param.GroupName(paramGroupNameGosh),
+			param.SeeAlso(paramNameImport),
 		)
 
 		ps.Add("build-arg", psetter.StrListAppender{Value: &g.buildArgs},

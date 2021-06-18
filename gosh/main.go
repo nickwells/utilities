@@ -185,6 +185,11 @@ func (g *Gosh) formatFile() {
 	defer timer.Start(intro, verboseTimer)()
 	verbose.Println(intro, ": Formatting the Go file")
 
+	if g.dontFormat {
+		verbose.Println(intro, ":\tSkipping formatting")
+		return
+	}
+
 	if !g.formatterSet {
 		if _, err := exec.LookPath(goImportsFormatter); err == nil {
 			g.formatter = goImportsFormatter

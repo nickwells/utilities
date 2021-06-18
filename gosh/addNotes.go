@@ -192,10 +192,30 @@ func addNotes(g *Gosh) func(ps *param.PSet) error {
 				" inside a main() func."+
 				"\n\n"+
 				"Any parameters that you pass to the script will be"+
-				" interpreted by gosh so you can add extra code to be run.",
+				" interpreted as gosh parameters so you can add extra"+
+				" code to be run."+
+				"\n\n"+
+				"You can skip the formatting stage by passing"+
+				" the "+paramNameDontFormat+" parameter."+
+				" This makes your script run a little faster"+
+				" and, more importantly, removes the dependency on"+
+				" additional commands (like gofmt or goimports)."+
+				" If you do skip formatting though you will need to"+
+				" provide the packages to be imported"+
+				" through "+paramNameImport+" parameters."+
+				"\n\n"+
+				"You might also want to consider setting the full"+
+				" path of the Go command using"+
+				" the "+paramNameSetGoCmd+" parameter. This will"+
+				" remove the need for the person running the"+
+				" shebang script to even have the go command in"+
+				" their path.",
 			param.NoteSeeParam(
-				paramNameBeforeFile, paramNameExecFile, paramNameAfterFile,
-				paramNameGlobalFile))
+				paramNameBeforeFile, paramNameExecFile,
+				paramNameAfterFile, paramNameGlobalFile,
+				paramNameDontFormat, paramNameImport,
+				paramNameSetGoCmd),
+		)
 
 		return nil
 	}
