@@ -801,6 +801,12 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.GroupName(paramGroupNameGosh),
 		)
 
+		ps.Add("show-timings", psetter.Bool{Value: &g.verboseTimer.showTimings},
+			"report the time taken for various parts of gosh to complete.",
+			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
+			param.GroupName(paramGroupNameGosh),
+		)
+
 		ps.Add(paramNameEditScript, psetter.Bool{Value: &g.edit},
 			"edit the generated code just before running it.",
 			param.AltNames("edit"),

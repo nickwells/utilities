@@ -30,19 +30,19 @@ func constantWidthStr(s string) string {
 
 // VerboseTimer used in conjunction with the timer and verbose packages this
 // will print out how long a function took to run
-type VerboseTimer struct{}
+type VerboseTimer struct {
+	showTimings bool
+}
 
 // Act will perform the action for the timer - it prints out the tag and the
 // duration in milliseconds if the program is in verbose mode
-func (VerboseTimer) Act(tag string, d time.Duration) {
-	if !verbose.IsOn() {
-		return
+func (v *VerboseTimer) Act(tag string, d time.Duration) {
+	if verbose.IsOn() || v.showTimings {
+		fmt.Printf("%s: %12.3f msecs\n",
+			tag, float64(d/time.Microsecond)/1000.0)
+		fmt.Printf("%s: ------------\n", strings.Repeat(" ", len(tag)))
 	}
-	fmt.Printf("%s: %12.3f msecs\n", tag, float64(d/time.Microsecond)/1000.0)
-	fmt.Printf("%s: ------------\n", strings.Repeat(" ", len(tag)))
 }
-
-var verboseTimer VerboseTimer
 
 // makeParamSet creates the parameter set ready for argument parsing
 func makeParamSet(g *Gosh, slp *snippetListParams) *param.PSet {
@@ -86,9 +86,10 @@ func makeParamSet(g *Gosh, slp *snippetListParams) *param.PSet {
 }
 
 func main() {
+	verboseTimer := &VerboseTimer{}
 	defer timer.Start(constantWidthStr("main"), verboseTimer)()
 
-	g := NewGosh()
+	g := NewGosh(verboseTimer)
 	slp := &snippetListParams{}
 
 	ps := makeParamSet(g, slp)
@@ -162,7 +163,7 @@ func listSnippets(g *Gosh, slp *snippetListParams) {
 // containing directory unless the dontClearFile flag is set
 func (g *Gosh) clearFiles() {
 	intro := constantWidthStr("clearFiles")
-	defer timer.Start(intro, verboseTimer)()
+	defer timer.Start(intro, g.verboseTimer)()
 	verbose.Println(intro, ": Cleaning-up the Go files")
 
 	if g.dontClearFile {
@@ -182,7 +183,7 @@ func (g *Gosh) clearFiles() {
 // formatFile runs the formatter over the populated program file
 func (g *Gosh) formatFile() {
 	intro := constantWidthStr("formatFile")
-	defer timer.Start(intro, verboseTimer)()
+	defer timer.Start(intro, g.verboseTimer)()
 	verbose.Println(intro, ": Formatting the Go file")
 
 	if g.dontFormat {
@@ -232,7 +233,7 @@ func (g Gosh) chdirInto(dir string) {
 // and any module files are created in that directory.
 func (g *Gosh) createGoFiles() {
 	intro := constantWidthStr("createGoFiles")
-	defer timer.Start(intro, verboseTimer)()
+	defer timer.Start(intro, g.verboseTimer)()
 
 	verbose.Println(intro, ": Creating the Go files")
 
@@ -271,7 +272,7 @@ func (g *Gosh) makeFile() {
 // it unless dontRun is set.
 func (g *Gosh) runGoFile() {
 	intro := constantWidthStr("runGoFile")
-	defer timer.Start(intro, verboseTimer)()
+	defer timer.Start(intro, g.verboseTimer)()
 	verbose.Println(intro, ": Running the program")
 
 	buildCmd := []string{"build"}
@@ -345,7 +346,7 @@ func (g Gosh) queryEditAgain() bool {
 // it formats the generated code.
 func (g *Gosh) buildGoProgram() {
 	intro := constantWidthStr("buildGoProgram")
-	defer timer.Start(intro, verboseTimer)()
+	defer timer.Start(intro, g.verboseTimer)()
 
 	verbose.Println(intro, ": Building the program")
 
@@ -422,7 +423,7 @@ func (g *Gosh) editGoFile() {
 		return
 	}
 	intro := constantWidthStr("editGoFile")
-	defer timer.Start(intro, verboseTimer)()
+	defer timer.Start(intro, g.verboseTimer)()
 	verbose.Println(intro, ": editing the program")
 
 	g.editorArgs = append(g.editorArgs, g.filename)
@@ -446,7 +447,7 @@ func (g *Gosh) editGoFile() {
 // populate the go.mod and go.sum files
 func (g *Gosh) tidyModule() {
 	intro := constantWidthStr("tidyModule")
-	defer timer.Start(intro, verboseTimer)()
+	defer timer.Start(intro, g.verboseTimer)()
 	verbose.Println(intro, ": tidying and populating the module files")
 
 	if os.Getenv("GO111MODULE") == "off" {
@@ -466,7 +467,7 @@ func (g *Gosh) tidyModule() {
 // initModule runs go mod init
 func (g *Gosh) initModule() {
 	intro := constantWidthStr("initModule")
-	defer timer.Start(intro, verboseTimer)()
+	defer timer.Start(intro, g.verboseTimer)()
 	verbose.Println(intro, ": initialising the module files")
 
 	if os.Getenv("GO111MODULE") == "off" {

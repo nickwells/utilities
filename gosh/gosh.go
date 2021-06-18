@@ -71,6 +71,7 @@ type Gosh struct {
 	runInReadloopSetters  []*param.ByName
 	runAsWebserverSetters []*param.ByName
 
+	verboseTimer  *VerboseTimer
 	showFilename  bool
 	dontClearFile bool
 	dontRun       bool
@@ -152,7 +153,7 @@ func addSnippetComment(script *[]string, message string) {
 
 // NewGosh creates a new instance of the Gosh struct with all the initial
 // default values set correctly.
-func NewGosh() *Gosh {
+func NewGosh(vt *VerboseTimer) *Gosh {
 	cwd, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't get the working directory:", err)
@@ -184,6 +185,8 @@ func NewGosh() *Gosh {
 
 		snippetUsed: map[string]bool{},
 		snippets:    &snippet.Cache{},
+
+		verboseTimer: vt,
 	}
 
 	g.setDfltSnippetPath()

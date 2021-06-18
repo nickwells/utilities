@@ -318,7 +318,7 @@ func (g *Gosh) defaultHandlerFuncDecl() string {
 // writeGoFile writes the contents of the Go file
 func (g *Gosh) writeGoFile() {
 	intro := constantWidthStr("writeGoFile")
-	defer timer.Start(intro, verboseTimer)()
+	defer timer.Start(intro, g.verboseTimer)()
 
 	verbose.Print(intro, ": Writing the contents of the Go file\n")
 
