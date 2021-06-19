@@ -80,13 +80,30 @@ The rest of the file is Go code to be run inside a main\(\) func\.
 
 
 
-Any parameters that you pass to the script will be interpreted by gosh so you
-can add extra code to be run\.
+Any parameters that you pass to the script will be interpreted as gosh
+parameters so you can add extra code to be run\.
+
+
+
+You can skip the formatting stage by passing the dont\-format parameter\. This
+makes your script run a little faster and, more importantly, removes the
+dependency on additional commands \(like gofmt or goimports\)\. If you do skip
+formatting though you will need to provide the packages to be imported through
+import parameters\.
+
+
+
+You might also want to consider setting the full path of the Go command using
+the set\-go\-cmd parameter\. This will remove the need for the person running
+the shebang script to even have the go command in their path\.
 ### See Parameters
 * after\-file
 * before\-file
+* dont\-format
 * exec\-file
 * global\-file
+* import
+* set\-go\-cmd
 
 
 
