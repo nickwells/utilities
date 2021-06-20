@@ -77,6 +77,7 @@ func (g *Gosh) writeGoFileImports() {
 	}
 	if g.runAsWebserver {
 		g.imports = append(g.imports, "net/http")
+		g.imports = append(g.imports, "log")
 	}
 
 	gogen.PrintImports(g.w, g.imports...)
