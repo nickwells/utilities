@@ -63,8 +63,8 @@ func (g *Gosh) writeScript(scriptName string) {
 	}
 }
 
-// writeGoFileImports writes the import statements into the Go file
-func (g *Gosh) writeGoFileImports() {
+// writeImports writes the import statements into the Go file
+func (g *Gosh) writeImports() {
 	if g.runInReadLoop {
 		g.imports = append(g.imports, "bufio")
 		g.imports = append(g.imports, "io")
@@ -83,9 +83,9 @@ func (g *Gosh) writeGoFileImports() {
 	gogen.PrintImports(g.w, g.imports...)
 }
 
-// writeGoArgsLoop writes the statements of the loop over the arguments
+// writeArgsLoop writes the statements of the loop over the arguments
 // (if any) into the Go file
-func (g *Gosh) writeGoArgsLoop() {
+func (g *Gosh) writeArgsLoop() {
 	tag := argTag
 
 	g.gDecl("_arg", "", tag)
@@ -112,9 +112,9 @@ func (g *Gosh) writeGoArgsLoop() {
 	g.writeScript(afterSect)
 }
 
-// writeGoFileReadLoop writes the statements of the readloop
+// writeReadLoop writes the statements of the readloop
 // (if any) into the Go file
-func (g *Gosh) writeGoFileReadLoop() {
+func (g *Gosh) writeReadLoop() {
 	tag := rlTag
 
 	g.gDecl("_fn", ` = "standard input"`, tag)
@@ -132,59 +132,28 @@ func (g *Gosh) writeGoFileReadLoop() {
 	g.writeScript(beforeSect)
 
 	if len(g.filesToRead) > 0 {
-		g.writeOpenFileLoop(tag + filesSfx)
+		g.writeFileLoopOpen(tag + filesSfx)
 		g.gDecl("_l", " = bufio.NewScanner(_f)", tag)
 	} else {
 		g.gDecl("_l", " = bufio.NewScanner(os.Stdin)", tag)
 	}
 
 	g.writeScript(beforeInnerSect)
-	g.writeOpenScanLoop(tag)
+	g.writeScanLoopOpen(tag)
 
 	g.writeScript(execSect)
 
-	g.writeCloseScanLoop(tag)
+	g.writeScanLoopClose(tag)
 	g.writeScript(afterInnerSect)
 
 	if len(g.filesToRead) > 0 {
-		g.writeCloseFileLoop(tag + filesSfx)
+		g.writeFileLoopClose(tag + filesSfx)
 	}
 	g.writeScript(afterSect)
 }
 
-// writeCloseFileLoop writes the code to close the loop ranging over the file
-// names.
-func (g *Gosh) writeCloseFileLoop(tag string) {
-	g.gPrint(`_f.Close()`, tag)
-	if g.inPlaceEdit {
-		g.writeEndInPlaceEdit(tag + ipeSfx)
-	}
-	g.out()
-	g.gPrint("}", tag)
-}
-
-// writeEndInPlaceEdit writes the code to complete the operation of the
-// in-place edit of the given files.
-func (g *Gosh) writeEndInPlaceEdit(tag string) {
-	g.gPrint(`_w.Close()`, tag)
-	g.gPrint(`if _err := os.Rename(_fn, _fn+"`+origExt+`"); _err != nil {`, tag)
-	{
-		g.in()
-		g.gPrintErr(`"Error making copy of %q : %v\n", _fn, _err`, tag)
-		g.out()
-	}
-	g.gPrint("}", tag)
-	g.gPrint(`if _err := os.Rename(_w.Name(), _fn); _err != nil {`, tag)
-	{
-		g.in()
-		g.gPrintErr(`"Error recreating %q : %v\n", _fn, _err`, tag)
-		g.out()
-	}
-	g.gPrint("}", tag)
-}
-
-// writeOpenScanLoop writes the code to open the loop reading from the scanner.
-func (g *Gosh) writeOpenScanLoop(tag string) {
+// writeScanLoopOpen writes the code to open the loop reading from the scanner.
+func (g *Gosh) writeScanLoopOpen(tag string) {
 	g.gPrint("for _l.Scan() {", tag)
 	g.in()
 	g.gPrint("_fl++", tag)
@@ -194,9 +163,9 @@ func (g *Gosh) writeOpenScanLoop(tag string) {
 	}
 }
 
-// writeCloseScanLoop writes the code to close the loop reading from the
+// writeScanLoopClose writes the code to close the loop reading from the
 // scanner.
-func (g *Gosh) writeCloseScanLoop(tag string) {
+func (g *Gosh) writeScanLoopClose(tag string) {
 	g.out()
 	g.gPrint("}", tag)
 	g.gPrint("if _err := _l.Err(); _err != nil {", tag)
@@ -216,8 +185,8 @@ func (g *Gosh) writeFileNameList(tag string) {
 	g.gPrint("}", tag)
 }
 
-// writeOpenFileLoop writes the opening of the loop over the list of filenames.
-func (g *Gosh) writeOpenFileLoop(tag string) {
+// writeFileLoopOpen writes the opening of the loop over the list of filenames.
+func (g *Gosh) writeFileLoopOpen(tag string) {
 	g.gPrint("for _, _fn = range _fns {", tag)
 	{
 		g.in()
@@ -233,16 +202,30 @@ func (g *Gosh) writeOpenFileLoop(tag string) {
 		}
 		g.gPrint("}", tag)
 		g.gPrint(`_fl = 0`, tag)
-		if g.inPlaceEdit {
-			g.writeInPlaceEditWriter(tag + ipeSfx)
-		}
+
+		g.writeInPlaceEditOpen(tag + ipeSfx)
 	}
 }
 
-// writeInPlaceEditWriter writes the declaration and initialisation of the
+// writeFileLoopClose writes the code to close the loop ranging over the file
+// names.
+func (g *Gosh) writeFileLoopClose(tag string) {
+	g.gPrint(`_f.Close()`, tag)
+
+	g.writeInPlaceEditClose(tag + ipeSfx)
+
+	g.out()
+	g.gPrint("}", tag)
+}
+
+// writeInPlaceEditOpen writes the declaration and initialisation of the
 // writer used for in-place editing. It writes code to handle any errors
 // detected.
-func (g *Gosh) writeInPlaceEditWriter(tag string) {
+func (g *Gosh) writeInPlaceEditOpen(tag string) {
+	if !g.inPlaceEdit {
+		return
+	}
+
 	g.gDecl("_w", "", tag)
 	g.gPrint(`_w, _err = os.CreateTemp(`, tag)
 	{
@@ -263,18 +246,47 @@ func (g *Gosh) writeInPlaceEditWriter(tag string) {
 	g.gPrint("}", tag)
 }
 
-// writeGoFileWebserverInit writes the webserver boilerplate code
+// writeInPlaceEditClose writes the code to complete the operation of the
+// in-place edit of the given files.
+func (g *Gosh) writeInPlaceEditClose(tag string) {
+	if !g.inPlaceEdit {
+		return
+	}
+
+	g.gPrint(`_w.Close()`, tag)
+	g.gPrint(`if _err := os.Rename(_fn, _fn+"`+origExt+`"); _err != nil {`, tag)
+	{
+		g.in()
+		g.gPrintErr(`"Error making copy of %q : %v\n", _fn, _err`, tag)
+		g.out()
+	}
+	g.gPrint("}", tag)
+	g.gPrint(`if _err := os.Rename(_w.Name(), _fn); _err != nil {`, tag)
+	{
+		g.in()
+		g.gPrintErr(`"Error recreating %q : %v\n", _fn, _err`, tag)
+		g.out()
+	}
+	g.gPrint("}", tag)
+}
+
+// writeWebserverInit writes the webserver boilerplate code
 // (if any) into the Go file
-func (g *Gosh) writeGoFileWebserverInit() {
+func (g *Gosh) writeWebserverInit() {
 	tag := webTag
 
-	g.gPrint(
-		fmt.Sprintf(`http.Handle(%q, %s)`,
-			g.httpPath, g.httpHandlerInstance()),
+	g.writeScript(beforeSect)
+	g.writeScript(beforeInnerSect)
+
+	g.gPrint(fmt.Sprintf(`http.Handle(%q, %s)`,
+		g.httpPath, g.httpHandlerInstance()),
 		tag)
-	g.gPrint(
-		fmt.Sprintf(`log.Fatal(http.ListenAndServe(":%d", nil))`,
-			g.httpPort),
+
+	g.writeScript(afterInnerSect)
+	g.writeScript(afterSect)
+
+	g.gPrint(fmt.Sprintf(`log.Fatal(http.ListenAndServe(":%d", nil))`,
+		g.httpPort),
 		tag)
 }
 
@@ -287,9 +299,9 @@ func (g *Gosh) httpHandlerInstance() string {
 	return g.httpHandler + "{}"
 }
 
-// writeGoFileWebserverHandler writes the webserver handler function
+// writeWebserverHandler writes the webserver handler function
 // (if any) into the Go file
-func (g *Gosh) writeGoFileWebserverHandler() {
+func (g *Gosh) writeWebserverHandler() {
 	if g.httpHandler != dfltHTTPHandlerName {
 		return
 	}
@@ -326,21 +338,17 @@ func (g *Gosh) writeGoFile() {
 	g.gPrint("package main", frameTag)
 
 	g.writeGoshComment()
-	g.writeGoFileImports()
+	g.writeImports()
 	g.writeScript(globalSect)
 
 	g.writeMainOpen()
 
 	if g.runAsWebserver {
-		g.writeScript(beforeSect)
-		g.writeScript(beforeInnerSect)
-		g.writeGoFileWebserverInit()
-		g.writeScript(afterInnerSect)
-		g.writeScript(afterSect)
+		g.writeWebserverInit()
 	} else if g.runInReadLoop {
-		g.writeGoFileReadLoop()
+		g.writeReadLoop()
 	} else if len(g.args) > 0 {
-		g.writeGoArgsLoop()
+		g.writeArgsLoop()
 	} else {
 		g.writeScript(beforeSect)
 		g.writeScript(beforeInnerSect)
@@ -349,21 +357,24 @@ func (g *Gosh) writeGoFile() {
 		g.writeScript(afterSect)
 	}
 
-	g.out()
-	g.gPrint("}", frameTag)
+	g.writeMainClose()
 
 	if g.runAsWebserver {
-		g.writeGoFileWebserverHandler()
+		g.writeWebserverHandler()
 	}
 }
 
 // writeMainOpen writes the opening of the main func.
 func (g *Gosh) writeMainOpen() {
-	tag := frameTag
-
-	g.gPrint("", tag)
-	g.gPrint("func main() {", tag)
+	g.gPrint("", frameTag)
+	g.gPrint("func main() {", frameTag)
 	g.in()
+}
+
+// writeMainClose writes the closing of the main func.
+func (g *Gosh) writeMainClose() {
+	g.out()
+	g.gPrint("}", frameTag)
 }
 
 // writeGoshComment writes the introductory comment
