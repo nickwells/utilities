@@ -11,6 +11,8 @@ import (
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
+	"github.com/nickwells/utilities/internal/callstack"
+	"github.com/nickwells/verbose.mod/verbose"
 )
 
 // Created: Thu Jun 11 12:43:33 2020
@@ -21,8 +23,6 @@ const (
 	installAct  = "install"
 	generateAct = "generate"
 )
-
-var noAction bool
 
 // doPrint will print the name
 func doPrint(name string) {
@@ -60,7 +60,13 @@ func doGoCommand(name, command string, cmdArgs []string) {
 }
 
 var (
-	dir string = "."
+	baseDirs     []string
+	skipDirs     []string
+	pkgNames     []string
+	filesWanted  []string
+	filesMissing []string
+
+	noAction bool
 
 	actions = make(map[string]bool)
 
@@ -75,13 +81,13 @@ var (
 	installArgs  = []string{}
 	buildArgs    = []string{}
 
-	pkgNames     []string
-	filesWanted  []string
-	filesMissing []string
+	dbgStack = &callstack.Stack{}
 )
 
 func main() {
 	ps := paramset.NewOrDie(
+		verbose.AddParams,
+
 		addParams,
 		addExamples,
 		param.SetProgramDescription(
@@ -93,49 +99,92 @@ func main() {
 
 	ps.Parse()
 
-	dirs, errs := dirsearch.FindRecursePrune(dir, -1,
-		[]check.FileInfo{
-			check.FileInfoName(check.StringNot(
-				check.StringEquals("testdata"), "Ignore testdata directories")),
-			check.FileInfoName(check.StringNot(
-				check.StringHasPrefix("_"),
-				"Ignore directories with name starting with '_'")),
-			check.FileInfoName(check.StringNot(
-				check.StringHasPrefix("."),
-				"Ignore hidden directories (including .git)")),
-		},
-		check.FileInfoIsDir)
-	for _, err := range errs {
-		fmt.Println("Err:", err)
-	}
-	sortedDirs := make([]string, 0, len(dirs))
-	for d := range dirs {
-		sortedDirs = append(sortedDirs, d)
-	}
-	sort.Strings(sortedDirs)
+	defer dbgStack.Start("main", os.Args[0])()
+
+	sortedDirs := findMatchingDirs()
 	for _, d := range sortedDirs {
 		onMatchDo(d, actions)
 	}
 }
 
+// findMatchingDirs finds directories in any of the baseDirs matching the
+// given criteria. Note that this just finds directories, excluding those:
+//
+// - called testdata
+// - starting with a dot
+// - starting with an underscore
+//
+// It does not perform any of the other tests, on package names, file
+// presence etc.
+func findMatchingDirs() []string {
+	defer dbgStack.Start("findMatchingDirs", "Find dirs matching criteria")()
+
+	var dirs []string
+	dirChecks := []check.FileInfo{
+		check.FileInfoName(check.StringNot(
+			check.StringEquals("testdata"),
+			"Ignore any directory called testdata")),
+		check.FileInfoName(check.StringNot(
+			check.StringHasPrefix("_"),
+			"Ignore directories with name starting with '_'")),
+		check.FileInfoName(
+			check.StringOr(
+				check.StringNot(
+					check.StringHasPrefix("."),
+					"Ignore hidden directories (including .git)"),
+				check.StringEquals("."),
+				check.StringEquals(".."),
+			)),
+	}
+	for _, skipDir := range skipDirs {
+		dirChecks = append(dirChecks, check.FileInfoName(check.StringNot(
+			check.StringEquals(skipDir),
+			"Ignore any directory called "+skipDir)))
+	}
+
+	fileChecks := []check.FileInfo{check.FileInfoIsDir}
+	fileChecks = append(fileChecks, dirChecks...)
+
+	for _, dir := range baseDirs {
+		matches, errs := dirsearch.FindRecursePrune(dir, -1,
+			dirChecks,
+			fileChecks...)
+		for _, err := range errs {
+			fmt.Fprintf(os.Stderr, "Error: %q : %v\n", dir, err)
+		}
+		for d := range matches {
+			dirs = append(dirs, d)
+		}
+	}
+	sort.Strings(dirs)
+	return dirs
+}
+
 // onMatchDo performs the actions if the directory is a go package directory
 // meeting the criteria
 func onMatchDo(dir string, actions map[string]bool) {
+	defer dbgStack.Start("onMatchDo", "Act on matching dir: "+dir)()
+	intro := dbgStack.Tag()
+
 	undo, err := cd(dir)
 	if err != nil {
+		verbose.Println(intro, " Skipping: couldn't chdir")
 		return
 	}
 	defer undo()
 
 	if !isPkg(pkgNames) {
+		verbose.Println(intro, " Skipping: wrong package")
 		return
 	}
 
 	if !hasFiles(filesWanted) {
+		verbose.Println(intro, " Skipping: missing files")
 		return
 	}
 
 	if len(filesMissing) > 0 && hasFiles(filesMissing) {
+		verbose.Println(intro, " Skipping: has unwanted files")
 		return
 	}
 
@@ -143,6 +192,7 @@ func onMatchDo(dir string, actions map[string]bool) {
 	// any files before building or installing (if generate is requested)
 	for _, a := range []string{printAct, generateAct, buildAct, installAct} {
 		if actions[a] {
+			verbose.Println(intro, " Doing: "+a)
 			actionFuncs[a](dir)
 		}
 	}
@@ -153,10 +203,12 @@ func onMatchDo(dir string, actions map[string]bool) {
 func cd(dir string) (func(), error) {
 	cwd, err := os.Getwd()
 	if err != nil {
+		fmt.Fprintln(os.Stderr, "Cannot get the current directory:", err)
 		return nil, err
 	}
 	err = os.Chdir(dir)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Cannot chdir to %q: %v\n", dir, err)
 		return nil, err
 	}
 	return func() {

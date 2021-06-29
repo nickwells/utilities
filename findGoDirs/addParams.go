@@ -4,13 +4,21 @@ import (
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paction"
 	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/utilities/internal/stdparams"
 )
 
 // addParams will add parameters to the passed ParamSet
 func addParams(ps *param.PSet) error {
+	var dir string
 	ps.Add("dir", psetter.Pathname{Value: &dir},
-		"set the name of the directory to search from",
-		param.AltName("d"),
+		"set the name of the directory to search from."+
+			" If no directories are given, the current directory is"+
+			" used. This parameter may be given more than once, each"+
+			" time it is used the directory will be added to the"+
+			" list of directories to search.",
+		param.AltNames("dirs", "d"),
+		param.PostAction(paction.AppendStringVal(&baseDirs, &dir)),
+		param.Attrs(param.CommandLineOnly),
 	)
 
 	ps.Add("actions",
@@ -24,57 +32,54 @@ func addParams(ps *param.PSet) error {
 			},
 		},
 		"set the actions to perform when a Go command directory is discovered",
-		param.AltName("a"),
-		param.AltName("do"),
+		param.AltNames("a", "do"),
+		param.Attrs(param.CommandLineOnly),
 	)
 
-	ps.Add("args-generate", psetter.StrListAppender{Value: &generateArgs},
+	ps.Add("generate-arg", psetter.StrListAppender{Value: &generateArgs},
 		"set the arguments to be given to the go generate command",
-		param.AltName("generate-args"),
-		param.AltName("gen-args"),
-		param.AltName("g-args"),
-		param.PostAction(paction.SetMapIf(actions, generateAct, true,
-			paction.IsACommandLineParam)),
+		param.AltNames("generate-args", "args-generate", "gen-args", "g-args"),
+		param.PostAction(
+			paction.SetMapIf(actions, generateAct, true,
+				paction.IsACommandLineParam)),
 	)
 
-	ps.Add("args-install", psetter.StrListAppender{Value: &installArgs},
+	ps.Add("install-arg", psetter.StrListAppender{Value: &installArgs},
 		"set the arguments to be given to the go install command",
-		param.AltName("install-args"),
-		param.AltName("inst-args"),
-		param.AltName("i-args"),
-		param.PostAction(paction.SetMapIf(actions, installAct, true,
-			paction.IsACommandLineParam)),
+		param.AltNames("install-args", "args-install", "inst-args", "i-args"),
+		param.PostAction(
+			paction.SetMapIf(actions, installAct, true,
+				paction.IsACommandLineParam)),
 	)
 
-	ps.Add("args-build", psetter.StrListAppender{Value: &buildArgs},
+	ps.Add("build-arg", psetter.StrListAppender{Value: &buildArgs},
 		"set the arguments to be given to the go build command",
-		param.AltName("build-args"),
-		param.AltName("b-args"),
-		param.PostAction(paction.SetMapIf(actions, buildAct, true,
-			paction.IsACommandLineParam)),
+		param.AltNames("build-args", "args-build", "b-args", "b-arg"),
+		param.PostAction(
+			paction.SetMapIf(actions, buildAct, true,
+				paction.IsACommandLineParam)),
 	)
 
 	ps.Add("package-names", psetter.StrList{Value: &pkgNames},
 		"set the names of packages to be matched. If this is not set then"+
 			" any package name will be matched",
-		param.AltName("package"),
-		param.AltName("pkg"),
+		param.AltNames("package", "pkg"),
 	)
 
 	ps.Add("having-files", psetter.StrList{Value: &filesWanted},
 		"give a list of files that the directory must contain. All the"+
 			" listed files must be present for the directory to be"+
 			" matched.",
-		param.AltName("having"),
-		param.AltName("with"),
+		param.AltNames("having", "with"),
+		param.Attrs(param.CommandLineOnly),
 	)
 
 	ps.Add("missing-files", psetter.StrList{Value: &filesMissing},
 		"give a list of files that the directory may not contain. Any of"+
 			" the listed files may be absent for the directory to be"+
 			" matched.",
-		param.AltName("not-having"),
-		param.AltName("without"),
+		param.AltNames("not-having", "without"),
+		param.Attrs(param.CommandLineOnly),
 	)
 
 	ps.Add("no-action", psetter.Bool{Value: &noAction},
@@ -83,9 +88,24 @@ func addParams(ps *param.PSet) error {
 		param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 	)
 
+	stdparams.AddTiming(ps, dbgStack)
+
+	var skipDir string
+	ps.Add("skip-dir", psetter.String{Value: &skipDir},
+		"exclude a directory with this name and skip any sub-directories."+
+			" This parameter may be given more than once, each"+
+			" time it is used the name will be added to the"+
+			" list of directories to skip.",
+		param.PostAction(paction.AppendStringVal(&skipDirs, &skipDir)),
+	)
+
 	ps.AddFinalCheck(func() error {
 		if len(actions) == 0 {
 			actions[printAct] = true
+		}
+
+		if len(baseDirs) == 0 {
+			baseDirs = []string{"."}
 		}
 		return nil
 	})
