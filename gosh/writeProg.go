@@ -5,8 +5,6 @@ import (
 	"strings"
 
 	"github.com/nickwells/gogen.mod/gogen"
-	"github.com/nickwells/timer.mod/timer"
-	"github.com/nickwells/verbose.mod/verbose"
 )
 
 const (
@@ -330,10 +328,7 @@ func (g *Gosh) defaultHandlerFuncDecl() string {
 
 // writeGoFile writes the contents of the Go file
 func (g *Gosh) writeGoFile() {
-	intro := constantWidthStr("writeGoFile")
-	defer timer.Start(intro, g.verboseTimer)()
-
-	verbose.Print(intro, ": Writing the contents of the Go file\n")
+	defer g.dbgStack.Start("writeGoFile", "Populating the Go file")()
 
 	g.gPrint("package main", frameTag)
 

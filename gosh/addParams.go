@@ -12,6 +12,7 @@ import (
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paction"
 	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/utilities/internal/stdparams"
 )
 
 const (
@@ -802,11 +803,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.GroupName(paramGroupNameGosh),
 		)
 
-		ps.Add("show-timings", psetter.Bool{Value: &g.verboseTimer.showTimings},
-			"report the time taken for various parts of gosh to complete.",
-			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
-			param.GroupName(paramGroupNameGosh),
-		)
+		stdparams.AddTiming(ps, g.dbgStack, param.GroupName(paramGroupNameGosh))
 
 		ps.Add(paramNameEditScript, psetter.Bool{Value: &g.edit},
 			"edit the generated code just before running it.",

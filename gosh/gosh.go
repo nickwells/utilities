@@ -11,6 +11,7 @@ import (
 	"github.com/nickwells/errutil.mod/errutil"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/snippet.mod/snippet"
+	"github.com/nickwells/utilities/internal/callstack"
 	"github.com/nickwells/xdg.mod/xdg"
 )
 
@@ -71,7 +72,8 @@ type Gosh struct {
 	runInReadloopSetters  []*param.ByName
 	runAsWebserverSetters []*param.ByName
 
-	verboseTimer  *VerboseTimer
+	dbgStack *callstack.Stack
+
 	showFilename  bool
 	dontClearFile bool
 	dontRun       bool
@@ -153,7 +155,7 @@ func addSnippetComment(script *[]string, message string) {
 
 // NewGosh creates a new instance of the Gosh struct with all the initial
 // default values set correctly.
-func NewGosh(vt *VerboseTimer) *Gosh {
+func NewGosh(dbgStack *callstack.Stack) *Gosh {
 	cwd, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't get the working directory:", err)
@@ -186,7 +188,7 @@ func NewGosh(vt *VerboseTimer) *Gosh {
 		snippetUsed: map[string]bool{},
 		snippets:    &snippet.Cache{},
 
-		verboseTimer: vt,
+		dbgStack: dbgStack,
 	}
 
 	g.setDfltSnippetPath()
