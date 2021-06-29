@@ -779,6 +779,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 
 		ps.Add("build-arg", psetter.StrListAppender{Value: &g.buildArgs},
 			"add an argument to pass to the go build command.",
+			param.AltNames("build-args", "args-build", "b-args", "b-arg"),
 			param.Attrs(param.DontShowInStdUsage),
 			param.GroupName(paramGroupNameGosh),
 		)
