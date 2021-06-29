@@ -59,6 +59,5 @@ func (s *Stack) Act(_ string, d time.Duration) {
 	if verbose.IsOn() || s.ShowTimings {
 		fmt.Printf("%s%12.3f msecs\n",
 			tag, float64(d/time.Microsecond)/1000.0)
-		//fmt.Printf("%s------------\n", strings.Repeat(" ", len(tag)))
 	}
 }
