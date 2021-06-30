@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/testhelper.mod/testhelper"
 )
 
@@ -105,7 +106,7 @@ func TestHasFiles(t *testing.T) {
 	}
 }
 
-func TestIsPkg(t *testing.T) {
+func TestPkgMatches(t *testing.T) {
 	testCases := []struct {
 		testhelper.ID
 		dir       string
@@ -167,5 +168,10 @@ func checkPkg(t *testing.T, dir string, pkgNames []string) bool {
 	}
 	defer undo()
 
-	return isPkg(pkgNames)
+	pkg, err := gogen.GetPackage()
+	if err != nil { // it's not a package directory
+		return false
+	}
+
+	return pkgMatches(pkg, pkgNames)
 }

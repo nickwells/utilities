@@ -173,8 +173,14 @@ func onMatchDo(dir string, actions map[string]bool) {
 	}
 	defer undo()
 
-	if !isPkg(pkgNames) {
-		verbose.Println(intro, " Skipping: wrong package")
+	pkg, err := gogen.GetPackage()
+	if err != nil { // it's not a package directory
+		verbose.Println(intro, " Skipping: Not a package directory")
+		return
+	}
+
+	if !pkgMatches(pkg, pkgNames) {
+		verbose.Println(intro, " Skipping: Wrong package")
 		return
 	}
 
@@ -216,15 +222,10 @@ func cd(dir string) (func(), error) {
 	}, nil
 }
 
-// isPkg will try to run the command to get the package name. If this fails,
-// it returns false. Otherwise it will compare the package name against the
-// list of target packages and return true only if any of them match.
-func isPkg(pkgNames []string) bool {
-	pkg, err := gogen.GetPackage()
-	if err != nil { // it's not a package directory
-		return false
-	}
-
+// pkgMatches will compare the package name against the list of target
+// packages, if any, and return true only if any of them match. If there are
+// no names to match then any name will match.
+func pkgMatches(pkg string, pkgNames []string) bool {
 	if len(pkgNames) == 0 { // any name matches
 		return true
 	}
