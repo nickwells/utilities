@@ -85,6 +85,7 @@ func addParams(ps *param.PSet) error {
 	ps.Add("no-action", psetter.Bool{Value: &noAction},
 		"this will stop any action from happening. Instead the action"+
 			" functions will just report what they would have done.",
+		param.AltNames("do-nothing"),
 		param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 	)
 
