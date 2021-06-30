@@ -99,7 +99,7 @@ func TestHasFiles(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		if hasFiles(tc.filesWanted) != tc.expResult {
+		if hasEntries(tc.filesWanted) != tc.expResult {
 			t.Log(tc.IDStr())
 			t.Errorf("\t: unexpected result\n")
 		}
@@ -173,5 +173,7 @@ func checkPkg(t *testing.T, dir string, pkgNames []string) bool {
 		return false
 	}
 
-	return pkgMatches(pkg, pkgNames)
+	fgd := NewFindGoDirs()
+	fgd.pkgNames = pkgNames
+	return fgd.pkgMatches(pkg)
 }

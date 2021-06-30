@@ -1,94 +1,91 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/nickwells/check.mod/check"
 	"github.com/nickwells/dirsearch.mod/dirsearch"
 	"github.com/nickwells/gogen.mod/gogen"
+	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
-	"github.com/nickwells/utilities/internal/callstack"
 	"github.com/nickwells/verbose.mod/verbose"
 )
 
 // Created: Thu Jun 11 12:43:33 2020
 
-const (
-	printAct    = "print"
-	buildAct    = "build"
-	installAct  = "install"
-	generateAct = "generate"
-)
-
 // doPrint will print the name
-func doPrint(name string) {
-	if noAction {
+func doPrint(fgd *findGoDirs, name string) {
+	if fgd.noAction {
 		fmt.Printf("%-20.20s : %s\n", "print", name)
 		return
 	}
 	fmt.Println(name)
 }
 
+// doContent will show the lines in the files in the directory that match
+// the content checks
+func doContent(fgd *findGoDirs, name string) {
+	defer fgd.dbgStack.Start("doContent", "Print matching content in : "+name)()
+
+	if fgd.noAction {
+		fmt.Printf("%-20.20s : %s\n", "content", name)
+		return
+	}
+	keys := []string{}
+	for k := range fgd.dirContent[name] {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		for _, match := range fgd.dirContent[name][k] {
+			fmt.Println(match.String())
+		}
+	}
+}
+
 // doBuild will run go build
-func doBuild(name string) {
-	doGoCommand(name, "build", buildArgs)
+func doBuild(fgd *findGoDirs, name string) {
+	fgd.doGoCommand(name, "build", fgd.buildArgs)
 }
 
 // doInstall will run go install
-func doInstall(name string) {
-	doGoCommand(name, "install", installArgs)
+func doInstall(fgd *findGoDirs, name string) {
+	fgd.doGoCommand(name, "install", fgd.installArgs)
 }
 
 // doGenerate will run go generate
-func doGenerate(name string) {
-	doGoCommand(name, "generate", generateArgs)
+func doGenerate(fgd *findGoDirs, name string) {
+	fgd.doGoCommand(name, "generate", fgd.generateArgs)
 }
 
 // doGoCommand will run the Go subcommand with the passed args
-func doGoCommand(name, command string, cmdArgs []string) {
-	if noAction {
+func (fgd *findGoDirs) doGoCommand(name, command string, cmdArgs []string) {
+	defer fgd.dbgStack.Start("doGoCommand", "In : "+name)()
+	intro := fgd.dbgStack.Tag()
+
+	if fgd.noAction {
 		fmt.Printf("%-20.20s : %s\n", "go "+command, name)
 		return
 	}
 	args := []string{command}
 	args = append(args, cmdArgs...)
+	verbose.Println(intro, "go "+strings.Join(args, " "))
 	gogen.ExecGoCmd(gogen.ShowCmdIO, args...)
 }
 
-var (
-	baseDirs     []string
-	skipDirs     []string
-	pkgNames     []string
-	filesWanted  []string
-	filesMissing []string
-
-	noAction bool
-
-	actions = make(map[string]bool)
-
-	actionFuncs = map[string]func(string){
-		printAct:    doPrint,
-		buildAct:    doBuild,
-		installAct:  doInstall,
-		generateAct: doGenerate,
-	}
-
-	generateArgs = []string{}
-	installArgs  = []string{}
-	buildArgs    = []string{}
-
-	dbgStack = &callstack.Stack{}
-)
-
 func main() {
+	fgd := NewFindGoDirs()
 	ps := paramset.NewOrDie(
 		verbose.AddParams,
 
-		addParams,
+		addParams(fgd),
 		addExamples,
 		param.SetProgramDescription(
 			"This will search for directories containing Go packages. You"+
@@ -99,11 +96,11 @@ func main() {
 
 	ps.Parse()
 
-	defer dbgStack.Start("main", os.Args[0])()
+	defer fgd.dbgStack.Start("main", os.Args[0])()
 
-	sortedDirs := findMatchingDirs()
+	sortedDirs := fgd.findMatchingDirs()
 	for _, d := range sortedDirs {
-		onMatchDo(d, actions)
+		fgd.onMatchDo(d)
 	}
 }
 
@@ -116,8 +113,9 @@ func main() {
 //
 // It does not perform any of the other tests, on package names, file
 // presence etc.
-func findMatchingDirs() []string {
-	defer dbgStack.Start("findMatchingDirs", "Find dirs matching criteria")()
+func (fgd *findGoDirs) findMatchingDirs() []string {
+	defer fgd.dbgStack.Start("findMatchingDirs",
+		"Find dirs matching criteria")()
 
 	var dirs []string
 	dirChecks := []check.FileInfo{
@@ -136,7 +134,7 @@ func findMatchingDirs() []string {
 				check.StringEquals(".."),
 			)),
 	}
-	for _, skipDir := range skipDirs {
+	for _, skipDir := range fgd.skipDirs {
 		dirChecks = append(dirChecks, check.FileInfoName(check.StringNot(
 			check.StringEquals(skipDir),
 			"Ignore any directory called "+skipDir)))
@@ -145,7 +143,7 @@ func findMatchingDirs() []string {
 	fileChecks := []check.FileInfo{check.FileInfoIsDir}
 	fileChecks = append(fileChecks, dirChecks...)
 
-	for _, dir := range baseDirs {
+	for _, dir := range fgd.baseDirs {
 		matches, errs := dirsearch.FindRecursePrune(dir, -1,
 			dirChecks,
 			fileChecks...)
@@ -162,9 +160,9 @@ func findMatchingDirs() []string {
 
 // onMatchDo performs the actions if the directory is a go package directory
 // meeting the criteria
-func onMatchDo(dir string, actions map[string]bool) {
-	defer dbgStack.Start("onMatchDo", "Act on matching dir: "+dir)()
-	intro := dbgStack.Tag()
+func (fgd *findGoDirs) onMatchDo(dir string) {
+	defer fgd.dbgStack.Start("onMatchDo", "Act on matching dir: "+dir)()
+	intro := fgd.dbgStack.Tag()
 
 	undo, err := cd(dir)
 	if err != nil {
@@ -179,27 +177,35 @@ func onMatchDo(dir string, actions map[string]bool) {
 		return
 	}
 
-	if !pkgMatches(pkg, pkgNames) {
+	if !fgd.pkgMatches(pkg) {
 		verbose.Println(intro, " Skipping: Wrong package")
 		return
 	}
 
-	if !hasFiles(filesWanted) {
+	if !hasEntries(fgd.filesWanted) {
 		verbose.Println(intro, " Skipping: missing files")
 		return
 	}
 
-	if len(filesMissing) > 0 && hasFiles(filesMissing) {
+	if len(fgd.filesMissing) > 0 && hasEntries(fgd.filesMissing) {
 		verbose.Println(intro, " Skipping: has unwanted files")
+		return
+	}
+
+	if !fgd.hasRequiredContent(dir) {
+		delete(fgd.dirContent, dir)
+		verbose.Println(intro, " Skipping: missing required content")
 		return
 	}
 
 	// We force the order that actions take place - we should always generate
 	// any files before building or installing (if generate is requested)
-	for _, a := range []string{printAct, generateAct, buildAct, installAct} {
-		if actions[a] {
+	for _, a := range []string{
+		printAct, contentAct, generateAct, buildAct, installAct,
+	} {
+		if fgd.actions[a] {
 			verbose.Println(intro, " Doing: "+a)
-			actionFuncs[a](dir)
+			fgd.actionFuncs[a](fgd, dir)
 		}
 	}
 }
@@ -225,12 +231,12 @@ func cd(dir string) (func(), error) {
 // pkgMatches will compare the package name against the list of target
 // packages, if any, and return true only if any of them match. If there are
 // no names to match then any name will match.
-func pkgMatches(pkg string, pkgNames []string) bool {
-	if len(pkgNames) == 0 { // any name matches
+func (fgd *findGoDirs) pkgMatches(pkg string) bool {
+	if len(fgd.pkgNames) == 0 { // any name matches
 		return true
 	}
 
-	for _, name := range pkgNames {
+	for _, name := range fgd.pkgNames {
 		if pkg == name { // this name matches
 			return true
 		}
@@ -238,34 +244,102 @@ func pkgMatches(pkg string, pkgNames []string) bool {
 	return false // no name matches
 }
 
-// hasFiles will check to see if any of the listed files exists in the
-// current directory and return false if any of them are missing. It will
-// only return true if all the files are found in the directory
-func hasFiles(files []string) bool {
-	if len(files) == 0 {
+// hasEntries will check to see if any of the listed directory entries exists
+// in the current directory and return false if any of them are missing. It
+// will only return true if all the entries are found in the directory
+func hasEntries(entries []string) bool {
+	if len(entries) == 0 {
 		return true
 	}
 
-	filesInDir, err := os.ReadDir(".")
+	dirEntries, err := os.ReadDir(".")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Cannot read the directory:", err)
 		return false
 	}
 
-	for _, fname := range files {
-		if !fileFound(fname, filesInDir) {
+	for _, entryName := range entries {
+		if !entryFound(entryName, dirEntries) {
 			return false
 		}
 	}
 	return true
 }
 
-// fileFound will return true if the name is in the list of files
-func fileFound(name string, files []fs.DirEntry) bool {
-	for _, f := range files {
+// entryFound will return true if the name is in the list of directory
+// entries
+func entryFound(name string, entries []fs.DirEntry) bool {
+	for _, f := range entries {
 		if f.Name() == name {
 			return true
 		}
 	}
 	return false
+}
+
+// hasRequiredContent will check to see if any of the files in the current
+// directory has the required content and return false if any of the required
+// content is not in any file. It will only return true if all the required
+// content is present in at least one of the files in the directory. In any
+// case it returns the map of content discovered.
+func (fgd *findGoDirs) hasRequiredContent(dir string) bool {
+	fgd.dirContent[dir] = contentMap{}
+
+	if len(fgd.contentChecks) == 0 {
+		return true
+	}
+
+	dirEntries, err := os.ReadDir(".")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Cannot read the directory:", err)
+		return false
+	}
+
+	for _, entry := range dirEntries {
+		if !entry.Type().IsRegular() {
+			continue
+		}
+
+		fgd.checkContent(dir, entry.Name())
+	}
+	return len(fgd.dirContent[dir]) == len(fgd.contentChecks)
+}
+
+// checkContent opens the file and finds any content matching the checks,
+// writing it into the contentMap
+func (fgd *findGoDirs) checkContent(dir, fname string) error {
+	checkStatus := []StatusCheck{}
+	for _, c := range fgd.contentChecks {
+		checkStatus = append(checkStatus, StatusCheck{chk: c})
+	}
+
+	f, err := os.Open(fname)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	loc := location.New(filepath.Join(dir, fname))
+	s := bufio.NewScanner(f)
+	for s.Scan() {
+		loc.Incr()
+		for _, cs := range checkStatus {
+			if cs.stopped {
+				continue
+			}
+			if cs.chk.stopPattern != nil &&
+				cs.chk.stopPattern.MatchString(s.Text()) {
+				cs.stopped = true
+				continue
+			}
+			if cs.chk.matchPattern.MatchString(s.Text()) {
+				locCopy := *loc
+				locCopy.SetContent(s.Text())
+				fgd.dirContent[dir][cs.chk.name] =
+					append(fgd.dirContent[dir][cs.chk.name], locCopy)
+			}
+		}
+	}
+	return nil
 }
