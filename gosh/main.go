@@ -14,7 +14,6 @@ import (
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/snippet.mod/snippet"
-	"github.com/nickwells/utilities/internal/callstack"
 	"github.com/nickwells/verbose.mod/verbose"
 )
 
@@ -62,7 +61,7 @@ func makeParamSet(g *Gosh, slp *snippetListParams) *param.PSet {
 }
 
 func main() {
-	g := NewGosh(&callstack.Stack{})
+	g := newGosh()
 	slp := &snippetListParams{}
 
 	ps := makeParamSet(g, slp)

@@ -10,8 +10,10 @@ const (
 	contentAct  = "content"
 )
 
-type actionFunc func(*findGoDirs, string)
-type dirToContentMap map[string]contentMap
+type (
+	actionFunc      func(*findGoDirs, string)
+	dirToContentMap map[string]contentMap
+)
 
 // findGoDirs holds the parameters and current status of the program
 type findGoDirs struct {
@@ -36,7 +38,7 @@ type findGoDirs struct {
 	dbgStack *callstack.Stack
 }
 
-func NewFindGoDirs() *findGoDirs {
+func newFindGoDirs() *findGoDirs {
 	fgd := &findGoDirs{
 		contentChecks: make(checkMap),
 		dirContent:    make(dirToContentMap),
@@ -48,6 +50,7 @@ func NewFindGoDirs() *findGoDirs {
 			generateAct: doGenerate,
 			contentAct:  doContent,
 		},
+
 		dbgStack: &callstack.Stack{},
 	}
 

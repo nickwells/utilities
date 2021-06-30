@@ -34,5 +34,7 @@ var gogenChecks = &ContentCheck{
 	matchPattern: regexp.MustCompile(`^//go:generate\s+`),
 }
 
-type contentMap map[string][]location.L
-type checkMap map[string]*ContentCheck
+type (
+	contentMap map[string][]location.L
+	checkMap   map[string]*ContentCheck
+)

@@ -173,7 +173,7 @@ func checkPkg(t *testing.T, dir string, pkgNames []string) bool {
 		return false
 	}
 
-	fgd := NewFindGoDirs()
+	fgd := newFindGoDirs()
 	fgd.pkgNames = pkgNames
 	return fgd.pkgMatches(pkg)
 }

@@ -153,14 +153,15 @@ func addSnippetComment(script *[]string, message string) {
 	*script = append(*script, "//"+goshCommentIntro+"snippet : "+message)
 }
 
-// NewGosh creates a new instance of the Gosh struct with all the initial
+// newGosh creates a new instance of the Gosh struct with all the initial
 // default values set correctly.
-func NewGosh(dbgStack *callstack.Stack) *Gosh {
+func newGosh() *Gosh {
 	cwd, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't get the working directory:", err)
 		os.Exit(1)
 	}
+
 	g := &Gosh{
 		scripts: map[string][]ScriptEntry{
 			globalSect:      {},
@@ -188,7 +189,7 @@ func NewGosh(dbgStack *callstack.Stack) *Gosh {
 		snippetUsed: map[string]bool{},
 		snippets:    &snippet.Cache{},
 
-		dbgStack: dbgStack,
+		dbgStack: &callstack.Stack{},
 	}
 
 	g.setDfltSnippetPath()

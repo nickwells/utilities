@@ -81,7 +81,7 @@ func (fgd *findGoDirs) doGoCommand(name, command string, cmdArgs []string) {
 }
 
 func main() {
-	fgd := NewFindGoDirs()
+	fgd := newFindGoDirs()
 	ps := paramset.NewOrDie(
 		verbose.AddParams,
 
@@ -300,7 +300,10 @@ func (fgd *findGoDirs) hasRequiredContent(dir string) bool {
 			continue
 		}
 
-		fgd.checkContent(dir, entry.Name())
+		err := fgd.checkContent(dir, entry.Name())
+		if err != nil {
+			break
+		}
 	}
 	return len(fgd.dirContent[dir]) == len(fgd.contentChecks)
 }
@@ -313,14 +316,16 @@ func (fgd *findGoDirs) checkContent(dir, fname string) error {
 		checkStatus = append(checkStatus, StatusCheck{chk: c})
 	}
 
+	pathname := filepath.Join(dir, fname)
 	f, err := os.Open(fname)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Couldn't open %q: %v\n", pathname, err)
 		return err
 	}
 
 	defer f.Close()
 
-	loc := location.New(filepath.Join(dir, fname))
+	loc := location.New(pathname)
 	s := bufio.NewScanner(f)
 	for s.Scan() {
 		loc.Incr()
