@@ -87,6 +87,7 @@ func main() {
 
 		addParams(fgd),
 		addExamples,
+		addNotes,
 		param.SetProgramDescription(
 			"This will search for directories containing Go packages. You"+
 				" can add extra criteria for selecting the directory."+
@@ -311,9 +312,14 @@ func (fgd *findGoDirs) hasRequiredContent(dir string) bool {
 // checkContent opens the file and finds any content matching the checks,
 // writing it into the contentMap
 func (fgd *findGoDirs) checkContent(dir, fname string) error {
-	checkStatus := []StatusCheck{}
+	statusChecks := []StatusCheck{}
 	for _, c := range fgd.contentChecks {
-		checkStatus = append(checkStatus, StatusCheck{chk: c})
+		if c.FileNameOK(fname) {
+			statusChecks = append(statusChecks, StatusCheck{chk: c})
+		}
+	}
+	if len(statusChecks) == 0 {
+		return nil
 	}
 
 	pathname := filepath.Join(dir, fname)
@@ -326,24 +332,26 @@ func (fgd *findGoDirs) checkContent(dir, fname string) error {
 	defer f.Close()
 
 	loc := location.New(pathname)
+	var allChecksComplete bool
 	s := bufio.NewScanner(f)
+
 	for s.Scan() {
 		loc.Incr()
-		for _, cs := range checkStatus {
-			if cs.stopped {
-				continue
-			}
-			if cs.chk.stopPattern != nil &&
-				cs.chk.stopPattern.MatchString(s.Text()) {
-				cs.stopped = true
-				continue
-			}
-			if cs.chk.matchPattern.MatchString(s.Text()) {
+		allChecksComplete = true
+
+		for _, sc := range statusChecks {
+			if sc.CheckLine(s.Text()) {
 				locCopy := *loc
 				locCopy.SetContent(s.Text())
-				fgd.dirContent[dir][cs.chk.name] =
-					append(fgd.dirContent[dir][cs.chk.name], locCopy)
+				fgd.dirContent[dir][sc.chk.name] =
+					append(fgd.dirContent[dir][sc.chk.name], locCopy)
 			}
+			if !sc.stopped {
+				allChecksComplete = false
+			}
+		}
+		if allChecksComplete {
+			break
 		}
 	}
 	return nil

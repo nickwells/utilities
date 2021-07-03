@@ -76,7 +76,7 @@ func (chk ContChkSetter) AllowedValues() string {
 		"\n" +
 		"The 'part' must be one of:" +
 		"\n" +
-		contentCheckParts()
+		checkerPartsHelpText()
 }
 
 // CurrentValue returns the current setting of the parameter value
