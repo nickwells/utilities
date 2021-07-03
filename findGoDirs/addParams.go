@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paction"
@@ -35,11 +37,11 @@ func addParams(fgd *findGoDirs) func(ps *param.PSet) error {
 			psetter.EnumMap{
 				Value: &fgd.actions,
 				AllowedVals: psetter.AllowedVals{
-					buildAct:    "build the command/package (go build)",
-					installAct:  "install the command/package (go install)",
-					generateAct: "auto-generate files, if any (go generate)",
+					buildAct:    "run 'go build' in the directory",
+					installAct:  "run 'go install' in the directory",
+					generateAct: "run 'go generate' in the directory",
 					printAct:    "print the directory name",
-					contentAct:  "print the directory name & matching content",
+					contentAct:  "print any matching content",
 				},
 			},
 			"set the actions to perform when a Go directory matching"+
@@ -56,6 +58,7 @@ func addParams(fgd *findGoDirs) func(ps *param.PSet) error {
 			param.PostAction(
 				paction.SetMapIf(fgd.actions, generateAct, true,
 					paction.IsACommandLineParam)),
+			param.Attrs(param.DontShowInStdUsage),
 		)
 
 		ps.Add("install-arg",
@@ -66,6 +69,7 @@ func addParams(fgd *findGoDirs) func(ps *param.PSet) error {
 			param.PostAction(
 				paction.SetMapIf(fgd.actions, installAct, true,
 					paction.IsACommandLineParam)),
+			param.Attrs(param.DontShowInStdUsage),
 		)
 
 		ps.Add("build-arg",
@@ -76,6 +80,7 @@ func addParams(fgd *findGoDirs) func(ps *param.PSet) error {
 			param.PostAction(
 				paction.SetMapIf(fgd.actions, buildAct, true,
 					paction.IsACommandLineParam)),
+			param.Attrs(param.DontShowInStdUsage),
 		)
 
 		ps.Add("package-names",
@@ -101,30 +106,50 @@ func addParams(fgd *findGoDirs) func(ps *param.PSet) error {
 			param.Attrs(param.CommandLineOnly),
 		)
 
-		ps.Add("having-build-tag", psetter.Nil{},
-			"the directory must contain some file with a build-tag.",
+		ps.Add(paramNameHavingBuildTag, psetter.Nil{},
+			"the directory must contain at least one file with"+
+				" a build-tag."+
+				" This adds a content"+
+				" check with tag name: "+buildTagChecks.name,
 			param.AltNames(
 				"having-build-tags",
 				"with-build-tags", "with-build-tag"),
-			param.Attrs(param.CommandLineOnly),
+			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 			param.PostAction(
 				func(_ location.L, _ *param.ByName, _ []string) error {
 					fgd.contentChecks[buildTagChecks.name] = buildTagChecks
 					return nil
 				}),
+			param.SeeAlso(paramNameHavingContent, paramNameHavingGoGenerate),
+			param.SeeNote(noteNameContentChecks),
 		)
 
-		ps.Add("having-go-generate", psetter.Nil{},
-			"the directory must contain some file with a go:generate comment.",
+		ps.Add(paramNameHavingGoGenerate, psetter.Nil{},
+			"the directory must contain at least one file with"+
+				" a go:generate comment."+
+				" This adds a content"+
+				" check with tag name: "+gogenChecks.name,
 			param.AltNames(
 				"having-go-gen",
 				"with-go-generate", "with-go-gen"),
-			param.Attrs(param.CommandLineOnly),
+			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 			param.PostAction(
 				func(_ location.L, _ *param.ByName, _ []string) error {
 					fgd.contentChecks[gogenChecks.name] = gogenChecks
 					return nil
 				}),
+			param.SeeAlso(paramNameHavingContent, paramNameHavingBuildTag),
+			param.SeeNote(noteNameContentChecks),
+		)
+
+		ps.Add(paramNameHavingContent, ContChkSetter{Value: &fgd.contentChecks},
+			"the directory must contain at least one file with the following"+
+				" content. Extra criteria can be set by adding"+
+				" a period to the tag name and a part name.",
+			param.AltNames("containing", "with-content"),
+			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
+			param.SeeAlso(paramNameHavingBuildTag, paramNameHavingGoGenerate),
+			param.SeeNote(noteNameContentChecks),
 		)
 
 		ps.Add("no-action", psetter.Bool{Value: &fgd.noAction},
@@ -178,6 +203,58 @@ func addExamples(ps *param.PSet) error {
 			" you run go build in the directory you will get an"+
 			" executable built in the directory which you don't want to"+
 			" check in to git and so you need it to be ignored.")
+	ps.AddExample(`findGoDirs -having-go-generate`,
+		"This will find all the Go directories with go:generate comments."+
+			" These are the directories where you might need to"+
+			" run 'go generate' or where 'go generate' might have"+
+			" changed the directory contents.")
+	ps.AddExample(`findGoDirs -having-go-generate -do content`,
+		"This will find all the Go directories with go:generate comments"+
+			" and prints the matching lines.")
+
+	return nil
+}
+
+// addNotes adds some notes to the help message
+func addNotes(ps *param.PSet) error {
+	ps.AddNote(noteNameContentChecks,
+		"You can constrain the Go directories this command will find"+
+			" by checking that a matching directory has at least one"+
+			" file containing certain content."+
+			"\n\n"+
+			"This feature can by useful, for instance, to find directories"+
+			" having files with go:generate comments so you know if you"+
+			" need to run 'go generate' in them."+
+			"\n\n"+
+			"There are some common searches which have dedicated parameters"+
+			" for setting them:"+
+			" '"+paramNameHavingBuildTag+"' and"+
+			" '"+paramNameHavingGoGenerate+"'."+
+			" These have all the correct patterns preset and"+
+			" it is recommended that you use these."+
+			"\n\n"+
+			"A content checker has at least a pattern for matching lines"+
+			" but it can be extended to only check files matching a"+
+			" pattern, to stop matching after a sertain pattern is matched"+
+			" and to skip otherwise matching lines if they match an"+
+			" additional pattern"+
+			"\n\n"+
+			"You can add these additional features using the"+
+			" '"+paramNameHavingContent+"' parameter. You repeat the"+
+			" checker name and add\n"+
+			"    a period ('.'),"+
+			"    a part name,"+
+			"    an equals ('=')"+
+			"    and the pattern for that part.\n"+
+			"Valid part names are:\n"+strings.Join(checkerPartNames(), ", ")+
+			"\n\n"+
+			"Before you can add a part you must first create the checker"+
+			" by giving a checker name and the match pattern"+
+			" (no '.part' is needed)",
+		param.NoteSeeParam(
+			paramNameHavingBuildTag,
+			paramNameHavingGoGenerate,
+			paramNameHavingContent))
 
 	return nil
 }
