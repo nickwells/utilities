@@ -8,6 +8,14 @@ import (
 	"github.com/nickwells/utilities/internal/stdparams"
 )
 
+const (
+	paramNameHavingContent    = "having-content"
+	paramNameHavingBuildTag   = "having-build-tag"
+	paramNameHavingGoGenerate = "having-go-generate"
+
+	noteNameContentChecks = "Content Checks"
+)
+
 // addParams will add parameters to the passed ParamSet
 func addParams(fgd *findGoDirs) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
