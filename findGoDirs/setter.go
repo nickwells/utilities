@@ -53,6 +53,7 @@ func (chk ContChkSetter) SetWithVal(_, paramVal string) error {
 				tagName, strings.Join(checkers, ", "))
 		}
 		cc = &ContentCheck{name: tagName}
+		(*chk.Value)[tagName] = cc
 	} else if partName == dfltCheckerPart {
 		return fmt.Errorf("The checker %q already exists", tagName)
 	}
