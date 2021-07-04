@@ -42,6 +42,7 @@ func addParams(fgd *findGoDirs) func(ps *param.PSet) error {
 					generateAct: "run 'go generate' in the directory",
 					printAct:    "print the directory name",
 					contentAct:  "print any matching content",
+					filenameAct: "print files with matching content",
 				},
 			},
 			"set the actions to perform when a Go directory matching"+

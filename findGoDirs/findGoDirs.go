@@ -8,6 +8,7 @@ const (
 	installAct  = "install"
 	generateAct = "generate"
 	contentAct  = "content"
+	filenameAct = "filename"
 )
 
 type (
@@ -49,6 +50,7 @@ func newFindGoDirs() *findGoDirs {
 			installAct:  doInstall,
 			generateAct: doGenerate,
 			contentAct:  doContent,
+			filenameAct: doFilenames,
 		},
 
 		dbgStack: &callstack.Stack{},

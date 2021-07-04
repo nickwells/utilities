@@ -50,6 +50,28 @@ func doContent(fgd *findGoDirs, name string) {
 	}
 }
 
+// doFilenames will show the names of the files in the directories that match
+// the content checks
+func doFilenames(fgd *findGoDirs, name string) {
+	defer fgd.dbgStack.Start("doFilenames",
+		"Print files with matching content in : "+name)()
+
+	if fgd.noAction {
+		fmt.Printf("%-20.20s : %s\n", "filenames", name)
+		return
+	}
+	keys := []string{}
+	for k := range fgd.dirContent[name] {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		for _, match := range fgd.dirContent[name][k] {
+			fmt.Println(match.Source())
+		}
+	}
+}
+
 // doBuild will run go build
 func doBuild(fgd *findGoDirs, name string) {
 	fgd.doGoCommand(name, "build", fgd.buildArgs)
@@ -202,7 +224,7 @@ func (fgd *findGoDirs) onMatchDo(dir string) {
 	// We force the order that actions take place - we should always generate
 	// any files before building or installing (if generate is requested)
 	for _, a := range []string{
-		printAct, contentAct, generateAct, buildAct, installAct,
+		printAct, contentAct, filenameAct, generateAct, buildAct, installAct,
 	} {
 		if fgd.actions[a] {
 			verbose.Println(intro, " Doing: "+a)
