@@ -28,3 +28,16 @@ don&apos;t have a \.gitignore  file\. Note that when you run go build in the
 directory you will get an executable built in the directory which you don&apos;t
 want to check in to git and so you need it to be ignored\.
 
+```sh
+findGoDirs -having-go-generate
+```
+This will find all the Go directories with go:generate comments\. These are the
+directories where you might need to run &apos;go generate&apos; or where
+&apos;go generate&apos; might have changed the directory contents\.
+
+```sh
+findGoDirs -having-go-generate -do content
+```
+This will find all the Go directories with go:generate comments and prints the
+matching lines\.
+

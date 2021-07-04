@@ -29,3 +29,7 @@ for the program from the command line.
 
 ## Examples
 For examples [see here](_findGoDirs.EXAMPLES.md)
+
+
+## Notes
+For additional notes [see here](_findGoDirs.NOTES.md)
