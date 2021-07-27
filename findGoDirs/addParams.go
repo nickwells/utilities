@@ -39,6 +39,7 @@ func addParams(fgd *findGoDirs) func(ps *param.PSet) error {
 				AllowedVals: psetter.AllowedVals{
 					buildAct:    "run 'go build' in the directory",
 					installAct:  "run 'go install' in the directory",
+					testAct:     "run 'go test' in the directory",
 					generateAct: "run 'go generate' in the directory",
 					printAct:    "print the directory name",
 					contentAct:  "print any matching content",
@@ -55,7 +56,7 @@ func addParams(fgd *findGoDirs) func(ps *param.PSet) error {
 			psetter.StrListAppender{Value: &fgd.generateArgs},
 			"set the arguments to be given to the go generate command",
 			param.AltNames("generate-args", "args-generate",
-				"gen-args", "g-args"),
+				"gen-args", "g-args", "g-arg"),
 			param.PostAction(
 				paction.SetMapIf(fgd.actions, generateAct, true,
 					paction.IsACommandLineParam)),
@@ -66,9 +67,20 @@ func addParams(fgd *findGoDirs) func(ps *param.PSet) error {
 			psetter.StrListAppender{Value: &fgd.installArgs},
 			"set the arguments to be given to the go install command",
 			param.AltNames("install-args", "args-install",
-				"inst-args", "i-args"),
+				"inst-args", "i-args", "i-arg"),
 			param.PostAction(
 				paction.SetMapIf(fgd.actions, installAct, true,
+					paction.IsACommandLineParam)),
+			param.Attrs(param.DontShowInStdUsage),
+		)
+
+		ps.Add("test-arg",
+			psetter.StrListAppender{Value: &fgd.testArgs},
+			"set the arguments to be given to the go test command",
+			param.AltNames("test-args", "args-test",
+				"t-args", "t-arg"),
+			param.PostAction(
+				paction.SetMapIf(fgd.actions, testAct, true,
 					paction.IsACommandLineParam)),
 			param.Attrs(param.DontShowInStdUsage),
 		)

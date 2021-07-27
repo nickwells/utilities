@@ -6,6 +6,7 @@ const (
 	printAct    = "print"
 	buildAct    = "build"
 	installAct  = "install"
+	testAct     = "test"
 	generateAct = "generate"
 	contentAct  = "content"
 	filenameAct = "filename"
@@ -35,6 +36,7 @@ type findGoDirs struct {
 	generateArgs []string
 	installArgs  []string
 	buildArgs    []string
+	testArgs     []string
 
 	dbgStack *callstack.Stack
 }
@@ -48,6 +50,7 @@ func newFindGoDirs() *findGoDirs {
 			printAct:    doPrint,
 			buildAct:    doBuild,
 			installAct:  doInstall,
+			testAct:     doTest,
 			generateAct: doGenerate,
 			contentAct:  doContent,
 			filenameAct: doFilenames,

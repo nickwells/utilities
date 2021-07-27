@@ -77,6 +77,11 @@ func doBuild(fgd *findGoDirs, name string) {
 	fgd.doGoCommand(name, "build", fgd.buildArgs)
 }
 
+// doTest will run go test
+func doTest(fgd *findGoDirs, name string) {
+	fgd.doGoCommand(name, "test", fgd.testArgs)
+}
+
 // doInstall will run go install
 func doInstall(fgd *findGoDirs, name string) {
 	fgd.doGoCommand(name, "install", fgd.installArgs)
@@ -224,7 +229,8 @@ func (fgd *findGoDirs) onMatchDo(dir string) {
 	// We force the order that actions take place - we should always generate
 	// any files before building or installing (if generate is requested)
 	for _, a := range []string{
-		printAct, contentAct, filenameAct, generateAct, buildAct, installAct,
+		printAct, contentAct, filenameAct,
+		generateAct, testAct, buildAct, installAct,
 	} {
 		if fgd.actions[a] {
 			verbose.Println(intro, " Doing: "+a)
