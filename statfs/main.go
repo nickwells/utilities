@@ -6,13 +6,13 @@ import (
 	"os"
 
 	"github.com/nickwells/check.mod/check"
-	"github.com/nickwells/col.mod/v2/col"
-	"github.com/nickwells/col.mod/v2/col/colfmt"
+	"github.com/nickwells/col.mod/v3/col"
+	"github.com/nickwells/col.mod/v3/col/colfmt"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/param.mod/v5/param/psetter"
-	"github.com/nickwells/units.mod/units"
-	"github.com/nickwells/unitsetter.mod/v3/unitsetter"
+	"github.com/nickwells/units.mod/v2/units"
+	"github.com/nickwells/unitsetter.mod/v4/unitsetter"
 
 	"golang.org/x/sys/unix"
 )
@@ -58,6 +58,12 @@ type fieldInfo struct {
 	col      func(int) *col.Col
 }
 
+var (
+	dataFamily   = units.GetFamilyOrPanic(units.Data)
+	baseUnit     = dataFamily.GetUnitOrPanic(dataFamily.BaseUnitName())
+	displayUnits = baseUnit
+)
+
 var fiMap = map[string]fieldInfo{
 	nameStr: {
 		fieldVal: func(name string, s *unix.Statfs_t) interface{} {
@@ -66,75 +72,66 @@ var fiMap = map[string]fieldInfo{
 		format:   func() string { return "%s" },
 		shortFmt: func() string { return "%s" },
 		col: func(w int) *col.Col {
-			return col.New(colfmt.String{W: w},
-				"Name")
+			return col.New(colfmt.String{W: w}, "Name")
 		},
 	},
 	fSpStr: {
 		fieldVal: func(name string, s *unix.Statfs_t) interface{} {
-			f, err := units.ConvertFromBaseUnits(
-				float64(s.Bfree*uint64(s.Bsize)),
-				mult)
-			if err != nil {
-				return float64(0.0)
+			vu := units.ValUnit{
+				U: baseUnit,
+				V: float64(s.Bfree * uint64(s.Bsize)),
 			}
-			return f
+			return vu.ConvertOrPanic(displayUnits).V
 		},
-		format:   func() string { return "%.0f " + mult.NamePlural },
+		format:   func() string { return "%.0f " + displayUnits.NamePlural() },
 		shortFmt: func() string { return "%.0f" },
 		col: func(_ int) *col.Col {
-			units := "Units: " + mult.Name
+			units := "Units: " + displayUnits.Name()
 			return col.New(&colfmt.Float{W: 15}, units, "space", "free")
 		},
 	},
 	avSpStr: {
 		fieldVal: func(name string, s *unix.Statfs_t) interface{} {
-			f, err := units.ConvertFromBaseUnits(
-				float64(s.Bavail*uint64(s.Bsize)),
-				mult)
-			if err != nil {
-				return float64(0.0)
+			vu := units.ValUnit{
+				U: baseUnit,
+				V: float64(s.Bavail * uint64(s.Bsize)),
 			}
-			return f
+			return vu.ConvertOrPanic(displayUnits).V
 		},
-		format:   func() string { return "%.0f " + mult.NamePlural },
+		format:   func() string { return "%.0f " + displayUnits.NamePlural() },
 		shortFmt: func() string { return "%.0f" },
 		col: func(_ int) *col.Col {
-			units := "Units: " + mult.Name
+			units := "Units: " + displayUnits.Name()
 			return col.New(&colfmt.Float{W: 15}, units, "space", "available")
 		},
 	},
 	totSpStr: {
 		fieldVal: func(name string, s *unix.Statfs_t) interface{} {
-			f, err := units.ConvertFromBaseUnits(
-				float64(s.Blocks*uint64(s.Bsize)),
-				mult)
-			if err != nil {
-				return float64(0.0)
+			vu := units.ValUnit{
+				U: baseUnit,
+				V: float64(s.Blocks * uint64(s.Bsize)),
 			}
-			return f
+			return vu.ConvertOrPanic(displayUnits).V
 		},
-		format:   func() string { return "%.0f " + mult.NamePlural },
+		format:   func() string { return "%.0f " + displayUnits.NamePlural() },
 		shortFmt: func() string { return "%.0f" },
 		col: func(_ int) *col.Col {
-			units := "Units: " + mult.Name
+			units := "Units: " + displayUnits.Name()
 			return col.New(&colfmt.Float{W: 15}, units, "space", "total")
 		},
 	},
 	usedSpStr: {
 		fieldVal: func(name string, s *unix.Statfs_t) interface{} {
-			f, err := units.ConvertFromBaseUnits(
-				float64((s.Blocks-s.Bfree)*uint64(s.Bsize)),
-				mult)
-			if err != nil {
-				return float64(0.0)
+			vu := units.ValUnit{
+				U: baseUnit,
+				V: float64((s.Blocks - s.Bfree) * uint64(s.Bsize)),
 			}
-			return f
+			return vu.ConvertOrPanic(displayUnits).V
 		},
-		format:   func() string { return "%.0f " + mult.NamePlural },
+		format:   func() string { return "%.0f " + displayUnits.NamePlural() },
 		shortFmt: func() string { return "%.0f" },
 		col: func(_ int) *col.Col {
-			units := "Units: " + mult.Name
+			units := "Units: " + displayUnits.Name()
 			return col.New(&colfmt.Float{W: 15}, units, "space", "used")
 		},
 	},
@@ -205,22 +202,16 @@ var fields = []string{
 	avSpStr,
 }
 
-var mult = units.ByteUnit
-
 var (
 	showAsTable bool
 	noLabel     bool
 )
 
 func addParams(ps *param.PSet) error {
-	unitDetails, err := units.GetUnitDetails(units.Data)
-	if err != nil {
-		return err
-	}
 	ps.Add("units",
 		unitsetter.UnitSetter{
-			Value: &mult,
-			UD:    unitDetails,
+			Value: &displayUnits,
+			F:     dataFamily,
 		},
 		"set the units in which to display the results")
 
@@ -247,7 +238,7 @@ func addParams(ps *param.PSet) error {
 		},
 		"choose which information to show about the file system")
 
-	err = ps.SetRemHandler(param.NullRemHandler{}) // allow trailing arguments
+	err := ps.SetRemHandler(param.NullRemHandler{}) // allow trailing arguments
 	if err != nil {
 		return err
 	}
@@ -264,7 +255,6 @@ func makeReport(dirs ...string) *col.Report {
 	}
 
 	cols := make([]*col.Col, 0, len(fields))
-	var rpt *col.Report
 	h, err := col.NewHeader()
 	if err != nil {
 		log.Fatal("couldn't create the table header: ", err)
@@ -281,11 +271,7 @@ func makeReport(dirs ...string) *col.Report {
 		cols = append(cols, fi.col(maxDirNameLen))
 	}
 
-	rpt, err = col.NewReport(h, os.Stdout, cols...)
-	if err != nil {
-		log.Fatal("couldn't create the table report: ", err)
-	}
-	return rpt
+	return col.NewReport(h, os.Stdout, cols[0], cols[1:]...)
 }
 
 func getStat(dirName string) unix.Statfs_t {
