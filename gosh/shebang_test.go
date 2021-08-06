@@ -72,5 +72,5 @@ var shebangTests = map[string]string{
 	"#!\n":           "",
 	"#asd!\r\n":      "#asd!\r\n",
 	"#!/asdsad\nyes": "yes",
-	" #!\n":          " #!\n",
+	" #!\n":          " #!\n", // nolint:gocritic
 }
