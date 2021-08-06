@@ -645,6 +645,23 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.Attrs(param.DontShowInStdUsage),
 		)
 
+		ps.Add("copy-go-file",
+			psetter.PathnameListAppender{
+				Value:       &g.copyGoFiles,
+				Expectation: filecheck.FileExists(),
+				Checks: []check.String{
+					check.StringHasSuffix(".go"),
+				},
+			},
+			"add a file to the list of Go files to be copied into"+
+				" the gosh directory before building the program. Note"+
+				" that the file must exist and will be copied with a name"+
+				" guaranteeing uniqueness so you don't need to worry"+
+				" about the files being copied having different names."+
+				" Note also that the file must be in package 'main'.",
+			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
+		)
+
 		ps.AddFinalCheck(func() error {
 			if g.runAsWebserver && g.runInReadLoop {
 				errStr := "gosh cannot run in a read-loop" +

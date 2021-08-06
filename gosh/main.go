@@ -174,7 +174,7 @@ func (g *Gosh) formatFile() {
 			return
 		}
 		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
-		os.Exit(1)
+		os.Exit(1) // nolint:gocritic
 	}
 }
 
@@ -230,7 +230,7 @@ func (g *Gosh) runGoFile() {
 			return
 		}
 		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
-		os.Exit(1)
+		os.Exit(1) // nolint:gocritic
 	}
 
 	if g.dontRun {
@@ -301,6 +301,24 @@ func (g *Gosh) buildGoProgram() {
 	}
 
 	g.writeGoFile()
+	g.copyFiles()
+}
+
+// copyFiles will read the files to be copied and write them into the gosh
+// directory.
+func (g *Gosh) copyFiles() {
+	for i, fromName := range g.copyGoFiles {
+		toName := fmt.Sprintf("goshCopy%02d%s", i, filepath.Base(fromName))
+		if !filepath.IsAbs(fromName) {
+			fromName = filepath.Clean(filepath.Join(g.runDir, fromName))
+		}
+
+		content, err := os.ReadFile(fromName)
+		g.reportFatalError("read the file to be copied", fromName, err)
+
+		err = os.WriteFile(toName, content, 0644)
+		g.reportFatalError("write the file to be copied", toName, err)
+	}
 }
 
 // setEditor returns true if the editor is valid - non-empty and is the

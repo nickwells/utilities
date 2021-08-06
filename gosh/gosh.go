@@ -57,7 +57,8 @@ type Gosh struct {
 
 	imports []string
 
-	scripts map[string][]ScriptEntry
+	scripts     map[string][]ScriptEntry
+	copyGoFiles []string
 
 	runInReadLoop bool
 	inPlaceEdit   bool
@@ -296,7 +297,7 @@ type varInfo struct {
 }
 type varMap map[string]varInfo
 
-var knownVarMap varMap = varMap{
+var knownVarMap = varMap{
 	"_arg": {
 		typeName: "string",
 		desc:     "the current argument",
