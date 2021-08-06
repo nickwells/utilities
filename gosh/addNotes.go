@@ -17,7 +17,7 @@ const (
 )
 
 // addNotes will add any notes to the param PSet
-func addNotes(g *Gosh) func(ps *param.PSet) error {
+func addNotes() func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		ps.AddNote(noteInPlaceEdit,
 			"The files given for editing are checked to make sure that"+

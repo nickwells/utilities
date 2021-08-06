@@ -31,7 +31,7 @@ func makeParamSet(g *Gosh, slp *snippetListParams) *param.PSet {
 		addGoshParams(g),
 		addParams(g),
 
-		addNotes(g),
+		addNotes(),
 		addExamples,
 		addReferences,
 
