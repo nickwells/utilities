@@ -119,12 +119,8 @@ func listSnippets(g *Gosh, slp *snippetListParams) {
 			snippet.SetParts(slp.parts...),
 			snippet.SetTags(slp.tags...),
 			snippet.HideIntro(slp.hideIntro))
-		if err != nil {
-			fmt.Fprintln(os.Stderr,
-				"There was a problem configuring the snippet list:")
-			fmt.Fprintln(os.Stderr, "\t", err)
-			os.Exit(1)
-		}
+		g.reportFatalError("configure the snippet list", "", err)
+
 		lc.List()
 		g.reportErrors()
 	}
@@ -145,11 +141,7 @@ func (g *Gosh) clearFiles() {
 	}
 
 	err := os.RemoveAll(g.goshDir)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Couldn't remove the Go files:", err)
-		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
-		os.Exit(1)
-	}
+	g.reportFatalError("remove the gosh directory", g.goshDir, err)
 }
 
 // formatFile runs the formatter over the populated program file
@@ -192,11 +184,7 @@ func (g Gosh) chdirInto(dir string) {
 	defer g.dbgStack.Start("chdirInto", "cd'ing into "+dir)()
 
 	err := os.Chdir(dir)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't chdir into %q: %v\n", dir, err)
-		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
-		os.Exit(1)
-	}
+	g.reportFatalError("chdir into directory", dir, err)
 }
 
 // createGoFiles creates the file to hold the program and opens it. If no
@@ -209,12 +197,7 @@ func (g *Gosh) createGoFiles() {
 	verbose.Println(intro, " Creating the temporary directory")
 	var err error
 	g.goshDir, err = os.MkdirTemp(g.baseTempDir, "gosh-*.d")
-	if err != nil {
-		fmt.Fprintf(os.Stderr,
-			"Couldn't create the temporary directory %q: %v\n",
-			g.goshDir, err)
-		os.Exit(1)
-	}
+	g.reportFatalError("create the temporary directory", g.goshDir, err)
 
 	g.chdirInto(g.goshDir)
 
@@ -229,12 +212,7 @@ func (g *Gosh) createGoFiles() {
 func (g *Gosh) makeFile() {
 	var err error
 	g.w, err = os.Create(g.filename)
-	if err != nil {
-		fmt.Fprintf(os.Stderr,
-			"Couldn't create the Go file %q: %v\n", g.filename, err)
-		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
-		os.Exit(1)
-	}
+	g.reportFatalError("create the Go file", g.filename, err)
 }
 
 // runGoFile will call go build to generate the executable and then will run
@@ -281,7 +259,7 @@ func (g *Gosh) runGoFile() {
 
 // queryEditAgain will prompt the user asking if they want to edit the program
 // again and return true if they reply yes or false if not
-func (g Gosh) queryEditAgain() bool {
+func (g *Gosh) queryEditAgain() bool {
 	if !g.editRepeat {
 		return false
 	}
@@ -397,13 +375,9 @@ func (g *Gosh) editGoFile() {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't run the editor: %q\n", cmd.Path)
-		fmt.Fprintf(os.Stderr, "\t%s\n", strings.Join(cmd.Args, " "))
-		fmt.Fprintln(os.Stderr, "\tError:", err)
-		fmt.Println("Gosh directory:", g.goshDir)
-		os.Exit(1)
-	}
+	g.reportFatalError("run the editor",
+		cmd.Path+"\t"+strings.Join(cmd.Args, ""),
+		err)
 }
 
 // tidyModule runs go mod tidy after the file is fully constructed to
@@ -453,4 +427,22 @@ func (g *Gosh) initModule() {
 				"-replace="+importPath+"="+g.localModules[k])
 		}
 	}
+}
+
+// reportFatalError will report the failure of the action if the err is
+// non-nil and will exit.
+func (g *Gosh) reportFatalError(action, name string, err error) {
+	if err == nil {
+		return
+	}
+
+	fmt.Fprintf(os.Stderr, "Couldn't %s", action)
+	if name != "" {
+		fmt.Fprintf(os.Stderr, " %q", name)
+	}
+	fmt.Fprintf(os.Stderr, ": %v\n", err)
+	if g.goshDir != "" {
+		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
+	}
+	os.Exit(1)
 }
