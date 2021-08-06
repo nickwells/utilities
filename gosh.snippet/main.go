@@ -36,7 +36,7 @@ const (
 var (
 	fromDir string
 	toDir   string
-	action  string = cmpAction
+	action  = cmpAction
 
 	maxSubDirs int64 = dfltMaxSubDirs
 	noCopy     bool
@@ -233,7 +233,7 @@ func main() {
 	)
 	ps.Parse()
 
-	var toFS fs.FS = createToFS(toDir)
+	toFS := createToFS(toDir)
 	var fromFS fs.FS
 	var err error
 	fromFS, err = fs.Sub(snippetsDir, "_snippets")
