@@ -36,6 +36,9 @@ func (s *Stack) Start(tag, msg string) func() {
 // Tag returns a stacked tag reflecting the current stack depth and
 // right-filled.
 func (s *Stack) Tag() string {
+	if len(s.stack) == 0 {
+		return "[empty]"
+	}
 	t := strings.Repeat("|    ", len(s.stack)-1) +
 		s.stack[len(s.stack)-1]
 	if len(t) < maxStackWidth {
@@ -47,6 +50,9 @@ func (s *Stack) Tag() string {
 
 // popStack removes the last stack entry
 func (s *Stack) popStack() {
+	if len(s.stack) == 0 {
+		return
+	}
 	s.stack = s.stack[:len(s.stack)-1]
 }
 
