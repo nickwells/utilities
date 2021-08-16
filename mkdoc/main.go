@@ -111,7 +111,7 @@ func main() {
 
 	ps.Parse()
 
-	checkPackageIsMain()
+	packageIsMainOrExit()
 
 	cmd := buildCmd(commandName())
 	defer os.RemoveAll(filepath.Dir(cmd))
@@ -123,20 +123,20 @@ func main() {
 	}
 	if docText == "" {
 		fmt.Println("No Documentation!")
-		os.Exit(1)
+		return
 	}
 
 	filename := parts[0].filename(cmd)
-	makeFile(filename, docText)
-
-	fmt.Println("Add the following lines to the README.md file")
-	fmt.Printf("## %s\n\n", filepath.Base(cmd))
-	fmt.Printf("[See here](%s/%s)\n", filepath.Base(cmd), filename)
+	if makeFile(filename, docText) {
+		fmt.Println("Add the following lines to the README.md file")
+		fmt.Printf("## %s\n\n", filepath.Base(cmd))
+		fmt.Printf("[See here](%s/%s)\n", filepath.Base(cmd), filename)
+	}
 }
 
-// checkPackageIsMain checks that the package directory we are in is one for
+// packageIsMainOrExit checks that the package directory we are in is one for
 // generating a command
-func checkPackageIsMain() {
+func packageIsMainOrExit() {
 	if pkgName := gogen.GetPackageOrDie(); pkgName != "main" {
 		fmt.Fprintf(os.Stderr,
 			"the package (%q) does not build a command\n", pkgName)
@@ -180,7 +180,7 @@ func commandName() string {
 // otherwise. A module should be skipped if either it does not have a prefix
 // in the list of valid module prefixes or else it is explicitly excluded.
 func skipModule(modName string) bool {
-	var skip bool = true
+	skip := true
 	for _, pfx := range snippetModPfx {
 		if strings.HasPrefix(modName, pfx) {
 			skip = false
@@ -280,33 +280,36 @@ func (pp partParams) generate(cmd string) string {
 	}
 
 	filename := pp.filename(cmd)
-	makeFile(filename, text)
-
-	return "\n\n" +
-		"## " + pp.subTitle +
-		"\n" +
-		"For " + pp.desc + " [see here](" + filename + ")\n"
+	if makeFile(filename, text) {
+		return "\n\n" +
+			"## " + pp.subTitle +
+			"\n" +
+			"For " + pp.desc + " [see here](" + filename + ")\n"
+	}
+	return ""
 }
 
-// makeFile creates the file and populates it
-func makeFile(filename, contents string) {
+// makeFile creates the file and populates it. It returns true if the file
+// was successfully created and populated, false otherwise
+func makeFile(filename, contents string) bool {
 	f, err := os.Create(filename)
-	defer f.Close() //nolint: staticcheck
-
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Could not create the file:", err)
-		os.Exit(1)
+		return false
 	}
+	defer f.Close()
+
 	_, err = f.WriteString("<!-- Created by mkdoc DO NOT EDIT. -->\n\n")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Could not write to the file:", err)
-		os.Exit(1)
+		return false
 	}
 	_, err = f.WriteString(contents)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Could not write to the file:", err)
-		os.Exit(1)
+		return false
 	}
+	return true
 }
 
 // getText reads the text from the file. If err is not nil and isn't
