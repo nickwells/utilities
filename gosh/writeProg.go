@@ -89,7 +89,7 @@ func (g *Gosh) writeArgsLoop() {
 	g.gDecl("_arg", "", tag)
 	g.gDecl("_args", " = []string{", tag)
 	for _, arg := range g.args {
-		g.gPrint(arg+",", tag)
+		g.gPrint(fmt.Sprintf("%q,", arg), tag)
 	}
 	g.gPrint("}", tag)
 
@@ -177,8 +177,8 @@ func (g *Gosh) writeScanLoopClose(tag string) {
 // of file names.
 func (g *Gosh) writeFileNameList(tag string) {
 	g.gDecl("_fns", " = []string{", tag)
-	for _, arg := range g.filesToRead {
-		g.gPrint(arg+",", tag)
+	for _, fn := range g.filesToRead {
+		g.gPrint(fmt.Sprintf("%q,", fn), tag)
 	}
 	g.gPrint("}", tag)
 }

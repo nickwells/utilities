@@ -25,7 +25,7 @@ func (g *Gosh) HandleRemainder(ps *param.PSet, _ *location.L) {
 	if g.runInReadLoop {
 		g.populateFilesToRead(ps.Remainder())
 	} else {
-		g.populateArgs(ps.Remainder())
+		g.args = append(g.args, ps.Remainder()...)
 	}
 }
 
@@ -45,7 +45,7 @@ func (g *Gosh) populateFilesToRead(names []string) {
 		if firstIdx, exists := dupMap[name]; exists {
 			g.addError("duplicate filename",
 				fmt.Errorf(
-					"filename %q has been given multiple times,"+
+					"filename %q has been given more than once,"+
 						" first at %d and again at %d",
 					name, firstIdx, i))
 			continue
@@ -64,15 +64,7 @@ func (g *Gosh) populateFilesToRead(names []string) {
 			}
 		}
 
-		goodNames = append(goodNames, fmt.Sprintf("%q", name))
+		goodNames = append(goodNames, name)
 	}
 	g.filesToRead = goodNames
-}
-
-// populateArgs will copy the remainder params into the args list on the Gosh
-// struct. It will quote them as they are copied.
-func (g *Gosh) populateArgs(names []string) {
-	for _, name := range names {
-		g.args = append(g.args, fmt.Sprintf("%q", name))
-	}
 }
