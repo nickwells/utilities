@@ -405,7 +405,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 			),
 		)
 
-		ps.Add(paramNameWPrint,
+		writeToIPEFile := ps.Add(paramNameWPrint,
 			psetter.String{
 				Value: &codeVal,
 				Editor: addPrint{
@@ -434,6 +434,18 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 					"You have given the %q parameter but no filenames have"+
 						" been given (they should be supplied following %q)",
 					"-"+paramNameInPlaceEdit, ps.TerminalParam())
+			}
+
+			if writeToIPEFile.HasBeenSet() && !g.inPlaceEdit {
+				return fmt.Errorf(
+					"You are writing to the file used when in-place editing"+
+						" (through one of the %q printing parameters)"+
+						" but you are not editing any files."+
+						"\n\n"+
+						"Give the %q parameter if you want to"+
+						" edit a file in-place or else write to standard"+
+						" output with a different printing parameter.",
+					"-"+paramNameWPrint, "-"+paramNameInPlaceEdit)
 			}
 
 			return nil
@@ -785,7 +797,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" want the marginal performance improvement. An"+
 				" additional advantage is that the script will run"+
 				" successfully even if you don't have access to"+
-				" goimports."+
+				" goimports (or some other formatter)."+
 				"\n\n"+
 				"Note that you will have to give any imports on the"+
 				" command line using the "+paramNameImport+" parameter.",
