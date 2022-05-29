@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nickwells/check.mod/check"
+	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/english.mod/english"
 	"github.com/nickwells/errutil.mod/errutil"
 	"github.com/nickwells/filecheck.mod/filecheck"
@@ -567,7 +567,7 @@ func addParams(ps *param.PSet) error {
 		psetter.Pathname{
 			Value: &toDir,
 			Checks: []check.String{
-				check.StringLenGT(0),
+				check.StringLength[string](check.ValGT[int](0)),
 			},
 		},
 		"set the directory where the snippets are to be copied or compared.",
@@ -590,7 +590,7 @@ func addParams(ps *param.PSet) error {
 	ps.Add("max-sub-dirs",
 		psetter.Int64{
 			Value:  &maxSubDirs,
-			Checks: []check.Int64{check.Int64GT(2)},
+			Checks: []check.Int64{check.ValGT[int64](2)},
 		},
 		"how many levels of sub-directory are allowed before we assume"+
 			" there is a loop in the directory path",

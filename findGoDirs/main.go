@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/nickwells/check.mod/check"
-	"github.com/nickwells/dirsearch.mod/dirsearch"
+	"github.com/nickwells/check.mod/v2/check"
+	"github.com/nickwells/dirsearch.mod/v2/dirsearch"
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v5/param"
@@ -147,24 +147,24 @@ func (fgd *findGoDirs) findMatchingDirs() []string {
 
 	var dirs []string
 	dirChecks := []check.FileInfo{
-		check.FileInfoName(check.StringNot(
-			check.StringEquals("testdata"),
+		check.FileInfoName(check.Not(
+			check.ValEQ("testdata"),
 			"Ignore any directory called testdata")),
-		check.FileInfoName(check.StringNot(
-			check.StringHasPrefix("_"),
+		check.FileInfoName(check.Not(
+			check.StringHasPrefix[string]("_"),
 			"Ignore directories with name starting with '_'")),
 		check.FileInfoName(
-			check.StringOr(
-				check.StringNot(
-					check.StringHasPrefix("."),
+			check.Or(
+				check.Not(
+					check.StringHasPrefix[string]("."),
 					"Ignore hidden directories (including .git)"),
-				check.StringEquals("."),
-				check.StringEquals(".."),
+				check.ValEQ("."),
+				check.ValEQ(".."),
 			)),
 	}
 	for _, skipDir := range fgd.skipDirs {
-		dirChecks = append(dirChecks, check.FileInfoName(check.StringNot(
-			check.StringEquals(skipDir),
+		dirChecks = append(dirChecks, check.FileInfoName(check.Not(
+			check.ValEQ(skipDir),
 			"Ignore any directory called "+skipDir)))
 	}
 
@@ -371,8 +371,8 @@ func (fgd *findGoDirs) checkContent(dir, fname string) error {
 			if sc.CheckLine(s.Text()) {
 				locCopy := *loc
 				locCopy.SetContent(s.Text())
-				fgd.dirContent[dir][sc.chk.name] =
-					append(fgd.dirContent[dir][sc.chk.name], locCopy)
+				fgd.dirContent[dir][sc.chk.name] = append(
+					fgd.dirContent[dir][sc.chk.name], locCopy)
 			}
 			if !sc.stopped {
 				allChecksComplete = false

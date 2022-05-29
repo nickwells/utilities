@@ -11,9 +11,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/nickwells/check.mod/check"
+	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/cli.mod/cli/responder"
-	"github.com/nickwells/dirsearch.mod/dirsearch"
+	"github.com/nickwells/dirsearch.mod/v2/dirsearch"
 	"github.com/nickwells/english.mod/english"
 	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/param.mod/v5/param"
@@ -448,7 +448,7 @@ func getFiles() []string {
 		findFunc = dirsearch.FindRecurse
 	}
 	entries, errs := findFunc(searchDir,
-		check.FileInfoName(check.StringHasSuffix(fileExtension)),
+		check.FileInfoName(check.StringHasSuffix[string](fileExtension)),
 		check.FileInfoIsRegular)
 
 	if len(errs) != 0 {

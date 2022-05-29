@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/nickwells/check.mod/check"
+	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/col.mod/v3/col"
 	"github.com/nickwells/col.mod/v3/col/colfmt"
 	"github.com/nickwells/param.mod/v5/param"
@@ -232,8 +232,8 @@ func addParams(ps *param.PSet) error {
 			Value:       &fields,
 			AllowedVals: allowedFields,
 			Checks: []check.StringSlice{
-				check.StringSliceNoDups,
-				check.StringSliceLenGT(0),
+				check.SliceHasNoDups[[]string, string],
+				check.SliceLength[[]string](check.ValGT(0)),
 			},
 		},
 		"choose which information to show about the file system")

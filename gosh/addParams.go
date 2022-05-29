@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/nickwells/check.mod/check"
+	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/location.mod/location"
@@ -164,7 +164,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 		ps.Add("exec-snippet",
 			psetter.String{
 				Value:  &snippetName,
-				Checks: []check.String{check.StringLenGT(0)},
+				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
 			},
 			makeSnippetHelpText(execSect),
 			param.AltNames("snippet", "e-s", "es"),
@@ -175,7 +175,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 		ps.Add("before-snippet",
 			psetter.String{
 				Value:  &snippetName,
-				Checks: []check.String{check.StringLenGT(0)},
+				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
 			},
 			makeSnippetHelpText(beforeSect),
 			param.AltNames("b-s", "bs"),
@@ -185,7 +185,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 		ps.Add("before-inner-snippet",
 			psetter.String{
 				Value:  &snippetName,
-				Checks: []check.String{check.StringLenGT(0)},
+				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
 			},
 			makeSnippetHelpText(beforeInnerSect),
 			param.AltNames("bi-s", "bis"),
@@ -195,7 +195,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 		ps.Add("after-inner-snippet",
 			psetter.String{
 				Value:  &snippetName,
-				Checks: []check.String{check.StringLenGT(0)},
+				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
 			},
 			makeSnippetHelpText(afterInnerSect),
 			param.AltNames("ai-s", "ais"),
@@ -205,7 +205,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 		ps.Add("after-snippet",
 			psetter.String{
 				Value:  &snippetName,
-				Checks: []check.String{check.StringLenGT(0)},
+				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
 			},
 			makeSnippetHelpText(afterSect),
 			param.AltNames("a-s", "as"),
@@ -215,7 +215,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 		ps.Add("global-snippet",
 			psetter.String{
 				Value:  &snippetName,
-				Checks: []check.String{check.StringLenGT(0)},
+				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
 			},
 			makeSnippetHelpText(globalSect),
 			param.AltNames("g-s", "gs"),
@@ -254,8 +254,8 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 				psetter.Int64{
 					Value: &g.httpPort,
 					Checks: []check.Int64{
-						check.Int64GT(0),
-						check.Int64LT((1 << 16) + 1),
+						check.ValGT[int64](0),
+						check.ValLT[int64]((1 << 16) + 1),
 					},
 				},
 				"set the port number that the webserver will listen on."+
@@ -273,7 +273,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 				psetter.String{
 					Value: &g.httpPath,
 					Checks: []check.String{
-						check.StringLenGT(0),
+						check.StringLength[string](check.ValGT(0)),
 					},
 				},
 				"set the path name (the pattern) that the webserver will"+
@@ -289,7 +289,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 				psetter.String{
 					Value: &g.httpHandler,
 					Checks: []check.String{
-						check.StringLenGT(0),
+						check.StringLength[string](check.ValGT(0)),
 					},
 				},
 				"set the handler for the web server. Setting this will"+
@@ -639,7 +639,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		ps.Add(paramNameImport,
 			psetter.StrListAppender{
 				Value:  &g.imports,
-				Checks: []check.String{check.StringLenGT(0)},
+				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
 			},
 			"provide any explicit imports.",
 			param.AltNames("imports", "I"),
@@ -659,7 +659,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				Value:       &g.copyGoFiles,
 				Expectation: filecheck.FileExists(),
 				Checks: []check.String{
-					check.StringHasSuffix(".go"),
+					check.StringHasSuffix[string](".go"),
 				},
 			},
 			"add a file to the list of Go files to be copied into"+
@@ -721,8 +721,8 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			psetter.String{
 				Value: &g.execName,
 				Checks: []check.String{
-					check.StringLenBetween(1, 50),
-					check.StringMatchesPattern(execNameRE,
+					check.StringLength[string](check.ValBetween(1, 50)),
+					check.StringMatchesPattern[string](execNameRE,
 						"The program name must start with a letter and"+
 							" be followed by zero or more"+
 							" letters, digits,"+

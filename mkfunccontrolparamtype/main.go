@@ -6,7 +6,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/nickwells/check.mod/check"
+	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
@@ -117,7 +117,7 @@ func addParams(ps *param.PSet) error {
 		psetter.String{
 			Value: &typeName,
 			Checks: []check.String{
-				check.StringMatchesPattern(goNameRE,
+				check.StringMatchesPattern[string](goNameRE,
 					"a valid Go identifier"),
 			},
 		},
@@ -133,7 +133,7 @@ func addParams(ps *param.PSet) error {
 		psetter.String{
 			Value: &typeDesc,
 			Checks: []check.String{
-				check.StringLenGT(0),
+				check.StringLength[string](check.ValGT(0)),
 			},
 		},
 		"text describing the type",
@@ -144,7 +144,7 @@ func addParams(ps *param.PSet) error {
 	ps.Add("value-name", psetter.StrListAppender{
 		Value: &constNames,
 		Checks: []check.String{
-			check.StringMatchesPattern(goNameRE,
+			check.StringMatchesPattern[string](goNameRE,
 				"a valid Go identifier"),
 		},
 	},
@@ -157,9 +157,9 @@ func addParams(ps *param.PSet) error {
 		psetter.Pathname{
 			Value: &outputFileName,
 			Checks: []check.String{
-				check.StringHasSuffix(".go"),
-				check.StringNot(
-					check.StringHasSuffix("_test.go"),
+				check.StringHasSuffix[string](".go"),
+				check.Not[string](
+					check.StringHasSuffix[string]("_test.go"),
 					"a test file"),
 			},
 		},
@@ -221,7 +221,7 @@ func addParams(ps *param.PSet) error {
 		if len(constNames) < 2 {
 			return errors.New("There must be at least 2 value names given")
 		}
-		err := check.StringSliceNoDups(constNames)
+		err := check.SliceHasNoDups(constNames)
 		return err
 	})
 

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/nickwells/gogen.mod/gogen"
-	"github.com/nickwells/testhelper.mod/testhelper"
+	"github.com/nickwells/testhelper.mod/v2/testhelper"
 )
 
 func TestCd(t *testing.T) {

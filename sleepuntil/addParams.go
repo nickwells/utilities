@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nickwells/check.mod/check"
+	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paction"
 	"github.com/nickwells/param.mod/v5/param/psetter"
@@ -33,7 +33,7 @@ func addActionParams(ps *param.PSet) error {
 		psetter.String{
 			Value: &msg,
 			Checks: []check.String{
-				check.StringLenGT(0),
+				check.StringLength[string](check.ValGT[int](0)),
 			},
 		},
 		"print this message when you wake up",
@@ -46,7 +46,7 @@ func addActionParams(ps *param.PSet) error {
 		psetter.String{
 			Value: &afterSleepCmd,
 			Checks: []check.String{
-				check.StringLenGT(0),
+				check.StringLength[string](check.ValGT[int](0)),
 			},
 		},
 		"run the command in a subshell when you wake up",
@@ -84,7 +84,7 @@ func addParams(ps *param.PSet) error {
 	ps.Add("repeat-count",
 		psetter.Int64{
 			Value: &repeatCount, Checks: []check.Int64{
-				check.Int64GT(0),
+				check.ValGT[int64](0),
 			},
 		},
 		"the number of times to repeat the operation.",
@@ -132,7 +132,7 @@ func addTimeParams(ps *param.PSet) error {
 		psetter.String{
 			Value: &absTimeStr,
 			Checks: []check.String{
-				check.StringLenEQ(len(absTimeFormat)),
+				check.StringLength[string](check.ValEQ[int](len(absTimeFormat))),
 			},
 		},
 		"the actual time to sleep until. Format: '"+absTimeFormat+"'."+
@@ -147,8 +147,8 @@ func addTimeParams(ps *param.PSet) error {
 		psetter.Int64{
 			Value: &timeMins,
 			Checks: []check.Int64{
-				check.Int64GT(0),
-				check.Int64Divides(24 * 60),
+				check.ValGT[int64](0),
+				check.ValDivides[int64](24 * 60),
 			},
 		},
 		"the minute to sleep until",
@@ -161,8 +161,8 @@ func addTimeParams(ps *param.PSet) error {
 		psetter.Int64{
 			Value: &timeSecs,
 			Checks: []check.Int64{
-				check.Int64GT(0),
-				check.Int64Divides(24 * 60 * 60),
+				check.ValGT[int64](0),
+				check.ValDivides[int64](24 * 60 * 60),
 			},
 		},
 		"the second to sleep until",
@@ -175,8 +175,8 @@ func addTimeParams(ps *param.PSet) error {
 		psetter.Int64{
 			Value: &perDay,
 			Checks: []check.Int64{
-				check.Int64GT(0),
-				check.Int64Divides(24 * 60 * 60),
+				check.ValGT[int64](0),
+				check.ValDivides[int64](24 * 60 * 60),
 			},
 		},
 		"the number of parts to split the day into. "+
@@ -189,8 +189,8 @@ func addTimeParams(ps *param.PSet) error {
 		psetter.Int64{
 			Value: &perHour,
 			Checks: []check.Int64{
-				check.Int64GT(0),
-				check.Int64Divides(60 * 60),
+				check.ValGT[int64](0),
+				check.ValDivides[int64](60 * 60),
 			},
 		},
 		"the number of parts to split the hour into."+
@@ -204,8 +204,8 @@ func addTimeParams(ps *param.PSet) error {
 		psetter.Int64{
 			Value: &perMinute,
 			Checks: []check.Int64{
-				check.Int64GT(0),
-				check.Int64Divides(60),
+				check.ValGT[int64](0),
+				check.ValDivides[int64](60),
 			},
 		},
 		"the number of parts to split the minute into."+
@@ -218,8 +218,8 @@ func addTimeParams(ps *param.PSet) error {
 		psetter.Int64{
 			Value: &offset,
 			Checks: []check.Int64{
-				check.Int64Not(
-					check.Int64EQ(0),
+				check.Not(
+					check.ValEQ[int64](0),
 					"The offset must not be zero"),
 			},
 		},
@@ -233,8 +233,8 @@ func addTimeParams(ps *param.PSet) error {
 		psetter.Int64{
 			Value: &offsetMins,
 			Checks: []check.Int64{
-				check.Int64Not(
-					check.Int64EQ(0),
+				check.Not(
+					check.ValEQ[int64](0),
 					"The offset must not be zero"),
 			},
 		},

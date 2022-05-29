@@ -3,7 +3,7 @@
 # See Also
 
 ```
-github.com/nickwells/testhelper.mod/testhelper
+github.com/nickwells/testhelper.mod/v2/testhelper
 ```
 The testhelper package provides some useful functions for testing Go code\. One
 of the features it offers is to compare output against a &apos;golden&apos;

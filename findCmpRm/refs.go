@@ -4,7 +4,7 @@ import "github.com/nickwells/param.mod/v5/param"
 
 // addRefs will add the references to the standard help message
 func addRefs(ps *param.PSet) error {
-	ps.AddReference(`github.com/nickwells/testhelper.mod/testhelper`,
+	ps.AddReference(`github.com/nickwells/testhelper.mod/v2/testhelper`,
 		"The testhelper package provides some useful functions for"+
 			" testing Go code. One of the features it offers is to"+
 			" compare output against a 'golden' file. It also supports"+

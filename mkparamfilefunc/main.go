@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/nickwells/check.mod/check"
+	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v5/param"
@@ -300,7 +300,7 @@ func addParams(ps *param.PSet) error {
 	ps.Add("base-dir-personal",
 		psetter.String{
 			Value:  &baseDirPersonal,
-			Checks: []check.String{check.StringLenGT(0)},
+			Checks: []check.String{check.StringLength[string](check.ValGT(0))},
 		},
 		"set the base directory in which the parameter file will be found."+
 			" This value will be used in place of the XDG config directory"+
@@ -313,7 +313,7 @@ func addParams(ps *param.PSet) error {
 	ps.Add("base-dir-global",
 		psetter.String{
 			Value:  &baseDirGlobal,
-			Checks: []check.String{check.StringLenGT(0)},
+			Checks: []check.String{check.StringLength[string](check.ValGT(0))},
 		},
 		"set the base directory in which the parameter file will be found."+
 			" This value will be used in place of the XDG config directory"+
