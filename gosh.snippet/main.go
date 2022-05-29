@@ -271,7 +271,7 @@ func createToFS(toDir string) fs.FS {
 	}
 
 	verbose.Println("creating the target directory: ", toDir)
-	err := os.MkdirAll(toDir, 0777)
+	err := os.MkdirAll(toDir, 0o777)
 	if err != nil {
 		fmt.Fprintf(os.Stderr,
 			"Failed to create the target directory (%q): %v\n", toDir, err)
@@ -367,7 +367,7 @@ func (inst *installer) makeSubDir(s snippet) error {
 		return nil
 	}
 
-	err := os.MkdirAll(subDirName, 0777)
+	err := os.MkdirAll(subDirName, 0o777)
 	if err == nil {
 		return nil
 	}
@@ -384,7 +384,7 @@ func (inst *installer) makeSubDir(s snippet) error {
 	}
 
 	if clearFile(s.name, name, inst) {
-		return os.MkdirAll(subDirName, 0777)
+		return os.MkdirAll(subDirName, 0o777)
 	}
 
 	return errors.New("Cannot clear the blocking non-dir: " + name)

@@ -316,7 +316,7 @@ func (g *Gosh) copyFiles() {
 		content, err := os.ReadFile(fromName)
 		g.reportFatalError("read the file to be copied", fromName, err)
 
-		err = os.WriteFile(toName, content, 0644)
+		err = os.WriteFile(toName, content, 0o644)
 		g.reportFatalError("write the file to be copied", toName, err)
 	}
 }

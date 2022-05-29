@@ -65,8 +65,8 @@ func makePSet(g *Gosh) *param.PSet {
 
 // mkTestParser populates and returns a paramtest.Parser ready to be added to
 // the testcases.
-func mkTestParser(
-	errs errutil.ErrMap, f func(g *Gosh), args ...string) paramtest.Parser {
+func mkTestParser(errs errutil.ErrMap, f func(g *Gosh), args ...string,
+) paramtest.Parser {
 	actVal := newGosh()
 
 	expVal := newGosh()
