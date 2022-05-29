@@ -37,7 +37,7 @@ func addActionParams(ps *param.PSet) error {
 			},
 		},
 		"print this message when you wake up",
-		param.AltName("msg"),
+		param.AltNames("msg"),
 		param.PostAction(countParams),
 		param.GroupName(paramGroupNameActions),
 	)
@@ -50,7 +50,7 @@ func addActionParams(ps *param.PSet) error {
 			},
 		},
 		"run the command in a subshell when you wake up",
-		param.AltName("do"),
+		param.AltNames("do"),
 		param.PostAction(countParams),
 		param.GroupName(paramGroupNameActions),
 	)
@@ -78,7 +78,7 @@ func addActionParams(ps *param.PSet) error {
 func addParams(ps *param.PSet) error {
 	ps.Add(paramNameRepeat, psetter.Bool{Value: &repeat},
 		"repeatedly sleep. Sleep and then sleep again and again...",
-		param.AltName("r"),
+		param.AltNames("r"),
 	)
 
 	ps.Add("repeat-count",
@@ -88,8 +88,7 @@ func addParams(ps *param.PSet) error {
 			},
 		},
 		"the number of times to repeat the operation.",
-		param.AltName("times"),
-		param.AltName("rc"),
+		param.AltNames("times", "rc"),
 		param.PostAction(paction.SetBool(&repeat, true)))
 
 	ps.Add("dont-sleep", psetter.Bool{Value: &doSleep, Invert: true},
@@ -124,8 +123,7 @@ func addTimeParams(ps *param.PSet) error {
 	ps.Add("timezone", psetter.TimeLocation{Value: &absTimeLocation},
 		"the timezone that the time is in. If this is supplied then an"+
 			" absolute time must also be given.",
-		param.AltName("tz"),
-		param.AltName("location"),
+		param.AltNames("tz", "location"),
 		param.PostAction(paction.SetBool(&needAbsTime, true)),
 		param.GroupName(paramGroupNameTime),
 	)
@@ -139,7 +137,7 @@ func addTimeParams(ps *param.PSet) error {
 		},
 		"the actual time to sleep until. Format: '"+absTimeFormat+"'."+
 			" This cannot be used with the "+paramNameRepeat+" argument",
-		param.AltName("t"),
+		param.AltNames("t"),
 		param.PostAction(countTimeParams),
 		param.PostAction(paction.SetBool(&hasAbsTime, true)),
 		param.GroupName(paramGroupNameTime),
@@ -154,9 +152,7 @@ func addTimeParams(ps *param.PSet) error {
 			},
 		},
 		"the minute to sleep until",
-		param.AltName("m"),
-		param.AltName("min"),
-		param.AltName("minutes"),
+		param.AltNames("m", "min", "minutes"),
 		param.PostAction(countTimeParams),
 		param.GroupName(paramGroupNameTime),
 	)
@@ -170,9 +166,7 @@ func addTimeParams(ps *param.PSet) error {
 			},
 		},
 		"the second to sleep until",
-		param.AltName("s"),
-		param.AltName("sec"),
-		param.AltName("seconds"),
+		param.AltNames("s", "sec", "seconds"),
 		param.PostAction(countTimeParams),
 		param.GroupName(paramGroupNameTime),
 	)

@@ -82,8 +82,7 @@ func comment(s string) {
 func addParams(ps *param.PSet) error {
 	ps.Add("twitter-account", psetter.String{Value: &twitterAC},
 		"The name of an associated twitter account",
-		param.AltName("twitter-ac"),
-		param.AltName("twitter"),
+		param.AltNames("twitter-ac", "twitter"),
 	)
 
 	ps.Add("no-comment", psetter.Bool{Value: &noComment},

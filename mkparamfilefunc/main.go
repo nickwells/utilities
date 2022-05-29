@@ -275,7 +275,7 @@ func addParams(ps *param.PSet) error {
 			" the output file name has been changed from the default,"+
 			" the output file name will be adjusted to reflect the"+
 			" group name.",
-		param.AltName("g"),
+		param.AltNames("g"),
 		param.PostAction(setFileNameForGroup),
 	)
 

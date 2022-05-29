@@ -47,7 +47,7 @@ func addParams(ps *param.PSet) error {
 			Checks: []check.String{check.StringLenGT(0)},
 		},
 		"give the extension for the files to search for.",
-		param.AltName("e"),
+		param.AltNames("e"),
 	)
 
 	ps.Add("tidy", psetter.Bool{Value: &tidyFiles},
@@ -69,7 +69,7 @@ func addParams(ps *param.PSet) error {
 		},
 		"give the name of the command to use when showing the"+
 			" differences between files",
-		param.AltName("diff"),
+		param.AltNames("diff"),
 		param.Attrs(param.DontShowInStdUsage),
 	)
 
@@ -90,7 +90,7 @@ func addParams(ps *param.PSet) error {
 		},
 		"give the name of the command to use for paginating the"+
 			" differences calculated by the diff command.",
-		param.AltName("less"),
+		param.AltNames("less"),
 		param.Attrs(param.DontShowInStdUsage),
 	)
 

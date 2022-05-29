@@ -44,9 +44,7 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 				" It will also show any per-snippet documentation and"+
 				" report on any problems detected with the snippets.",
 			param.GroupName(snippetListParamGroup),
-			param.AltName("snippets-list"),
-			param.AltName("s-l"),
-			param.AltName("sl"),
+			param.AltNames("snippets-list", "s-l", "sl"),
 			param.SeeAlso(
 				paramNameSnippetListShort,
 				paramNameSnippetListConstraint,
@@ -66,8 +64,7 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 				"Setting this will also set the flag indicating that a"+
 				" snippet list is wanted",
 			param.GroupName(snippetListParamGroup),
-			param.AltName("sl-short"),
-			param.AltName("sl-s"),
+			param.AltNames("sl-short", "sl-s"),
 			param.PostAction(paction.SetBool(&slp.listSnippets, true)),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
@@ -82,7 +79,7 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 				"Setting this will also set the flag indicating that a"+
 				" snippet list is wanted",
 			param.GroupName(snippetListParamGroup),
-			param.AltName("sl-c"),
+			param.AltNames("sl-c"),
 			param.PostAction(paction.SetBool(&slp.listSnippets, true)),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
@@ -104,7 +101,7 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 				"Setting this will also set the flag indicating that a"+
 				" snippet list is wanted",
 			param.GroupName(snippetListParamGroup),
-			param.AltName("sl-p"),
+			param.AltNames("sl-p"),
 			param.PostAction(paction.SetBool(&slp.listSnippets, true)),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
@@ -116,7 +113,7 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 				"Setting this will also set the flag indicating that a"+
 				" snippet list is wanted",
 			param.GroupName(snippetListParamGroup),
-			param.AltName("sl-t"),
+			param.AltNames("sl-t"),
 			param.PostAction(paction.SetBool(&slp.listSnippets, true)),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
@@ -124,7 +121,7 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 		ps.Add(paramNameSnippetListDir, psetter.Bool{Value: &slp.listDirs},
 			"show the snippet directories",
 			param.GroupName(snippetListParamGroup),
-			param.AltName("sl-d"),
+			param.AltNames("sl-d"),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
 

@@ -122,7 +122,7 @@ func addTimeSettingParams(ps *param.PSet) error {
 			" and is in 24-hour form with a leading zero and"+
 			" a colon (':') between the hours, minutes and seconds.\n\n"+
 			"For instance: '20190321 15:10:30'",
-		param.AltName("dt"),
+		param.AltNames("dt"),
 		param.GroupName(timeGroupname),
 		param.PostAction(dtCounterAF))
 
@@ -135,7 +135,7 @@ func addTimeSettingParams(ps *param.PSet) error {
 			"When only the time is given the date is taken as the"+
 			" current date in the source timezone which could be"+
 			" a day before or after the current time",
-		param.AltName("t"),
+		param.AltNames("t"),
 		param.GroupName(timeGroupname),
 		param.PostAction(dtCounterAF))
 
@@ -173,7 +173,7 @@ func addTimeFormattingParams(ps *param.PSet) error {
 			"to show AM or PM use 'PM'\n"+
 			"to show the timezone use 'MST'\n\n"+
 			"unrecognised strings will appear as given",
-		param.AltName("fmt"),
+		param.AltNames("fmt"),
 		param.GroupName(fmtGroupname),
 		param.PostAction(fmtCounterAF))
 
@@ -182,7 +182,7 @@ func addTimeFormattingParams(ps *param.PSet) error {
 		`set the output format to one suitable for use as a timestamp:
 
 `+timestampFormat,
-		param.AltName("fmt-ts"),
+		param.AltNames("fmt-ts"),
 		param.GroupName(fmtGroupname),
 		param.PostAction(fmtCounterAF),
 		param.PostAction(setFormatToTimestamp))
@@ -192,7 +192,7 @@ func addTimeFormattingParams(ps *param.PSet) error {
 		`set the output format to that given by ISO 8601:
 
 `+iso8601Format,
-		param.AltName("fmt-iso"),
+		param.AltNames("fmt-iso"),
 		param.GroupName(fmtGroupname),
 		param.PostAction(fmtCounterAF),
 		param.PostAction(setFormatToISO8601))
@@ -204,7 +204,7 @@ func addTimeFormattingParams(ps *param.PSet) error {
 `+httpFormat+`
 
 This will also set the output timezone to UTC (GMT) but this can be overridden by following parameters in which case the format will not be HTTP standard compliant. Also, be aware that the GMT at the end of the displayed time is a fixed string and will not change to reflect any change in timezone.`,
-		param.AltName("fmt-http"),
+		param.AltNames("fmt-http"),
 		param.GroupName(fmtGroupname),
 		param.PostAction(fmtCounterAF),
 		param.PostAction(setFormatToHTTP))
@@ -212,14 +212,14 @@ This will also set the output timezone to UTC (GMT) but this can be overridden b
 	ps.Add("us-date-order",
 		psetter.Bool{Value: &useUSDateOrder},
 		`display the date in US format: month day year`,
-		param.AltName("us-date-fmt"),
+		param.AltNames("us-date-fmt"),
 		param.GroupName(fmtGroupname),
 		param.PostAction(fmtFlagCounterAF))
 
 	ps.Add("no-seconds",
 		psetter.Bool{Value: &noSecs},
 		`display the  time without showing the seconds`,
-		param.AltName("no-secs"),
+		param.AltNames("no-secs"),
 		param.GroupName(fmtGroupname),
 		param.PostAction(fmtFlagCounterAF))
 

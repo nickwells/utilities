@@ -155,7 +155,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 				" insert another directory into the list. When finding"+
 				" snippets the directories are searched in order and the"+
 				" first snippet found is used.",
-			param.AltName("snippet-dir"),
+			param.AltNames("snippet-dir"),
 			param.Attrs(param.DontShowInStdUsage),
 			param.SeeAlso(paramNameSnippetList),
 		)
@@ -244,7 +244,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 					fmt.Sprintf("%d", dfltHTTPPort)+
 					" unless the port number has been set explicitly"+
 					" through the http-port parameter.",
-				param.AltName("http"),
+				param.AltNames("http"),
 				param.GroupName(paramGroupNameWeb),
 			),
 		)
@@ -297,7 +297,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 					" Note that no script is expected in this case as the"+
 					" function is supplied here.",
 				param.PostAction(paction.SetBool(&g.runAsWebserver, true)),
-				param.AltName("http-h"),
+				param.AltNames("http-h"),
 				param.GroupName(paramGroupNameWeb),
 			),
 		)
@@ -357,7 +357,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 					" line can be accessed by calling 'line.Text()'. Note"+
 					" that any newline will have been removed and will"+
 					" need to be added back if you want to print the line.",
-				param.AltName("n"),
+				param.AltNames("n"),
 				param.GroupName(paramGroupNameReadloop),
 			),
 		)
@@ -369,7 +369,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 					" of strings (see the Note '"+noteVars+"')."+
 					" Setting this will also force"+
 					" the script to be run in a loop reading from stdin.",
-				param.AltName("s"),
+				param.AltNames("s"),
 				param.PostAction(paction.SetBool(&g.runInReadLoop, true)),
 				param.GroupName(paramGroupNameReadloop),
 			),
@@ -382,7 +382,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 					" regular expression. Setting this will also force"+
 					" the script to be run in a loop reading from stdin"+
 					" and for each line to be split.",
-				param.AltName("sp"),
+				param.AltNames("sp"),
 				param.PostAction(paction.SetBool(&g.runInReadLoop, true)),
 				param.PostAction(paction.SetBool(&g.splitLine, true)),
 				param.GroupName(paramGroupNameReadloop),
@@ -398,7 +398,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 					" original name and  '.orig' extension. If any of the"+
 					" supplied files already has a '.orig' copy then the"+
 					" file will be reported and execution will stop",
-				param.AltName("i"),
+				param.AltNames("i"),
 				param.PostAction(paction.SetBool(&g.runInReadLoop, true)),
 				param.GroupName(paramGroupNameReadloop),
 				param.SeeAlso(paramNameWPrint),
@@ -464,10 +464,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		ps.Add("exec", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", execSect),
-			param.AltName("e"),
-			// ... and to help our python-speaking friends feel at home
-			// (bash also uses -c)
-			param.AltName("c"),
+			param.AltNames("e", "c"), // python and bash use '-c'
 			param.PostAction(scriptPAF(g, &codeVal, execSect)),
 		)
 
@@ -502,14 +499,14 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		ps.Add("before", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", beforeSect),
-			param.AltName("b"),
+			param.AltNames("b"),
 			param.PostAction(scriptPAF(g, &codeVal, beforeSect)),
 		)
 
 		ps.Add("before-inner", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", beforeInnerSect),
-			param.AltName("bi"),
+			param.AltNames("bi"),
 			param.PostAction(scriptPAF(g, &codeVal, beforeInnerSect)),
 		)
 
@@ -519,7 +516,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				Expectation: filecheck.FileNonEmpty(),
 			},
 			makeShebangFileHelpText(beforeSect),
-			param.AltName("b-f"),
+			param.AltNames("b-f"),
 			param.PostAction(shebangFilePAF(g, &fileName, beforeSect)),
 			param.SeeAlso(
 				paramNameExecFile, paramNameAfterFile, paramNameGlobalFile),
@@ -561,14 +558,14 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		ps.Add("after-inner", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", afterInnerSect),
-			param.AltName("ai"),
+			param.AltNames("ai"),
 			param.PostAction(scriptPAF(g, &codeVal, afterInnerSect)),
 		)
 
 		ps.Add("after", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", afterSect),
-			param.AltName("a"),
+			param.AltNames("a"),
 			param.PostAction(scriptPAF(g, &codeVal, afterSect)),
 		)
 
@@ -578,7 +575,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				Expectation: filecheck.FileNonEmpty(),
 			},
 			makeShebangFileHelpText(afterSect),
-			param.AltName("a-f"),
+			param.AltNames("a-f"),
 			param.PostAction(shebangFilePAF(g, &fileName, afterSect)),
 			param.SeeAlso(
 				paramNameBeforeFile, paramNameExecFile, paramNameGlobalFile),
@@ -622,7 +619,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				" For instance, functions that you might want to call from"+
 				" several places, global variables or data types."+
 				makeCodeSectionHelpText("", globalSect),
-			param.AltName("g"),
+			param.AltNames("g"),
 			param.PostAction(scriptPAF(g, &codeVal, globalSect)),
 		)
 
@@ -632,7 +629,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				Expectation: filecheck.FileNonEmpty(),
 			},
 			makeShebangFileHelpText(globalSect),
-			param.AltName("g-f"),
+			param.AltNames("g-f"),
 			param.PostAction(shebangFilePAF(g, &fileName, globalSect)),
 			param.SeeAlso(
 				paramNameBeforeFile, paramNameExecFile, paramNameAfterFile),
@@ -738,7 +735,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" execution has successfully completed, the assumption being"+
 				" that if you have set the program name you will want to"+
 				" preserve it.",
-			param.AltName("program-name"),
+			param.AltNames("program-name"),
 			param.PostAction(paction.SetBool(&g.dontClearFile, true)),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
 			param.GroupName(paramGroupNameGosh),

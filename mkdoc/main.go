@@ -372,8 +372,7 @@ func addParams(ps *param.PSet) error {
 			Value: &buildArgs,
 		},
 		"arguments to be passed to go build when building the program",
-		param.AltName("build-arg"),
-		param.AltName("build-param"),
+		param.AltNames("build-arg", "build-param"),
 	)
 
 	ps.Add(paramSnippetModPfx,
@@ -382,7 +381,7 @@ func addParams(ps *param.PSet) error {
 		},
 		"add the prefix of Go module names to be searched for"+
 			" Markdown snippet files ("+snippetFile+")",
-		param.AltName("sm-pfx"),
+		param.AltNames("sm-pfx"),
 	)
 
 	ps.Add(paramSnippetModSkip,
@@ -391,7 +390,7 @@ func addParams(ps *param.PSet) error {
 		},
 		"add the name of Go modules to be skipped when searching for"+
 			" Markdown snippet files ("+snippetFile+")",
-		param.AltName("sm-skip"),
+		param.AltNames("sm-skip"),
 	)
 
 	return nil

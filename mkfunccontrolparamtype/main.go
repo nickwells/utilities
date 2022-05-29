@@ -125,8 +125,7 @@ func addParams(ps *param.PSet) error {
 			" Note that a name starting with a lowercase letter"+
 			" will be private to the package."+
 			" Also, any name given here will have 'Type' appended.",
-		param.AltName("type"),
-		param.AltName("t"),
+		param.AltNames("type", "t"),
 		param.Attrs(param.MustBeSet),
 	)
 
@@ -138,8 +137,7 @@ func addParams(ps *param.PSet) error {
 			},
 		},
 		"text describing the type",
-		param.AltName("desc"),
-		param.AltName("d"),
+		param.AltNames("desc", "d"),
 		param.Attrs(param.MustBeSet),
 	)
 
@@ -151,9 +149,7 @@ func addParams(ps *param.PSet) error {
 		},
 	},
 		"follow this with the name of one of the constant values you want",
-		param.AltName("value"),
-		param.AltName("val"),
-		param.AltName("v"),
+		param.AltNames("value", "val", "v"),
 		param.Attrs(param.MustBeSet),
 	)
 
@@ -168,7 +164,7 @@ func addParams(ps *param.PSet) error {
 			},
 		},
 		"set the name of the output file",
-		param.AltName("o"),
+		param.AltNames("o"),
 		param.Attrs(param.DontShowInStdUsage),
 	)
 
