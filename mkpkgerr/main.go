@@ -86,7 +86,7 @@ func (e pkgWError) Unwrap() error {
 }
 
 // pkgErrorf formats its arguments into an Error
-func pkgErrorf(format string, args ...interface{}) Error {
+func pkgErrorf(format string, args ...any) Error {
 	e := fmt.Errorf(format, args...)
 	if we := errors.Unwrap(e); we != nil {
 		return pkgWError{

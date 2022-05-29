@@ -48,7 +48,7 @@ var mountFlags = map[int64]string{
 }
 
 // valFunc is the type of a fieldVal function in the fieldInfo struct
-type valFunc func(name string, s *unix.Statfs_t) interface{}
+type valFunc func(name string, s *unix.Statfs_t) any
 
 // fieldInfo records details about each field
 type fieldInfo struct {
@@ -66,7 +66,7 @@ var (
 
 var fiMap = map[string]fieldInfo{
 	nameStr: {
-		fieldVal: func(name string, s *unix.Statfs_t) interface{} {
+		fieldVal: func(name string, s *unix.Statfs_t) any {
 			return name
 		},
 		format:   func() string { return "%s" },
@@ -76,7 +76,7 @@ var fiMap = map[string]fieldInfo{
 		},
 	},
 	fSpStr: {
-		fieldVal: func(name string, s *unix.Statfs_t) interface{} {
+		fieldVal: func(name string, s *unix.Statfs_t) any {
 			vu := units.ValUnit{
 				U: baseUnit,
 				V: float64(s.Bfree * uint64(s.Bsize)),
@@ -91,7 +91,7 @@ var fiMap = map[string]fieldInfo{
 		},
 	},
 	avSpStr: {
-		fieldVal: func(name string, s *unix.Statfs_t) interface{} {
+		fieldVal: func(name string, s *unix.Statfs_t) any {
 			vu := units.ValUnit{
 				U: baseUnit,
 				V: float64(s.Bavail * uint64(s.Bsize)),
@@ -106,7 +106,7 @@ var fiMap = map[string]fieldInfo{
 		},
 	},
 	totSpStr: {
-		fieldVal: func(name string, s *unix.Statfs_t) interface{} {
+		fieldVal: func(name string, s *unix.Statfs_t) any {
 			vu := units.ValUnit{
 				U: baseUnit,
 				V: float64(s.Blocks * uint64(s.Bsize)),
@@ -121,7 +121,7 @@ var fiMap = map[string]fieldInfo{
 		},
 	},
 	usedSpStr: {
-		fieldVal: func(name string, s *unix.Statfs_t) interface{} {
+		fieldVal: func(name string, s *unix.Statfs_t) any {
 			vu := units.ValUnit{
 				U: baseUnit,
 				V: float64((s.Blocks - s.Bfree) * uint64(s.Bsize)),
@@ -136,7 +136,7 @@ var fiMap = map[string]fieldInfo{
 		},
 	},
 	fileCntStr: {
-		fieldVal: func(name string, s *unix.Statfs_t) interface{} {
+		fieldVal: func(name string, s *unix.Statfs_t) any {
 			return s.Files
 		},
 		format:   func() string { return "%d" },
@@ -146,7 +146,7 @@ var fiMap = map[string]fieldInfo{
 		},
 	},
 	freeFCntStr: {
-		fieldVal: func(name string, s *unix.Statfs_t) interface{} {
+		fieldVal: func(name string, s *unix.Statfs_t) any {
 			return s.Ffree
 		},
 		format:   func() string { return "%d" },
@@ -156,7 +156,7 @@ var fiMap = map[string]fieldInfo{
 		},
 	},
 	maxNameStr: {
-		fieldVal: func(name string, s *unix.Statfs_t) interface{} {
+		fieldVal: func(name string, s *unix.Statfs_t) any {
 			return s.Namelen
 		},
 		format:   func() string { return "%d" },
@@ -166,7 +166,7 @@ var fiMap = map[string]fieldInfo{
 		},
 	},
 	flagsStr: {
-		fieldVal: func(name string, s *unix.Statfs_t) interface{} {
+		fieldVal: func(name string, s *unix.Statfs_t) any {
 			rval := ""
 			sep := ""
 			for f, flagName := range mountFlags {
@@ -284,7 +284,7 @@ func getStat(dirName string) unix.Statfs_t {
 }
 
 func reportStatAsTable(rpt *col.Report, dirName string, s unix.Statfs_t) {
-	reportArgs := make([]interface{}, 0, len(fields))
+	reportArgs := make([]any, 0, len(fields))
 	for _, f := range fields {
 		fi := getFieldInfo(f)
 		reportArgs = append(reportArgs, fi.fieldVal(dirName, &s))

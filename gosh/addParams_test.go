@@ -32,7 +32,7 @@ const (
 
 // cmpGoshStruct compares the value with the expected value and returns
 // an error if they differ
-func cmpGoshStruct(iVal, iExpVal interface{}) error {
+func cmpGoshStruct(iVal, iExpVal any) error {
 	val, ok := iVal.(*Gosh)
 	if !ok {
 		return errors.New("Bad value: not a pointer to a Gosh struct")
