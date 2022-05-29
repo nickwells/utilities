@@ -14,6 +14,7 @@ import (
 	"github.com/nickwells/param.mod/v5/param/psetter"
 	"github.com/nickwells/twrap.mod/twrap"
 	"github.com/nickwells/verbose.mod/verbose"
+	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Sat May 25 16:13:02 2019
@@ -41,7 +42,10 @@ func main() {
 	ps := paramset.NewOrDie(
 		gogen.AddParams(&outputFileName, &makeFile),
 		verbose.AddParams,
+		versionparams.AddParams,
+
 		addParams,
+
 		param.SetProgramDescription(
 			"This creates a Go file defining functions which set the"+
 				" default parameter files for the package or program."+

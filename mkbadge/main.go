@@ -11,6 +11,7 @@ import (
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Fri Sep 25 18:29:06 2020
@@ -20,9 +21,14 @@ var twitterAC string
 var noComment bool
 
 func main() {
-	ps := paramset.NewOrDie(addParams,
+	ps := paramset.NewOrDie(
+		versionparams.AddParams,
+
+		addParams,
+
 		SetGlobalConfigFile,
 		SetConfigFile,
+
 		param.SetProgramDescription(
 			"This will print the markdown for displaying badges"+
 				" in your README.md file."+

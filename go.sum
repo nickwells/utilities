@@ -40,6 +40,8 @@ github.com/nickwells/unitsetter.mod/v4 v4.2.2 h1:aaX7rUd5/c28LnKbgJGgNHfq4JT6Gj+
 github.com/nickwells/unitsetter.mod/v4 v4.2.2/go.mod h1:CMFFY3q6CWMyzxUSZdtXf8kyf8NwDkRVhNR+3EUe1P0=
 github.com/nickwells/verbose.mod v1.0.44 h1:f3RyI5XWQz7XLhAWLysspnoa9etmU4QneXIoEamHmMk=
 github.com/nickwells/verbose.mod v1.0.44/go.mod h1:X5gBHIwDi0Ifd6vJuap+soUmMFsGponx4z348m5gqYw=
+github.com/nickwells/versionparams.mod v1.0.28 h1:EJnUTodvWetRlA1SVFsVwQjZ4E3xuWWKN/5P5HX2MGQ=
+github.com/nickwells/versionparams.mod v1.0.28/go.mod h1:jcrVERMnlD5u0KWR9KEW/4ISOMcFzIVwIBiCxhzOE6c=
 github.com/nickwells/xdg.mod v1.0.5 h1:BkCim2ft//W1dlmh96z39YpIL4dJE7UQ1dDcMHtnfdU=
 github.com/nickwells/xdg.mod v1.0.5/go.mod h1:h8lRJMpY6oXdD6E3jJuolpO9QJE5FcTvUe8eyRzgyQo=
 golang.org/x/exp v0.0.0-20220518171630-0b5c67f07fdf h1:oXVg4h2qJDd9htKxb5SCpFBHLipW6hXmL3qpUixS2jw=

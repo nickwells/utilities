@@ -22,6 +22,7 @@ import (
 	"github.com/nickwells/param.mod/v5/param/psetter"
 	"github.com/nickwells/twrap.mod/twrap"
 	"github.com/nickwells/verbose.mod/verbose"
+	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Wed May 26 22:30:48 2021
@@ -221,7 +222,10 @@ var snippetsDir embed.FS
 func main() {
 	ps := paramset.NewOrDie(
 		verbose.AddParams,
+		versionparams.AddParams,
+
 		addParams,
+
 		param.SetProgramDescription(
 			"This can install the standard collection of useful snippets."+
 				" It can also be used to install snippets from a"+

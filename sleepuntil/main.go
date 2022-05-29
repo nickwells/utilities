@@ -9,6 +9,7 @@ import (
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/verbose.mod/verbose"
+	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 const dfltShowTimeFmt = "20060102.150405"
@@ -120,11 +121,15 @@ func calcDurationSecs() int64 {
 
 func main() {
 	ps := paramset.NewOrDie(
+		verbose.AddParams,
+		versionparams.AddParams,
+
 		addParams,
 		addTimeParams,
 		addActionParams,
-		verbose.AddParams,
+
 		addExamples,
+
 		param.SetProgramDescription(
 			"This will sleep until a given time and then perform the"+
 				" chosen actions."+

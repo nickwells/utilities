@@ -7,12 +7,17 @@ import (
 
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
+	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Sun Oct 22 11:17:41 2017
 
 func main() {
-	ps := paramset.NewOrDie(addParams,
+	ps := paramset.NewOrDie(
+		versionparams.AddParams,
+
+		addParams,
+
 		param.SetProgramDescription(
 			"this will convert the passed date into the equivalent time"+
 				" in the given timezone. If no 'from' timezone is given"+
@@ -20,7 +25,8 @@ func main() {
 				" timezone. If no time or date is given then the current"+
 				" time is used. Only one of the time or date can be"+
 				" given. A time or date must be given if the 'from'"+
-				" timezone is given."))
+				" timezone is given."),
+	)
 	ps.Parse()
 
 	tIn := time.Now()

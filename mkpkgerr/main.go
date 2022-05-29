@@ -9,6 +9,7 @@ import (
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
+	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Fri Jan 17 18:31:18 2020
@@ -24,6 +25,8 @@ var outputFileName = dfltFileName
 func main() {
 	ps := paramset.NewOrDie(
 		gogen.AddParams(&outputFileName, &makeFile),
+		versionparams.AddParams,
+
 		param.SetProgramDescription(
 			"This creates a Go file defining a package-specific error"+
 				" type. The default name of the file is: "+dfltFileName),

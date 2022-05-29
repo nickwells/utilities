@@ -14,6 +14,7 @@ import (
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Wed Jun 10 11:29:28 2020
@@ -94,10 +95,13 @@ func main() {
 		notesPart,
 	}
 	ps := paramset.NewOrDie(
+		versionparams.AddParams,
+		addParams,
+
 		SetGlobalConfigFile,
 		SetConfigFile,
-		addParams,
 		addNotes(parts),
+
 		param.SetProgramDescription(
 			"This creates markdown documentation for any Go program which"+
 				" uses the param package"+

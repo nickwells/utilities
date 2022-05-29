@@ -20,6 +20,7 @@ import (
 	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/twrap.mod/twrap"
 	"github.com/nickwells/verbose.mod/verbose"
+	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Wed Oct 23 18:05:24 2019
@@ -95,12 +96,17 @@ func (s Status) Report() {
 }
 
 func main() {
-	ps := paramset.NewOrDie(addParams,
+	ps := paramset.NewOrDie(
+		verbose.AddParams,
+		versionparams.AddParams,
+
+		addParams,
+
 		addExamples,
 		addRefs,
-		verbose.AddParams,
 		SetGlobalConfigFile,
 		SetConfigFile,
+
 		param.SetProgramDescription(
 			"This finds any files in the given directory"+
 				" (by default: "+dfltDir+") with the given extension"+

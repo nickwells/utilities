@@ -15,6 +15,7 @@ import (
 	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/snippet.mod/snippet"
 	"github.com/nickwells/verbose.mod/verbose"
+	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Wed Sep  4 09:58:54 2019
@@ -23,6 +24,7 @@ import (
 func makeParamSet(g *Gosh, slp *snippetListParams) *param.PSet {
 	return paramset.NewOrDie(
 		verbose.AddParams,
+		versionparams.AddParams,
 
 		addSnippetListParams(slp),
 		addSnippetParams(g),

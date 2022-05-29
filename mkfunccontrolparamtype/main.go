@@ -11,6 +11,7 @@ import (
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Sat Mar 21 11:18:36 2020
@@ -29,7 +30,11 @@ var (
 )
 
 func main() {
-	ps := paramset.NewOrDie(addParams,
+	ps := paramset.NewOrDie(
+		versionparams.AddParams,
+
+		addParams,
+
 		param.SetProgramDescription(
 			"this generates a Go file containing the definition of a type"+
 				" that can be used to provide a parameter to a function"+

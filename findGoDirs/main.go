@@ -16,6 +16,7 @@ import (
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/verbose.mod/verbose"
+	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Thu Jun 11 12:43:33 2020
@@ -111,10 +112,13 @@ func main() {
 	fgd := newFindGoDirs()
 	ps := paramset.NewOrDie(
 		verbose.AddParams,
+		versionparams.AddParams,
 
 		addParams(fgd),
+
 		addExamples,
 		addNotes,
+
 		param.SetProgramDescription(
 			"This will search for directories containing Go packages. You"+
 				" can add extra criteria for selecting the directory."+
