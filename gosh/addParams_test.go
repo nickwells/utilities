@@ -59,7 +59,7 @@ func makePSet(g *Gosh) *param.PSet {
 		addReadloopParams(g),
 		addGoshParams(g),
 		addParams(g),
-		addNotes(),
+		addNotes,
 	)
 }
 

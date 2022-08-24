@@ -33,7 +33,7 @@ func makeParamSet(g *Gosh, slp *snippetListParams) *param.PSet {
 		addGoshParams(g),
 		addParams(g),
 
-		addNotes(),
+		addNotes,
 		addExamples,
 		addReferences,
 
@@ -59,6 +59,9 @@ func makeParamSet(g *Gosh, slp *snippetListParams) *param.PSet {
 				" command and if that is sufficient then just stop. If"+
 				" you need to do more then save the file and edit it just"+
 				" like a regular Go program."),
+
+		SetGlobalConfigFile,
+		SetConfigFile,
 	)
 }
 
@@ -67,9 +70,6 @@ func main() {
 	slp := &snippetListParams{}
 
 	ps := makeParamSet(g, slp)
-
-	_ = SetGlobalConfigFile(ps)
-	_ = SetConfigFile(ps)
 
 	ps.Parse()
 	defer g.dbgStack.Start("main", os.Args[0])()
