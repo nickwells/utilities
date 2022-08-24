@@ -652,6 +652,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			"the name and mapping of a local module."+
 				" This will add a replace directive in the 'go.mod' file.",
 			param.Attrs(param.DontShowInStdUsage),
+			param.AltNames("replace", "mod-replace"),
 		)
 
 		ps.Add("copy-go-file",
