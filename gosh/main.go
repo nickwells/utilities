@@ -250,6 +250,12 @@ func (g *Gosh) runGoFile() {
 
 	err := cmd.Run()
 	if err != nil {
+		if ee, ok := err.(*exec.ExitError); ok {
+			exitCode := ee.ProcessState.ExitCode()
+			if exitCode == -1 { // Program exited due to receiving a signal
+				return
+			}
+		}
 		fmt.Fprintf(os.Stderr,
 			"Couldn't execute the program %q: %v\n", g.execName, err)
 		if !g.editRepeat {
