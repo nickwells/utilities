@@ -135,7 +135,7 @@ func addTimeSettingParams(ps *param.PSet) error {
 			"When only the time is given the date is taken as the"+
 			" current date in the source timezone which could be"+
 			" a day before or after the current time",
-		param.AltNames("t"),
+		param.AltNames("from", "t"),
 		param.GroupName(timeGroupname),
 		param.PostAction(dtCounterAF))
 
