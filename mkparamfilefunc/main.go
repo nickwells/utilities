@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"unicode"
 
 	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/gogen.mod/gogen"
@@ -130,7 +131,9 @@ func makeGroupSuffix(groupName string) string {
 	groupName = strings.ReplaceAll(groupName, "-", ".")
 	groupParts := strings.Split(groupName, ".")
 	for _, part := range groupParts {
-		groupSuffix += strings.Title(part)
+		r := []rune(part)
+		r[0] = unicode.ToUpper(r[0])
+		groupSuffix += string(r)
 	}
 
 	return groupSuffix

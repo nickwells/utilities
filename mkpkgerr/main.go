@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
+	"unicode"
 
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/param.mod/v5/param"
@@ -49,8 +49,9 @@ func main() {
 // printFile prints the file contents
 func printFile(f io.Writer) {
 	pkgName := gogen.GetPackageOrDie()
-	capitalPkg := strings.Title(pkgName)
-	idFunc := capitalPkg + "Error()"
+	r := []rune(pkgName)
+	r[0] = unicode.ToUpper(r[0])
+	idFunc := string(r) + "Error()"
 
 	fmt.Fprint(f, `
 
