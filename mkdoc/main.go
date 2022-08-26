@@ -132,7 +132,8 @@ func main() {
 
 	filename := parts[0].filename(cmd)
 	if makeFile(filename, docText) {
-		fmt.Println("Add the following lines to the README.md file")
+		fmt.Println("Add the following lines to the README.md file" +
+			" (if not already present).")
 		fmt.Printf("## %s\n\n", filepath.Base(cmd))
 		fmt.Printf("[See here](%s/%s)\n", filepath.Base(cmd), filename)
 	}
