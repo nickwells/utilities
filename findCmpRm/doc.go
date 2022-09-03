@@ -1,5 +1,4 @@
 /*
-
 The findCmpRm command finds all files in a given directory with a given
 extension and compares them against corresponding files without the
 extension. Then the user is prompted to delete the file with the extension.
@@ -11,6 +10,5 @@ the changes and tidy up afterwards.
 
 The gosh command also generates files with an extension of '.orig' when
 editing files in place and these can be cleared up using this command.
-
 */
 package main
