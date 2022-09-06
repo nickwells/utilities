@@ -92,7 +92,9 @@ type Gosh struct {
 	snippetUsed map[string]bool
 	snippets    *snippet.Cache
 
-	localModules map[string]string
+	localModules        map[string]string
+	workspace           []string
+	ignoreGoModTidyErrs bool
 
 	formatter     string
 	formatterSet  bool

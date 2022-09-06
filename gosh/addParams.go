@@ -28,7 +28,9 @@ const (
 	paramNameAfterFile   = "after-file"
 	paramNameGlobalFile  = "global-file"
 
-	paramNameImport = "import"
+	paramNameImport              = "import"
+	paramNameWorkspaceUse        = "workspace-use"
+	paramNameIgnoreGoModTidyErrs = "ignore-go-mod-tidy-errors"
 
 	paramNameDontFormat = "dont-format"
 
@@ -653,6 +655,41 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				" This will add a replace directive in the 'go.mod' file.",
 			param.Attrs(param.DontShowInStdUsage),
 			param.AltNames("replace", "mod-replace"),
+		)
+
+		ps.Add(paramNameWorkspaceUse,
+			psetter.PathnameListAppender{
+				Value:         &g.workspace,
+				Expectation:   filecheck.DirExists(),
+				ForceAbsolute: true,
+			},
+			"the name of a module to be added to the 'go.work' file."+
+				"\n\n"+
+				" Note that if a workspace use directive is given"+
+				" the version of Go that you are using must have"+
+				" the 'go work ...' command available;"+
+				" this command was added in Go 1.18."+
+				"\n\n"+
+				" Note that the local changes to the other module"+
+				" may result in errors from the 'go mod tidy' command."+
+				" These would normally cause gosh to abort but you"+
+				" can suppress this behaviour with"+
+				" the '"+paramNameIgnoreGoModTidyErrs+"' parameter",
+			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
+			param.AltNames("go-work-use"),
+			param.SeeAlso(paramNameIgnoreGoModTidyErrs),
+		)
+
+		ps.Add(paramNameIgnoreGoModTidyErrs,
+			psetter.Bool{
+				Value: &g.ignoreGoModTidyErrs,
+			},
+			"don't abort when the 'go mod tidy' command reports errors;"+
+				" the error message, if any, will still be written to stderr."+
+				"\n\n"+
+				" This should only be set when a workspace is in use",
+			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
+			param.SeeAlso(paramNameWorkspaceUse),
 		)
 
 		ps.Add("copy-go-file",

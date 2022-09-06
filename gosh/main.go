@@ -208,6 +208,7 @@ func (g *Gosh) createGoFiles() {
 	g.makeFile()
 
 	g.initModule()
+	g.initWorkspace()
 }
 
 // makeFile will create the go file and exit if it fails
@@ -329,9 +330,9 @@ func (g *Gosh) copyFiles() {
 	}
 }
 
-// setEditor returns true if the editor is valid - non-empty and is the
-// name of an executable program. If it's non-empty but doesn't yield an
-// executable program an error is added to the error map.
+// setEditor sets the script editor to be used. If the editor is set but
+// cannot be found in the execution path then an error is added to the error
+// map.
 func (g *Gosh) setEditor() {
 	if !g.edit {
 		return
@@ -422,7 +423,11 @@ func (g *Gosh) tidyModule() {
 	}
 
 	verbose.Println(intro, " Command: go mod tidy")
-	gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "tidy")
+	if g.ignoreGoModTidyErrs {
+		gogen.ExecGoCmdNoExit(gogen.NoCmdIO, "mod", "tidy")
+	} else {
+		gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "tidy")
+	}
 }
 
 // initModule runs go mod init
@@ -453,6 +458,28 @@ func (g *Gosh) initModule() {
 				"-replace="+importPath+"="+g.localModules[k])
 		}
 	}
+}
+
+// initWorkspace initialises the workspace file if any workspace use values
+// have been given
+func (g *Gosh) initWorkspace() {
+	if len(g.workspace) == 0 {
+		return
+	}
+
+	defer g.dbgStack.Start("initWorkspace", "Initialising the workspace")()
+	intro := g.dbgStack.Tag()
+
+	verbose.Println(intro, " Command: go work init .")
+	gogen.ExecGoCmd(gogen.NoCmdIO, "work", "init", ".")
+
+	for _, ws := range g.workspace {
+		verbose.Println(intro, " Command: go work use "+ws)
+		gogen.ExecGoCmd(gogen.NoCmdIO, "work", "use", ws)
+	}
+
+	verbose.Println(intro, " Command: go work sync")
+	gogen.ExecGoCmd(gogen.NoCmdIO, "work", "sync")
 }
 
 // reportFatalError will report the failure of the action if the err is
