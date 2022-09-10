@@ -424,7 +424,7 @@ func (g *Gosh) tidyModule() {
 
 	verbose.Println(intro, " Command: go mod tidy")
 	if g.ignoreGoModTidyErrs {
-		gogen.ExecGoCmdNoExit(gogen.NoCmdIO, "mod", "tidy")
+		gogen.ExecGoCmdNoExit(gogen.NoCmdFailIO, "mod", "tidy")
 	} else {
 		gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "tidy")
 	}
