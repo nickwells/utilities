@@ -3,7 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
+	"go/token"
 	"regexp"
+	"strings"
 
 	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/filecheck.mod/filecheck"
@@ -137,6 +139,34 @@ func shebangFilePAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
 		g.AddScriptEntry(scriptName, contents, verbatim)
 		return nil
 	}
+}
+
+// checkImports checks the provided import name. If the name has an embedded
+// '=' then it is split into two parts and the first part must be either a
+// valid Go identifier or else a single period. Both parts must be non-empty.
+func checkImports(v string) error {
+	id, imp, ok := strings.Cut(v, "=")
+	if !ok {
+		return nil
+	}
+
+	if len(id) == 0 {
+		return errors.New(
+			"an import of the form id=import must have a non-empty id")
+	}
+
+	if len(imp) == 0 {
+		return errors.New(
+			"an import of the form id=import must have a non-empty import name")
+	}
+
+	if id == "." {
+		return nil
+	}
+	if token.IsIdentifier(id) {
+		return nil
+	}
+	return errors.New(`"` + id + `" is not a valid Go identifier`)
 }
 
 // addSnippetParams will add the parameters in the "snippet" parameter group
@@ -640,10 +670,18 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 
 		ps.Add(paramNameImport,
 			psetter.StrListAppender{
-				Value:  &g.imports,
-				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
+				Value: &g.imports,
+				Checks: []check.String{
+					check.StringLength[string](check.ValGT(0)),
+					checkImports,
+				},
 			},
-			"provide any explicit imports.",
+			"provide any explicit imports."+
+				"\n\n"+
+				"Note that the import path can be given with"+
+				" a leading ...= in which case the part before"+
+				" the '=' must be a '.' or a valid Go identifier"+
+				" and is used as an alias for the package name.",
 			param.AltNames("imports", "I"),
 		)
 
