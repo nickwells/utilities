@@ -32,7 +32,8 @@ func addExamples(ps *param.PSet) error {
 			" after the loop.")
 
 	ps.AddExample("gosh -n -b-p '\"Radius: \"'"+
-		" -e 'r, _ := strconv.ParseFloat(_l.Text(), 10)'"+
+		" -e 'r, err := strconv.ParseFloat(_l.Text(), 64)'"+
+		" -e-s iferr"+
 		" -pf '\"Area: %9.2f\\n\", r*r*math.Pi'"+
 		" -p '\"Radius: \"'",
 		"This repeatedly prompts the user for a Radius and prints"+
@@ -43,9 +44,11 @@ func addExamples(ps *param.PSet) error {
 			"-b-p '\"Radius: \"' prints the first prompt"+
 			" before the loop."+
 			"\n\n"+
-			"-e 'r, _ := strconv.ParseFloat(_l.Text(), 10)' sets"+
+			"-e 'r, err := strconv.ParseFloat(_l.Text(), 64)' sets"+
 			" the radius from the text read from standard input,"+
 			" ignoring errors."+
+			"\n\n"+
+			"-e-s iferr checks the error using the 'iferr' snippet"+
 			"\n\n"+
 			"-pf '\"Area: %9.2f\\n\", r*r*math.Pi' calculates and"+
 			" prints the area using fmt.Printf."+

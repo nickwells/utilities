@@ -32,7 +32,7 @@ This reads from the standard input and prints the number of lines read
 loop\.
 
 ```sh
-gosh -n -b-p '"Radius: "' -e 'r, _ := strconv.ParseFloat(_l.Text(), 10)' -pf '"Area: %9.2f\n", r*r*math.Pi' -p '"Radius: "'
+gosh -n -b-p '"Radius: "' -e 'r, err := strconv.ParseFloat(_l.Text(), 64)' -e-s iferr -pf '"Area: %9.2f\n", r*r*math.Pi' -p '"Radius: "'
 ```
 This repeatedly prompts the user for a Radius and prints the Area of the
 corresponding circle
@@ -42,8 +42,10 @@ corresponding circle
 \-b\-p &apos;&quot;Radius: &quot;&apos; prints the first prompt before the
 loop\.
 
-\-e &apos;r, \_ := strconv\.ParseFloat\(\_l\.Text\(\), 10\)&apos; sets the
+\-e &apos;r, err := strconv\.ParseFloat\(\_l\.Text\(\), 64\)&apos; sets the
 radius from the text read from standard input, ignoring errors\.
+
+\-e\-s iferr checks the error using the &apos;iferr&apos; snippet
 
 \-pf &apos;&quot;Area: %9\.2f\\n&quot;, r\*r\*math\.Pi&apos; calculates and
 prints the area using fmt\.Printf\.
