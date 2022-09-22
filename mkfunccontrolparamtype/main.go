@@ -59,7 +59,7 @@ func main() {
 // printFile writes the contents of the file being generated
 func printFile(f *os.File, ps *param.PSet) {
 	if printPreamble {
-		gogen.PrintPreambleOrDie(f, ps)
+		gogen.PrintPreamble(f, ps)
 
 		fmt.Fprintln(f)
 	}

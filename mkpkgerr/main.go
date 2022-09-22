@@ -40,7 +40,7 @@ func main() {
 		defer f.Close()
 	}
 
-	gogen.PrintPreambleOrDie(f, ps)
+	gogen.PrintPreamble(f, ps)
 	gogen.PrintImports(f, "errors", "fmt")
 
 	printFile(f)

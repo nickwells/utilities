@@ -74,7 +74,7 @@ func main() {
 		defer f.Close()
 	}
 
-	gogen.PrintPreambleOrDie(f, ps)
+	gogen.PrintPreamble(f, ps)
 	gogen.PrintImports(f,
 		"path/filepath",
 		"github.com/nickwells/filecheck.mod/filecheck",
