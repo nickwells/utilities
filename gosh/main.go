@@ -83,7 +83,7 @@ func main() {
 	g.setEditor()
 	g.reportErrors()
 
-	g.buildGoProgram()
+	g.constructGoProgram()
 	g.reportErrors()
 
 	for {
@@ -218,17 +218,24 @@ func (g *Gosh) makeFile() {
 	g.reportFatalError("create the Go file", g.filename, err)
 }
 
+// makeExecutable runs go build to make the executable file
+func (g *Gosh) makeExecutable() bool {
+	defer g.dbgStack.Start("makeExecutable", "Building the program")()
+	intro := g.dbgStack.Tag()
+
+	buildCmd := []string{"build"}
+	buildCmd = append(buildCmd, g.buildArgs...)
+	verbose.Println(intro, " Command: go "+strings.Join(buildCmd, " "))
+	return gogen.ExecGoCmdNoExit(gogen.ShowCmdIO, buildCmd...)
+}
+
 // runGoFile will call go build to generate the executable and then will run
 // it unless dontRun is set.
 func (g *Gosh) runGoFile() {
 	defer g.dbgStack.Start("runGoFile", "Running the program")()
 	intro := g.dbgStack.Tag()
 
-	buildCmd := []string{"build"}
-	buildCmd = append(buildCmd, g.buildArgs...)
-	verbose.Println(intro, " Building the program")
-	verbose.Println(intro, " Command: go "+strings.Join(buildCmd, " "))
-	if !gogen.ExecGoCmdNoExit(gogen.ShowCmdIO, buildCmd...) {
+	if !g.makeExecutable() {
 		if g.editRepeat {
 			return
 		}
@@ -243,7 +250,14 @@ func (g *Gosh) runGoFile() {
 
 	g.chdirInto(g.runDir)
 
-	verbose.Println(intro, " Executing the program: ", g.execName)
+	g.executeProgram()
+}
+
+// executeProgram executes the newly built executeProgram
+func (g *Gosh) executeProgram() {
+	defer g.dbgStack.Start("executeProgram",
+		"Executing the program: "+g.execName)()
+
 	cmd := exec.Command(filepath.Join(g.goshDir, g.execName))
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -297,10 +311,10 @@ func (g *Gosh) queryEditAgain() bool {
 	return false
 }
 
-// buildGoProgram creates the Go file and then writes the code into the it, then
+// constructGoProgram creates the Go file and then writes the code into the it, then
 // it formats the generated code.
-func (g *Gosh) buildGoProgram() {
-	defer g.dbgStack.Start("buildGoProgram", "Building the program")()
+func (g *Gosh) constructGoProgram() {
+	defer g.dbgStack.Start("constructGoProgram", "Constructing the program")()
 
 	g.createGoFiles()
 	defer g.w.Close()
