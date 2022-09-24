@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -146,7 +145,8 @@ func (g *Gosh) clearFiles() {
 	g.reportFatalError("remove the gosh directory", g.goshDir, err)
 }
 
-// formatFile runs the formatter over the populated program file
+// formatFile runs the formatter over the populated (and possibly edited)
+// program file
 func (g *Gosh) formatFile() {
 	defer g.dbgStack.Start("formatFile", "Formatting the Go file")()
 	intro := g.dbgStack.Tag()
@@ -311,8 +311,8 @@ func (g *Gosh) queryEditAgain() bool {
 	return false
 }
 
-// constructGoProgram creates the Go file and then writes the code into the it, then
-// it formats the generated code.
+// constructGoProgram creates the Go file and then writes the code into the
+// file. Finally, it copies in any requested files.
 func (g *Gosh) constructGoProgram() {
 	defer g.dbgStack.Start("constructGoProgram", "Constructing the program")()
 
@@ -328,7 +328,7 @@ func (g *Gosh) constructGoProgram() {
 }
 
 // copyFiles will read the files to be copied and write them into the gosh
-// directory.
+// directory with a guaranteed unique name.
 func (g *Gosh) copyFiles() {
 	for i, fromName := range g.copyGoFiles {
 		toName := fmt.Sprintf("goshCopy%02d%s", i, filepath.Base(fromName))
@@ -342,83 +342,6 @@ func (g *Gosh) copyFiles() {
 		err = os.WriteFile(toName, content, 0o644)
 		g.reportFatalError("write the file to be copied", toName, err)
 	}
-}
-
-// setEditor sets the script editor to be used. If the editor is set but
-// cannot be found in the execution path then an error is added to the error
-// map.
-func (g *Gosh) setEditor() {
-	if !g.edit {
-		return
-	}
-
-	for _, trialEditor := range []struct {
-		editor string
-		source string
-	}{
-		{g.editorParam, "parameter"},
-		{os.Getenv(envVisual), "Environment variable: " + envVisual},
-		{os.Getenv(envEditor), "Environment variable: " + envEditor},
-	} {
-		editor := strings.TrimSpace(trialEditor.editor)
-		if editor == "" {
-			continue
-		}
-
-		var err error
-		if _, err = exec.LookPath(editor); err == nil {
-			g.editor = editor
-			return
-		}
-		parts := strings.Fields(editor)
-		if parts[0] == editor {
-			g.addError("bad editor",
-				fmt.Errorf("Cannot find %s (source: %s): %w",
-					editor, trialEditor.source, err))
-			continue
-		}
-
-		editor = parts[0]
-		if _, err = exec.LookPath(editor); err == nil {
-			g.editor = editor
-			g.editorArgs = parts[1:]
-			return
-		}
-		g.addError("bad editor",
-			fmt.Errorf("Cannot find %s (source: %s): %w",
-				editor, trialEditor.source, err))
-		continue
-	}
-
-	g.addError("no editor",
-		errors.New("No editor has been given."+
-			" Possible sources are:"+
-			"\n    the '"+paramNameScriptEditor+"' parameter,"+
-			"\n    the '"+envVisual+"' environment variable"+
-			"\n or the '"+envEditor+"' environment variable,"+
-			"\nin that order."))
-}
-
-// editGoFile starts an editor to edit the program
-func (g *Gosh) editGoFile() {
-	if !g.edit {
-		return
-	}
-
-	defer g.dbgStack.Start("editGoFile", "editing the program")()
-	intro := g.dbgStack.Tag()
-
-	g.editorArgs = append(g.editorArgs, g.filename)
-	verbose.Println(intro,
-		" Command: "+g.editor+" "+strings.Join(g.editorArgs, " "))
-	cmd := exec.Command(g.editor, g.editorArgs...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	g.reportFatalError("run the editor",
-		cmd.Path+"\t"+strings.Join(cmd.Args, ""),
-		err)
 }
 
 // tidyModule runs go mod tidy after the file is fully constructed to
