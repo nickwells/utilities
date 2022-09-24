@@ -1,5 +1,5 @@
 # referenced tools and packages:
-#  - bundleFiles : github.com/nickwells/bash.scripts/bundleFiles
+#  - bundleFiles : github.com/nickwells/shell.scripts/bundleFiles
 #  - gosh        : github.com/nickwells/utilities/gosh
 #  - findCmpRm   - github.com/nickwells/utilities/findCmpRm
 #  - testhelper  - github.com/nickwells/testhelper.mod/testhelper
