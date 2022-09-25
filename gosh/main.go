@@ -71,9 +71,10 @@ func main() {
 	ps := makeParamSet(g, slp)
 
 	ps.Parse()
-	defer g.dbgStack.Start("main", os.Args[0])()
 
 	listSnippets(g, slp)
+
+	defer g.dbgStack.Start("main", os.Args[0])()
 
 	g.snippets.Check(g.errMap)
 	g.checkScripts()
@@ -273,10 +274,11 @@ func (g *Gosh) executeProgram() {
 		}
 		fmt.Fprintf(os.Stderr,
 			"Couldn't execute the program %q: %v\n", g.execName, err)
-		if !g.editRepeat {
-			fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
-			os.Exit(1)
+		if g.editRepeat {
+			return
 		}
+		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
+		os.Exit(1) // nolint: gocritic
 	}
 }
 
