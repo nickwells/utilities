@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/nickwells/english.mod/english"
 	"github.com/nickwells/verbose.mod/verbose"
 )
 
@@ -18,7 +19,7 @@ func (g *Gosh) setEditor() {
 		return
 	}
 
-	sources := []struct {
+	editors := []struct {
 		editor string
 		source string
 	}{
@@ -27,7 +28,7 @@ func (g *Gosh) setEditor() {
 		{os.Getenv(envEditor), "the '" + envEditor + "' environment variable"},
 	}
 
-	for _, trialEditor := range sources {
+	for _, trialEditor := range editors {
 		editor := strings.TrimSpace(trialEditor.editor)
 		if editor == "" {
 			continue
@@ -58,16 +59,16 @@ func (g *Gosh) setEditor() {
 		continue
 	}
 
-	possibleSources := make([]string, 0, len(sources))
-	for _, e := range sources {
-		possibleSources = append(possibleSources, e.source)
+	sources := make([]string, 0, len(editors))
+	for _, e := range editors {
+		sources = append(sources, e.source)
 	}
 	intro := "    "
 
 	g.addError("no editor",
 		errors.New("No editor has been given."+
 			" Possible sources are:\n"+intro+
-			english.Join(possibleSources, ",\n"+intro, "\n or ")+
+			english.Join(sources, ",\n"+intro, "\n or ")+
 			",\nin that order."))
 }
 
