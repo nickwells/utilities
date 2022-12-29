@@ -65,7 +65,9 @@ func (g *Gosh) writeScript(scriptName string) {
 func (g *Gosh) writeImports() {
 	if g.runInReadLoop {
 		g.imports = append(g.imports, "bufio")
-		g.imports = append(g.imports, "io")
+		if len(g.filesToRead) == 0 {
+			g.imports = append(g.imports, "os")
+		}
 		if g.inPlaceEdit {
 			g.imports = append(g.imports, "path/filepath")
 		}
