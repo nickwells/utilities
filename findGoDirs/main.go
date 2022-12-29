@@ -175,6 +175,9 @@ func (fgd *findGoDirs) findMatchingDirs() []string {
 	fileChecks := []check.FileInfo{check.FileInfoIsDir}
 	fileChecks = append(fileChecks, dirChecks...)
 
+	if len(fgd.baseDirs) == 0 {
+		fgd.baseDirs = []string{"."}
+	}
 	for _, dir := range fgd.baseDirs {
 		matches, errs := dirsearch.FindRecursePrune(dir, -1,
 			dirChecks,

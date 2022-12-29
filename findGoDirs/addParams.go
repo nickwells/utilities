@@ -3,6 +3,7 @@ package main
 import (
 	"strings"
 
+	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paction"
@@ -18,11 +19,43 @@ const (
 	noteNameContentChecks = "Content Checks"
 )
 
+// remHandler handles any directory names passed at the end of the parameters
+// (after the terminal parameter, which is '--' by default)
+type remHandler struct {
+	dirs     *[]string
+	provisos filecheck.Provisos
+}
+
+// HandleRemainder checks that each trailing argument is a directory and adds
+// them to the directory list. It records an error if any parameter is not a
+// directory.
+func (rh remHandler) HandleRemainder(ps *param.PSet, loc *location.L) {
+	for _, dirName := range ps.Remainder() {
+		if err := rh.provisos.StatusCheck(dirName); err != nil {
+			ps.AddErr("bad directory", err)
+			continue
+		}
+		*rh.dirs = append(*rh.dirs, dirName)
+	}
+}
+
 // addParams will add parameters to the passed ParamSet
 func addParams(fgd *findGoDirs) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
+		dirProvisos := filecheck.DirExists()
+
+		rh := remHandler{
+			dirs:     &fgd.baseDirs,
+			provisos: dirProvisos,
+		}
+		ps.SetNamedRemHandler(rh, "directory")
+
 		var dir string
-		ps.Add("dir", psetter.Pathname{Value: &dir},
+		ps.Add("dir",
+			psetter.Pathname{
+				Value:       &dir,
+				Expectation: dirProvisos,
+			},
 			"set the name of the directory to search from."+
 				" If no directories are given, the current directory is"+
 				" used. This parameter may be given more than once, each"+
@@ -186,10 +219,6 @@ func addParams(fgd *findGoDirs) func(ps *param.PSet) error {
 		ps.AddFinalCheck(func() error {
 			if len(fgd.actions) == 0 {
 				fgd.actions[printAct] = true
-			}
-
-			if len(fgd.baseDirs) == 0 {
-				fgd.baseDirs = []string{"."}
 			}
 			return nil
 		})
