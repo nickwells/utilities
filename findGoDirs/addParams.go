@@ -48,7 +48,10 @@ func addParams(fgd *findGoDirs) func(ps *param.PSet) error {
 			dirs:     &fgd.baseDirs,
 			provisos: dirProvisos,
 		}
-		ps.SetNamedRemHandler(rh, "directory")
+		err := ps.SetNamedRemHandler(rh, "directory")
+		if err != nil {
+			return err
+		}
 
 		var dir string
 		ps.Add("dir",
