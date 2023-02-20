@@ -22,13 +22,15 @@ const (
 	paramGroupNameWeb      = "cmd-web"
 	paramGroupNameGosh     = "cmd-gosh"
 
-	paramNameInPlaceEdit = "in-place-edit"
-	paramNameWPrint      = "w-print"
-	paramNameSnippetDir  = "snippets-dir"
-	paramNameExecFile    = "exec-file"
-	paramNameBeforeFile  = "before-file"
-	paramNameAfterFile   = "after-file"
-	paramNameGlobalFile  = "global-file"
+	paramNameInPlaceEdit     = "in-place-edit"
+	paramNameWPrint          = "w-print"
+	paramNameSnippetDir      = "snippets-dir"
+	paramNameExecFile        = "exec-file"
+	paramNameBeforeFile      = "before-file"
+	paramNameAfterFile       = "after-file"
+	paramNameInnerBeforeFile = "inner-before-file"
+	paramNameInnerAfterFile  = "inner-after-file"
+	paramNameGlobalFile      = "global-file"
 
 	paramNameImport              = "import"
 	paramNameWorkspaceUse        = "workspace-use"
@@ -214,23 +216,24 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 			param.PostAction(snippetPAF(g, &snippetName, beforeSect)),
 		)
 
-		ps.Add("before-inner-snippet",
+		ps.Add("inner-before-snippet",
 			psetter.String{
 				Value:  &snippetName,
 				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
 			},
 			makeSnippetHelpText(beforeInnerSect),
-			param.AltNames("bi-s", "bis"),
+			param.AltNames("before-inner-snippet",
+				"ib-s", "bi-s", "ibs", "bis"),
 			param.PostAction(snippetPAF(g, &snippetName, beforeInnerSect)),
 		)
 
-		ps.Add("after-inner-snippet",
+		ps.Add("inner-after-snippet",
 			psetter.String{
 				Value:  &snippetName,
 				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
 			},
 			makeSnippetHelpText(afterInnerSect),
-			param.AltNames("ai-s", "ais"),
+			param.AltNames("after-inner-snippet", "ia-s", "ai-s", "ias", "ais"),
 			param.PostAction(snippetPAF(g, &snippetName, afterInnerSect)),
 		)
 
@@ -535,10 +538,10 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.PostAction(scriptPAF(g, &codeVal, beforeSect)),
 		)
 
-		ps.Add("before-inner", psetter.String{Value: &codeVal},
+		ps.Add("inner-before", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", beforeInnerSect),
-			param.AltNames("bi"),
+			param.AltNames("before-inner", "ib", "bi"),
 			param.PostAction(scriptPAF(g, &codeVal, beforeInnerSect)),
 		)
 
@@ -571,26 +574,32 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 		)
 
-		ps.Add("before-inner-print",
+		ps.Add("inner-before-print",
 			psetter.String{
 				Value: &codeVal,
 				Editor: addPrint{
-					prefixes:    []string{"before-inner-", "bi-"},
+					prefixes: []string{
+						"inner-before-", "ib-",
+						"before-inner-", "bi-"},
 					paramToCall: stdPrintMap,
 					needsVal:    needsValMap,
 				},
 			},
-			makePrintHelpText(beforeSect),
-			param.AltNames("before-inner-printf", "before-inner-println",
+			makePrintHelpText(beforeInnerSect),
+			param.AltNames(
+				"inner-before-printf", "inner-before-println",
+				"before-inner-printf", "before-inner-println",
+				"before-inner-print",
+				"ib-p", "ib-pf", "ib-pln",
 				"bi-p", "bi-pf", "bi-pln"),
 			param.PostAction(scriptPAF(g, &codeVal, beforeInnerSect)),
 			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 		)
 
-		ps.Add("after-inner", psetter.String{Value: &codeVal},
+		ps.Add("inner-after", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", afterInnerSect),
-			param.AltNames("ai"),
+			param.AltNames("after-inner", "ia", "ai"),
 			param.PostAction(scriptPAF(g, &codeVal, afterInnerSect)),
 		)
 
@@ -614,17 +623,23 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.SeeNote(noteShebangScripts),
 		)
 
-		ps.Add("after-inner-print",
+		ps.Add("inner-after-print",
 			psetter.String{
 				Value: &codeVal,
 				Editor: addPrint{
-					prefixes:    []string{"after-inner-", "ai-"},
+					prefixes: []string{
+						"inner-after-", "ia-",
+						"after-inner-", "ai-"},
 					paramToCall: stdPrintMap,
 					needsVal:    needsValMap,
 				},
 			},
 			makePrintHelpText(afterInnerSect),
-			param.AltNames("after-inner-printf", "after-inner-println",
+			param.AltNames(
+				"inner-after-printf", "inner-after-println",
+				"after-inner-printf", "after-inner-println",
+				"after-inner-print",
+				"ia-p", "ia-pf", "ia-pln",
 				"ai-p", "ai-pf", "ai-pln"),
 			param.PostAction(scriptPAF(g, &codeVal, afterInnerSect)),
 			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
