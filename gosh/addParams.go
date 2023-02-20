@@ -683,6 +683,22 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.SeeNote(noteShebangScripts),
 		)
 
+		ps.Add("global-print",
+			psetter.String{
+				Value: &codeVal,
+				Editor: addPrint{
+					prefixes:    []string{"global-", "g-"},
+					paramToCall: stdPrintMap,
+					needsVal:    needsValMap,
+				},
+			},
+			makePrintHelpText(globalSect),
+			param.AltNames("global-printf", "global-println",
+				"g-p", "g-pf", "g-pln"),
+			param.PostAction(scriptPAF(g, &codeVal, globalSect)),
+			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
+		)
+
 		ps.Add(paramNameImport,
 			psetter.StrListAppender{
 				Value: &g.imports,
