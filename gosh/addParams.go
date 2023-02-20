@@ -718,18 +718,6 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.SeeAlso(paramNameIgnoreGoModTidyErrs),
 		)
 
-		ps.Add(paramNameIgnoreGoModTidyErrs,
-			psetter.Bool{
-				Value: &g.ignoreGoModTidyErrs,
-			},
-			"don't abort when the 'go mod tidy' command reports errors;"+
-				" the error message, if any, will still be written to stderr."+
-				"\n\n"+
-				" This should only be set when a workspace is in use",
-			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
-			param.SeeAlso(paramNameWorkspaceUse),
-		)
-
 		ps.Add("copy-go-file",
 			psetter.PathnameListAppender{
 				Value:       &g.copyGoFiles,
@@ -937,6 +925,19 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" '"+envEditor+"' in that order",
 			param.SeeAlso(paramNameEditScript, paramNameEditRepeat),
 			param.Attrs(param.DontShowInStdUsage),
+			param.GroupName(paramGroupNameGosh),
+		)
+
+		ps.Add(paramNameIgnoreGoModTidyErrs,
+			psetter.Bool{
+				Value: &g.ignoreGoModTidyErrs,
+			},
+			"don't abort when the 'go mod tidy' command reports errors;"+
+				" the error message, if any, will still be written to stderr."+
+				"\n\n"+
+				" This should only be set when a workspace is in use",
+			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
+			param.SeeAlso(paramNameWorkspaceUse),
 			param.GroupName(paramGroupNameGosh),
 		)
 
