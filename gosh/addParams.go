@@ -36,7 +36,9 @@ const (
 	paramNameWorkspaceUse        = "workspace-use"
 	paramNameIgnoreGoModTidyErrs = "ignore-go-mod-tidy-errors"
 
-	paramNameDontFormat = "dont-format"
+	paramNameDontFormat    = "dont-format"
+	paramNameFormatter     = "formatter"
+	paramNameFormatterArgs = "formatter-args"
 
 	paramNameSetGoCmd = "set-go-cmd"
 
@@ -46,6 +48,27 @@ const (
 	envVisual             = "VISUAL"
 	envEditor             = "EDITOR"
 )
+
+var fileParamNames = []string{
+	paramNameExecFile,
+	paramNameBeforeFile,
+	paramNameAfterFile,
+	paramNameInnerBeforeFile,
+	paramNameInnerAfterFile,
+	paramNameGlobalFile,
+}
+
+var editParamNames = []string{
+	paramNameEditScript,
+	paramNameEditRepeat,
+	paramNameScriptEditor,
+}
+
+var formatterParamNames = []string{
+	paramNameDontFormat,
+	paramNameFormatter,
+	paramNameFormatterArgs,
+}
 
 // makeSnippetHelpText returns the standard text for the various snippet
 // parameters
@@ -511,8 +534,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			makeShebangFileHelpText(execSect),
 			param.AltNames("shebang", "e-f"),
 			param.PostAction(shebangFilePAF(g, &fileName, execSect)),
-			param.SeeAlso(
-				paramNameBeforeFile, paramNameAfterFile, paramNameGlobalFile),
+			param.SeeAlso(fileParamNames...),
 			param.SeeNote(noteShebangScripts),
 		)
 
@@ -553,8 +575,31 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			makeShebangFileHelpText(beforeSect),
 			param.AltNames("b-f"),
 			param.PostAction(shebangFilePAF(g, &fileName, beforeSect)),
-			param.SeeAlso(
-				paramNameExecFile, paramNameAfterFile, paramNameGlobalFile),
+			param.SeeAlso(fileParamNames...),
+			param.SeeNote(noteShebangScripts),
+		)
+
+		ps.Add(paramNameInnerBeforeFile,
+			psetter.Pathname{
+				Value:       &fileName,
+				Expectation: filecheck.FileNonEmpty(),
+			},
+			makeShebangFileHelpText(beforeInnerSect),
+			param.AltNames("ib-f"),
+			param.PostAction(shebangFilePAF(g, &fileName, beforeInnerSect)),
+			param.SeeAlso(fileParamNames...),
+			param.SeeNote(noteShebangScripts),
+		)
+
+		ps.Add(paramNameInnerAfterFile,
+			psetter.Pathname{
+				Value:       &fileName,
+				Expectation: filecheck.FileNonEmpty(),
+			},
+			makeShebangFileHelpText(afterInnerSect),
+			param.AltNames("ia-f"),
+			param.PostAction(shebangFilePAF(g, &fileName, afterInnerSect)),
+			param.SeeAlso(fileParamNames...),
 			param.SeeNote(noteShebangScripts),
 		)
 
@@ -580,7 +625,8 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				Editor: addPrint{
 					prefixes: []string{
 						"inner-before-", "ib-",
-						"before-inner-", "bi-"},
+						"before-inner-", "bi-",
+					},
 					paramToCall: stdPrintMap,
 					needsVal:    needsValMap,
 				},
@@ -618,8 +664,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			makeShebangFileHelpText(afterSect),
 			param.AltNames("a-f"),
 			param.PostAction(shebangFilePAF(g, &fileName, afterSect)),
-			param.SeeAlso(
-				paramNameBeforeFile, paramNameExecFile, paramNameGlobalFile),
+			param.SeeAlso(fileParamNames...),
 			param.SeeNote(noteShebangScripts),
 		)
 
@@ -629,7 +674,8 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				Editor: addPrint{
 					prefixes: []string{
 						"inner-after-", "ia-",
-						"after-inner-", "ai-"},
+						"after-inner-", "ai-",
+					},
 					paramToCall: stdPrintMap,
 					needsVal:    needsValMap,
 				},
@@ -678,8 +724,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			makeShebangFileHelpText(globalSect),
 			param.AltNames("g-f"),
 			param.PostAction(shebangFilePAF(g, &fileName, globalSect)),
-			param.SeeAlso(
-				paramNameBeforeFile, paramNameExecFile, paramNameAfterFile),
+			param.SeeAlso(fileParamNames...),
 			param.SeeNote(noteShebangScripts),
 		)
 
@@ -863,22 +908,27 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.GroupName(paramGroupNameGosh),
 		)
 
-		ps.Add("formatter", psetter.String{Value: &g.formatter},
-			"the name of the formatter command to run. If the default"+
-				" value is not replaced then this program shall look"+
-				" for the "+goImportsFormatter+" program and use"+
-				" that if it is found.",
+		ps.Add(paramNameFormatter, psetter.String{Value: &g.formatter},
+			"the name of the formatter command to run. If no"+
+				" value is given then one of "+formatterCmds()+
+				" will be used."+
+				" They are checked in the order given and the first"+
+				" which is installed and executable will be used."+
+				" Note that you should give just the executable"+
+				" name with this parameter and any arguments separately.",
 			param.PostAction(paction.SetBool(&g.formatterSet, true)),
 			param.Attrs(param.DontShowInStdUsage),
 			param.GroupName(paramGroupNameGosh),
+			param.SeeAlso(formatterParamNames...),
 		)
 
-		ps.Add("formatter-args", psetter.StrList{Value: &g.formatterArgs},
+		ps.Add(paramNameFormatterArgs, psetter.StrList{Value: &g.formatterArgs},
 			"the arguments to pass to the formatter command. Note that"+
 				" the final argument will always be the name of the"+
 				" generated program.",
 			param.Attrs(param.DontShowInStdUsage),
 			param.GroupName(paramGroupNameGosh),
+			param.SeeAlso(formatterParamNames...),
 		)
 
 		ps.Add(paramNameDontFormat, psetter.Bool{Value: &g.dontFormat},
@@ -889,7 +939,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" want the marginal performance improvement. An"+
 				" additional advantage is that the script will run"+
 				" successfully even if you don't have access to"+
-				" goimports (or some other formatter)."+
+				" any of the default formatters."+
 				"\n\n"+
 				"Note that you will have to give any imports on the"+
 				" command line using the "+paramNameImport+" parameter.",
@@ -897,6 +947,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
 			param.GroupName(paramGroupNameGosh),
 			param.SeeAlso(paramNameImport),
+			param.SeeAlso(formatterParamNames...),
 		)
 
 		ps.Add("build-arg", psetter.StrListAppender{Value: &g.buildArgs},
@@ -930,7 +981,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			"edit the generated code just before running it.",
 			param.AltNames("edit"),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
-			param.SeeAlso(paramNameScriptEditor, paramNameEditRepeat),
+			param.SeeAlso(editParamNames...),
 			param.GroupName(paramGroupNameGosh),
 		)
 
@@ -939,7 +990,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" to repeat the edit/build/run loop.",
 			param.PostAction(paction.SetBool(&g.edit, true)),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
-			param.SeeAlso(paramNameScriptEditor, paramNameEditScript),
+			param.SeeAlso(editParamNames...),
 			param.GroupName(paramGroupNameGosh),
 		)
 
@@ -954,7 +1005,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" from the environment variables:"+
 				" '"+envVisual+"' and"+
 				" '"+envEditor+"' in that order",
-			param.SeeAlso(paramNameEditScript, paramNameEditRepeat),
+			param.SeeAlso(editParamNames...),
 			param.Attrs(param.DontShowInStdUsage),
 			param.GroupName(paramGroupNameGosh),
 		)

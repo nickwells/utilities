@@ -126,11 +126,13 @@ The following text is reported as documentation when the snippets are listed\.
 
 \- &apos;imports:&apos;
 
-The following text is added to the list of import statements\. Note that gosh
-will format the program it generates with goimports \(if available\) which
-should populate the import statement automatically but adding an import comment
-can ensure that the snippet works even if goimports is not available and can
-avoid any mismatch where the formatter finds the wrong package\.
+The following text is added to the list of import statements\. Note that, by
+default, gosh will format the program it generates with the first of &apos;gopls
+imports \-w&apos;, &apos;goimports \-w&apos; or &apos;gofmt \-w&apos; that can
+be executed which should populate the import statement automatically but adding
+an import comment can ensure that the snippet works even if no importing
+formatter is available\. This also avoids any possible mismatch where the
+formatter finds the wrong package\.
 
 
 

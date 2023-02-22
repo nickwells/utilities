@@ -158,9 +158,19 @@ func (g *Gosh) formatFile() {
 	}
 
 	if !g.formatterSet {
-		if _, err := exec.LookPath(goImportsFormatter); err == nil {
-			g.formatter = goImportsFormatter
-			verbose.Println(intro, " Using ", goImportsFormatter)
+		for _, f := range formatters {
+			if _, err := exec.LookPath(f.name); err == nil {
+				g.formatter = f.name
+				g.formatterArgs = f.args
+				g.formatterSet = true
+
+				verbose.Println(intro, " Using ", f.name)
+				break
+			}
+		}
+		if !g.formatterSet {
+			verbose.Println("No formatter is available, skipping formatting")
+			return
 		}
 	}
 

@@ -24,10 +24,6 @@ const (
 
 	dfltSplitPattern = `\s+`
 
-	dfltFormatter      = "gofmt"
-	dfltFormatterArg   = "-w"
-	goImportsFormatter = "goimports"
-
 	goshCommentIntro = " gosh : "
 
 	globalSect      = "global"
@@ -175,9 +171,7 @@ func newGosh() *Gosh {
 			afterSect:       {},
 		},
 
-		splitPattern:  dfltSplitPattern,
-		formatter:     dfltFormatter,
-		formatterArgs: []string{dfltFormatterArg},
+		splitPattern: dfltSplitPattern,
 
 		errMap: errutil.NewErrMap(),
 
