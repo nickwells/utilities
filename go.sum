@@ -22,8 +22,8 @@ github.com/nickwells/mathutil.mod/v2 v2.0.3 h1:NufKwLV0zcMCUhllfgoaLZgwevZfo7O3S
 github.com/nickwells/mathutil.mod/v2 v2.0.3/go.mod h1:aC49B0tadhToVfsP33Hz4yjRJ87q+IEbXeY0/EXjGwg=
 github.com/nickwells/pager.mod v1.0.11 h1:actfWhNh1TPtRpMPwJcRvYeuL2iRd+JQ44l+4KKsoJg=
 github.com/nickwells/pager.mod v1.0.11/go.mod h1:rRmwJHKd/xaSpi/xqJv7P7IJUtFeoJ9s/8yoJ+mh+tM=
-github.com/nickwells/param.mod/v5 v5.15.4 h1:4dsXkwohMOMtYaPHtM11cDTBA92Mk2af2yhH05SVXDM=
-github.com/nickwells/param.mod/v5 v5.15.4/go.mod h1:9WBD8RUMvvAQtIV9KorGG9XpJdbOTV5iBUeke+Nomas=
+github.com/nickwells/param.mod/v5 v5.15.6 h1:cXTDpW36OB8dH1pBbdTAS1UMBTDPaBDlrRpagbEFROw=
+github.com/nickwells/param.mod/v5 v5.15.6/go.mod h1:9WBD8RUMvvAQtIV9KorGG9XpJdbOTV5iBUeke+Nomas=
 github.com/nickwells/snippet.mod v1.1.17 h1:hnM7T+Keks4xvts4tkw8nThG/EZ8Nr5TnvVyHB4+hcs=
 github.com/nickwells/snippet.mod v1.1.17/go.mod h1:NA/3Mt7ZSVG76fbF3DYnuX6WmnDnsx4dFXe3r7RUgB0=
 github.com/nickwells/strdist.mod v1.1.8 h1:zDaosOm1+nVdjeFZcEzqGfXUqVOAp9MJFya8MrlHm7k=
@@ -47,9 +47,9 @@ github.com/nickwells/versionparams.mod v1.1.6 h1:68w4RXNaJYrhKuendzCEytwq+6tGaRu
 github.com/nickwells/versionparams.mod v1.1.6/go.mod h1:C1qHmNHN1EjKMt5UA2qX8CBO63ysUSxX40LwctnomD8=
 github.com/nickwells/xdg.mod v1.0.9 h1:IQhytP6QBCC2xrSVXTE0GDbYJSD8E25H6sSqd7jtCHA=
 github.com/nickwells/xdg.mod v1.0.9/go.mod h1:WbQC4EaiIUSCgzmgYCqGq1zhYnWDe+pBODhx8HzlStM=
-golang.org/x/exp v0.0.0-20230131160201-f062dba9d201 h1:BEABXpNXLEz0WxtA+6CQIz2xkg80e+1zrhWyMcq8VzE=
-golang.org/x/exp v0.0.0-20230131160201-f062dba9d201/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
-golang.org/x/sys v0.4.0 h1:Zr2JFtRQNX3BCZ8YtxRE9hNJYC8J6I1MVbMg6owUp18=
-golang.org/x/sys v0.4.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
-golang.org/x/term v0.4.0 h1:O7UWfv5+A2qiuulQk30kVinPoMtoIPeVaKLEgLpVkvg=
-golang.org/x/term v0.4.0/go.mod h1:9P2UbLfCdcvo3p/nzKvsmas4TnlujnuoV9hGgYzW1lQ=
+golang.org/x/exp v0.0.0-20230213192124-5e25df0256eb h1:PaBZQdo+iSDyHT053FjUCgZQ/9uqVwPOcl7KSWhKn6w=
+golang.org/x/exp v0.0.0-20230213192124-5e25df0256eb/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
+golang.org/x/sys v0.5.0 h1:MUK/U/4lj1t1oPg0HfuXDN/Z1wv31ZJ/YcPiGccS4DU=
+golang.org/x/sys v0.5.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/term v0.5.0 h1:n2a8QNdAb0sZNpU9R1ALUXBbY+w51fCQDN+7EdxNBsY=
+golang.org/x/term v0.5.0/go.mod h1:jMB1sMXY+tzblOD4FWmEbocvup2/aLOaQEp7JmGp78k=
