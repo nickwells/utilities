@@ -22,15 +22,17 @@ const (
 	paramGroupNameWeb      = "cmd-web"
 	paramGroupNameGosh     = "cmd-gosh"
 
-	paramNameInPlaceEdit     = "in-place-edit"
-	paramNameWPrint          = "w-print"
-	paramNameSnippetDir      = "snippets-dir"
-	paramNameExecFile        = "exec-file"
-	paramNameBeforeFile      = "before-file"
-	paramNameAfterFile       = "after-file"
-	paramNameInnerBeforeFile = "inner-before-file"
-	paramNameInnerAfterFile  = "inner-after-file"
-	paramNameGlobalFile      = "global-file"
+	paramNameInPlaceEdit = "in-place-edit"
+	paramNameWPrint      = "w-print"
+	paramNameSnippetDir  = "snippets-dir"
+
+	paramNameExecFile          = "exec-file"
+	paramNameBeforeFile        = "before-file"
+	paramNameAfterFile         = "after-file"
+	paramNameInnerBeforeFile   = "inner-before-file"
+	paramNameInnerAfterFile    = "inner-after-file"
+	paramNameGlobalFile        = "global-file"
+	paramNameGlobalPackageFile = "global-package-file"
 
 	paramNameImport              = "import"
 	paramNameWorkspaceUse        = "workspace-use"
@@ -56,6 +58,7 @@ var fileParamNames = []string{
 	paramNameInnerBeforeFile,
 	paramNameInnerAfterFile,
 	paramNameGlobalFile,
+	paramNameGlobalPackageFile,
 }
 
 var editParamNames = []string{
@@ -101,12 +104,16 @@ func makeCodeSectionHelpText(name, sect string) string {
 		" in the '" + sect + "' section in the order they are given."
 }
 
+func makeFileHelpText(sect string) string {
+	return "follow this with a file name (which must exist)." +
+		" The contents of the file will appear with others" +
+		" in the '" + sect + "' section in the order they are given."
+}
+
 // makeShebangFileHelpText makes the fragment of help text describing how
 // the contents of a shebang (#!) file appear in the given section.
 func makeShebangFileHelpText(sect string) string {
-	return "follow this with a file name (which must exist)." +
-		" The contents of the file will appear with others" +
-		" in the '" + sect + "' section in the order they are given." +
+	return makeFileHelpText(sect) +
 		"\n\n" +
 		"Note that if the first line of the file starts with '#!' then" +
 		" that first line is removed before the rest of the file is copied" +
@@ -158,6 +165,25 @@ func scriptPAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
 func shebangFilePAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
 	return func(_ location.L, _ *param.ByName, _ []string) error {
 		contents, err := shebangFileContents(*text)
+		if err != nil {
+			return err
+		}
+		g.AddScriptEntry(scriptName, contents, verbatim)
+		return nil
+	}
+}
+
+// packageFilePAF generates the Post-Action func (PAF) that adds the contents
+// of the package file to the named script. This will strip out any package
+// or import statements at the start of the file.
+//
+// Note that we pass a pointer to the name of the file rather than the string
+// - this is necessary otherwise we are passing the text value at the point
+// the PAF is being generated not at the point where the parameter value is
+// given.
+func packageFilePAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
+	return func(_ location.L, _ *param.ByName, _ []string) error {
+		contents, err := packageFileContents(*text)
 		if err != nil {
 			return err
 		}
@@ -726,6 +752,23 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.PostAction(shebangFilePAF(g, &fileName, globalSect)),
 			param.SeeAlso(fileParamNames...),
 			param.SeeNote(noteShebangScripts),
+		)
+
+		ps.Add(paramNameGlobalPackageFile,
+			psetter.Pathname{
+				Value:       &fileName,
+				Expectation: filecheck.FileNonEmpty(),
+			},
+			makeFileHelpText(globalSect)+
+				"\n\n"+
+				"Note that the file is expected to be a file from another"+
+				" Go package and should contain at least a 'package'"+
+				" statement. Any 'package' statement and any 'import'"+
+				" statements are removed before the file is inserted"+
+				" into the gosh-generated program.",
+			param.AltNames("global-file-package", "g-f-p", "g-p-f"),
+			param.PostAction(packageFilePAF(g, &fileName, globalSect)),
+			param.SeeAlso(fileParamNames...),
 		)
 
 		ps.Add("global-print",
