@@ -130,7 +130,7 @@ func makeShebangFileHelpText(sect string) string {
 // given.
 func snippetPAF(g *Gosh, sName *string, scriptName string) param.ActionFunc {
 	return func(_ location.L, _ *param.ByName, _ []string) error {
-		_, err := g.snippets.Add(g.snippetDirs, *sName)
+		err := g.CacheSnippet(*sName)
 		if err != nil {
 			return err
 		}
