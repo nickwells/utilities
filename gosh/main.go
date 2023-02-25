@@ -174,10 +174,10 @@ func (g *Gosh) formatFile() {
 		}
 	}
 
-	g.formatterArgs = append(g.formatterArgs, g.filename)
+	args := append(g.formatterArgs, g.filename)
 	verbose.Println(intro,
-		" Command: ", g.formatter, " ", strings.Join(g.formatterArgs, " "))
-	out, err := exec.Command(g.formatter, g.formatterArgs...).CombinedOutput()
+		" Command: ", g.formatter, " ", strings.Join(args, " "))
+	out, err := exec.Command(g.formatter, args...).CombinedOutput()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't format the Go file:", err)
 		fmt.Fprintln(os.Stderr, "\tfilename:", g.filename)
