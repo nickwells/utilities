@@ -93,6 +93,8 @@ func addNotes(ps *param.PSet) error {
 			"\n"+
 			"The following text is reported as documentation"+
 			" when the snippets are listed."+
+			"\n"+
+			"Alternative values are 'notes', 'doc' or 'docs'"+
 			"\n\n"+
 			"- '"+snippet.ImportStr+"'"+
 			"\n"+
@@ -105,6 +107,8 @@ func addNotes(ps *param.PSet) error {
 			" formatter is available. This also avoids"+
 			" any possible mismatch where the formatter finds the"+
 			" wrong package."+
+			"\n"+
+			"An alternative value is 'import'"+
 			"\n\n"+
 			"- '"+snippet.ExpectStr+"'"+
 			"\n"+
@@ -116,6 +120,8 @@ func addNotes(ps *param.PSet) error {
 			"\n"+
 			"This is enforced by the Gosh command."+
 			"\n\n"+
+			"\n"+
+			"An alternative value is 'expect'"+
 			"- '"+snippet.AfterStr+"'"+
 			"\n"+
 			"Records another snippet that"+
@@ -124,6 +130,8 @@ func addNotes(ps *param.PSet) error {
 			" parts have been used in the right order."+
 			"\n"+
 			"This is enforced by the Gosh command."+
+			"\n"+
+			"Alternative values are 'follow' or 'comesafter'"+
 			"\n\n"+
 			"- '"+snippet.TagStr+"'"+
 			"\n"+
