@@ -3,7 +3,6 @@
 // snippet: Doc: every 5 and 10 marks. The ruler will be 99 characters
 // snippet: Doc: long and will be on two lines
 // snippet: Imports: fmt
-// snippet: Imports: strings
 {
 	rpt := "----|----"
 	rulerLine1 := ""
