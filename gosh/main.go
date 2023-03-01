@@ -194,11 +194,11 @@ func (g Gosh) chdirInto(dir string) {
 	g.reportFatalError("chdir into directory", dir, err)
 }
 
-// createGoFiles creates the file to hold the program and opens it. If no
-// filename is given then a temporary directory is created, the program files
-// and any module files are created in that directory.
-func (g *Gosh) createGoFiles() {
-	defer g.dbgStack.Start("createGoFiles", "Creating the Go files")()
+// createGoshTmpDir creates the temporary directory that gosh will use to
+// generate the program. It will change directory into this dir and create
+// the module files and any requested workplace
+func (g *Gosh) createGoshTmpDir() {
+	defer g.dbgStack.Start("createGoshTmpDir", "Creating the gosh directory")()
 	intro := g.dbgStack.Tag()
 
 	verbose.Println(intro, " Creating the temporary directory")
@@ -207,10 +207,6 @@ func (g *Gosh) createGoFiles() {
 	g.reportFatalError("create the temporary directory", g.goshDir, err)
 
 	g.chdirInto(g.goshDir)
-
-	g.filename = filepath.Join(g.goshDir, "gosh.go")
-	verbose.Println(intro, " Creating the Go file: ", g.filename)
-	g.makeFile()
 
 	g.initModule()
 	g.initWorkspace()
@@ -322,13 +318,7 @@ func (g *Gosh) queryEditAgain() bool {
 func (g *Gosh) constructGoProgram() {
 	defer g.dbgStack.Start("constructGoProgram", "Constructing the program")()
 
-	g.createGoFiles()
-	defer g.w.Close()
-
-	if g.showFilename {
-		fmt.Println("Gosh filename:", g.filename)
-	}
-
+	g.createGoshTmpDir()
 	g.writeGoFile()
 	g.copyFiles()
 }

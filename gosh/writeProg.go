@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/nickwells/gogen.mod/gogen"
+	"github.com/nickwells/verbose.mod/verbose"
 )
 
 const (
@@ -328,9 +331,21 @@ func (g *Gosh) defaultHandlerFuncDecl() string {
 		g.nameType("_req"))
 }
 
-// writeGoFile writes the contents of the Go file
+// writeGoFile creates the gosh.go file and writes its contents.
 func (g *Gosh) writeGoFile() {
-	defer g.dbgStack.Start("writeGoFile", "Populating the Go file")()
+	defer g.dbgStack.Start("writeGoFile", "Writing the Go file")()
+	intro := g.dbgStack.Tag()
+
+	g.filename = filepath.Join(g.goshDir, "gosh.go")
+	verbose.Println(intro, " Creating the Go file: ", g.filename)
+	var err error
+	g.w, err = os.Create(g.filename)
+	defer g.w.Close()
+	g.reportFatalError("create the Go file", g.filename, err)
+
+	if g.showFilename {
+		fmt.Println("Gosh filename:", g.filename)
+	}
 
 	g.gPrint("package main", frameTag)
 
