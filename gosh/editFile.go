@@ -81,10 +81,10 @@ func (g *Gosh) editGoFile() {
 	defer g.dbgStack.Start("editGoFile", "editing the program")()
 	intro := g.dbgStack.Tag()
 
-	g.editorArgs = append(g.editorArgs, g.filename)
+	args := append(g.editorArgs, g.filename)
 	verbose.Println(intro,
-		" Command: "+g.editor+" "+strings.Join(g.editorArgs, " "))
-	cmd := exec.Command(g.editor, g.editorArgs...)
+		" Command: "+g.editor+" "+strings.Join(args, " "))
+	cmd := exec.Command(g.editor, args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
