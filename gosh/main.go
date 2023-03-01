@@ -158,20 +158,14 @@ func (g *Gosh) formatFile() {
 	}
 
 	if !g.formatterSet {
-		for _, f := range formatters {
-			if _, err := exec.LookPath(f.name); err == nil {
-				g.formatter = f.name
-				g.formatterArgs = f.args
-				g.formatterSet = true
-
-				verbose.Println(intro, " Using ", f.name)
-				break
-			}
-		}
-		if !g.formatterSet {
-			verbose.Println("No formatter is available, skipping formatting")
+		f, path, ok := findFormatter(g)
+		if !ok {
+			verbose.Println(intro,
+				"No formatter is available, skipping formatting")
 			return
 		}
+		g.formatter = path
+		g.formatterArgs = f.args
 	}
 
 	args := append(g.formatterArgs, g.filename)
