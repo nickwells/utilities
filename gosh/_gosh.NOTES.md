@@ -122,6 +122,8 @@ these values then the rest of the line is used as described:
 
 The following text is reported as documentation when the snippets are listed\.
 
+Alternative values are &apos;notes&apos;, &apos;doc&apos; or &apos;docs&apos;
+
 
 
 \- &apos;imports:&apos;
@@ -134,6 +136,8 @@ an import comment can ensure that the snippet works even if no importing
 formatter is available\. This also avoids any possible mismatch where the
 formatter finds the wrong package\.
 
+An alternative value is &apos;import&apos;
+
 
 
 \- &apos;expects:&apos;
@@ -144,6 +148,8 @@ and help to ensure correct usage of the snippet chain\.
 
 This is enforced by the Gosh command\.
 
+An alternative value is &apos;expect&apos;
+
 
 
 \- &apos;follows:&apos;
@@ -153,6 +159,8 @@ This allows a chain of snippets to check that the parts have been used in the
 right order\.
 
 This is enforced by the Gosh command\.
+
+Alternative values are &apos;follow&apos; or &apos;comesafter&apos;
 
 
 
