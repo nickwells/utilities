@@ -119,9 +119,9 @@ func addNotes(ps *param.PSet) error {
 			" of the snippet chain."+
 			"\n"+
 			"This is enforced by the Gosh command."+
-			"\n\n"+
 			"\n"+
 			"An alternative value is 'expect'"+
+			"\n\n"+
 			"- '"+snippet.AfterStr+"'"+
 			"\n"+
 			"Records another snippet that"+
