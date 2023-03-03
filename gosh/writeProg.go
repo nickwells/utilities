@@ -331,20 +331,21 @@ func (g *Gosh) defaultHandlerFuncDecl() string {
 		g.nameType("_req"))
 }
 
-// writeGoFile creates the gosh.go file and writes its contents.
+// writeGoFile creates the gosh.go file and writes its contents. It is run
+// from within the temp directory.
 func (g *Gosh) writeGoFile() {
 	defer g.dbgStack.Start("writeGoFile", "Writing the Go file")()
 	intro := g.dbgStack.Tag()
 
-	g.filename = filepath.Join(g.goshDir, "gosh.go")
-	verbose.Println(intro, " Creating the Go file: ", g.filename)
+	g.filepath = filepath.Join(g.goshDir, goshFilename)
+	verbose.Println(intro, " Creating the Go file: ", goshFilename)
 	var err error
-	g.w, err = os.Create(g.filename)
+	g.w, err = os.Create(goshFilename)
 	defer g.w.Close()
-	g.reportFatalError("create the Go file", g.filename, err)
+	g.reportFatalError("create the Go file", goshFilename, err)
 
 	if g.showFilename {
-		fmt.Println("Gosh filename:", g.filename)
+		fmt.Println("Gosh filename:", g.filepath)
 	}
 
 	g.gPrint("package main", frameTag)

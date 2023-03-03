@@ -168,13 +168,13 @@ func (g *Gosh) formatFile() {
 		g.formatterArgs = f.args
 	}
 
-	args := append(g.formatterArgs, g.filename)
+	args := append(g.formatterArgs, goshFilename)
 	verbose.Println(intro,
 		" Command: ", g.formatter, " ", strings.Join(args, " "))
 	out, err := exec.Command(g.formatter, args...).CombinedOutput()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't format the Go file:", err)
-		fmt.Fprintln(os.Stderr, "\tfilename:", g.filename)
+		fmt.Fprintln(os.Stderr, "\tfilename:", goshFilename)
 		fmt.Fprintln(os.Stderr, string(out))
 
 		if g.editRepeat {
@@ -215,8 +215,8 @@ func (g *Gosh) createGoshTmpDir() {
 // makeFile will create the go file and exit if it fails
 func (g *Gosh) makeFile() {
 	var err error
-	g.w, err = os.Create(g.filename)
-	g.reportFatalError("create the Go file", g.filename, err)
+	g.w, err = os.Create(g.filepath)
+	g.reportFatalError("create the Go file", g.filepath, err)
 }
 
 // makeExecutable runs go build to make the executable file
@@ -348,10 +348,6 @@ func (g *Gosh) tidyModule() {
 
 	if os.Getenv("GO111MODULE") == "off" {
 		verbose.Println(intro, " Skipping - GO111MODULES == 'off'")
-		return
-	}
-	if g.filename == "" {
-		verbose.Println(intro, " Skipping - no filename")
 		return
 	}
 

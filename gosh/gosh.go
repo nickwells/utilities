@@ -32,6 +32,8 @@ const (
 	execSect        = "exec"
 	afterInnerSect  = "after-inner"
 	afterSect       = "after"
+
+	goshFilename = "gosh.go"
 )
 
 type expandFunc func(*Gosh, string) ([]string, error)
@@ -74,7 +76,7 @@ type Gosh struct {
 	showFilename  bool
 	dontClearFile bool
 	dontRun       bool
-	filename      string
+	filepath      string
 	goshDir       string
 	baseTempDir   string
 	runDir        string
