@@ -168,7 +168,7 @@ func (g *Gosh) formatFile() {
 		g.formatterArgs = f.args
 	}
 
-	args := append(g.formatterArgs, goshFilename)
+	args := append(g.formatterArgs, goshFilename) // nolint:gocritic
 	verbose.Println(intro,
 		" Command: ", g.formatter, " ", strings.Join(args, " "))
 	out, err := exec.Command(g.formatter, args...).CombinedOutput()
