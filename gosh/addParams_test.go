@@ -237,13 +237,13 @@ At: [command line]: Supplied Parameter:2: -base-temp-dir testdata/nosuchdir`))
 	}
 
 	for _, p := range []string{
-		"-dont-format",
-		"-dont-fmt",
-		"-no-format",
-		"-no-fmt",
+		"-dont-populate-imports",
+		"-dont-auto-import",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil, func(g *Gosh) { g.dontFormat = true }, p))
+			mkTestParser(nil, func(g *Gosh) {
+				g.dontPopulateImports = true
+			}, p))
 	}
 
 	for _, p := range []string{

@@ -85,11 +85,11 @@ parameters so you can add extra code to be run\.
 
 
 
-You can skip the formatting stage by passing the dont\-format parameter\. This
-makes your script run a little faster and, more importantly, removes the
-dependency on additional commands \(like gofmt or goimports\)\. If you do skip
-formatting though you will need to provide the packages to be imported through
-import parameters\.
+You can skip the stage where import statements are populated by passing the
+dont\-populate\-imports parameter\. This makes your script run a little faster
+and, more importantly, removes the dependency on additional commands \(like
+gopls or goimports\)\. If you skip import generation you will need to provide
+the packages to be imported through import parameters\.
 
 
 
@@ -99,7 +99,7 @@ the shebang script to even have the go command in their path\.
 ### See Parameters
 * after\-file
 * before\-file
-* dont\-format
+* dont\-populate\-imports
 * exec\-file
 * global\-file
 * import
@@ -129,12 +129,12 @@ Alternative values are &apos;notes&apos;, &apos;doc&apos; or &apos;docs&apos;
 \- &apos;imports:&apos;
 
 The following text is added to the list of import statements\. Note that, by
-default, gosh will format the program it generates with the first of &apos;gopls
-imports \-w&apos;, &apos;goimports \-w&apos; or &apos;gofmt \-w&apos; that can
-be executed which should populate the import statement automatically but adding
-an import comment can ensure that the snippet works even if no importing
-formatter is available\. This also avoids any possible mismatch where the
-formatter finds the wrong package\.
+default, gosh will automatically populate the import statements using a standard
+tool\. It runs the first of &apos;gopls imports \-w&apos; or &apos;goimports
+\-w&apos; that can be executed\. This should populate the import statements for
+you but adding an import comment can ensure that the snippet works even if no
+import generator is available\. This also avoids any possible mismatch where the
+import populator finds the wrong package\.
 
 An alternative value is &apos;import&apos;
 
@@ -148,7 +148,7 @@ and help to ensure correct usage of the snippet chain\.
 
 This is enforced by the Gosh command\.
 
-An alternative value is &apos;expect&apos;
+Alternative values are &apos;expect&apos; or &apos;comesbefore&apos;
 
 
 
@@ -179,6 +179,8 @@ Suggested tag names might be
    &apos;Env&apos;      for an environment variable the snippet uses
 
    &apos;Declares&apos; for a variable that it declares\.
+
+An alternative value is &apos;tags&apos;
 ### See Note
 * Gosh \- snippets
 

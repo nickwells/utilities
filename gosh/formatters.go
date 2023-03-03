@@ -8,9 +8,8 @@ import (
 	"github.com/nickwells/verbose.mod/verbose"
 )
 
-// Formatter holds the name of a program that can "format" the generated
-// program and any associated arguments. Note that the notion of formatting
-// is more to do with generating the necessary import statements.
+// Formatter holds the name of a program that can format the generated
+// program according to the Go standard and any associated arguments.
 type Formatter struct {
 	name string
 	args []string
@@ -21,9 +20,10 @@ type Formatter struct {
 // populating the import statement. These two independed functions should be
 // split into two separate tasks.
 var formatters = []Formatter{
-	{name: "gopls", args: []string{"imports", "-w"}},
-	{name: "goimports", args: []string{"-w"}},
 	{name: "gofmt", args: []string{"-w"}},
+	{name: "gopls", args: []string{"format", "-w"}},
+	{name: "gofumpt", args: []string{"-w"}},
+	{name: "goimports", args: []string{"-w"}},
 }
 
 // formatterCmds will return a string describing the available commands

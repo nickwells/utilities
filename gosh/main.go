@@ -88,6 +88,7 @@ func main() {
 
 	for {
 		g.editGoFile()
+		g.populateImports()
 		g.formatFile()
 		g.tidyModule()
 		g.runGoFile()
@@ -152,7 +153,7 @@ func (g *Gosh) formatFile() {
 	defer g.dbgStack.Start("formatFile", "Formatting the Go file")()
 	intro := g.dbgStack.Tag()
 
-	if g.dontFormat {
+	if !g.formatCode {
 		verbose.Println(intro, " Skipping formatting")
 		return
 	}
@@ -174,6 +175,45 @@ func (g *Gosh) formatFile() {
 	out, err := exec.Command(g.formatter, args...).CombinedOutput()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't format the Go file:", err)
+		fmt.Fprintln(os.Stderr, "\tfilename:", goshFilename)
+		fmt.Fprintln(os.Stderr, string(out))
+
+		if g.editRepeat {
+			return
+		}
+		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
+		os.Exit(1) // nolint:gocritic
+	}
+}
+
+// populateImports runs the importPopulator over the program file
+func (g *Gosh) populateImports() {
+	defer g.dbgStack.Start("populateImports",
+		"Setting imports for the Go file")()
+	intro := g.dbgStack.Tag()
+
+	if g.dontPopulateImports {
+		verbose.Println(intro, " Skipping import population")
+		return
+	}
+
+	if !g.importPopulatorSet {
+		f, path, ok := findImporter(g)
+		if !ok {
+			verbose.Println(intro,
+				"No importer is available, skipping import population")
+			return
+		}
+		g.importPopulator = path
+		g.importPopulatorArgs = f.args
+	}
+
+	args := append(g.importPopulatorArgs, goshFilename) // nolint:gocritic
+	verbose.Println(intro,
+		" Command: ", g.importPopulator, " ", strings.Join(args, " "))
+	out, err := exec.Command(g.importPopulator, args...).CombinedOutput()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Couldn't populate the Go file imports:", err)
 		fmt.Fprintln(os.Stderr, "\tfilename:", goshFilename)
 		fmt.Fprintln(os.Stderr, string(out))
 

@@ -94,10 +94,15 @@ type Gosh struct {
 	workspace           []string
 	ignoreGoModTidyErrs bool
 
+	importPopulator     string
+	importPopulatorSet  bool
+	importPopulatorArgs []string
+	dontPopulateImports bool
+
 	formatter     string
 	formatterSet  bool
 	formatterArgs []string
-	dontFormat    bool
+	formatCode    bool
 
 	edit        bool
 	editRepeat  bool

@@ -114,13 +114,14 @@ func addNotes(ps *param.PSet) error {
 			"- '"+snippet.ImportStr+"'"+
 			"\n"+
 			"The following text is added to the list of"+
-			" import statements. Note that, by default, gosh will format the"+
-			" program it generates with the first of "+formatterCmds()+
-			" that can be executed which should populate the import"+
-			" statement automatically but adding an import comment"+
-			" can ensure that the snippet works even if no importing"+
-			" formatter is available. This also avoids"+
-			" any possible mismatch where the formatter finds the"+
+			" import statements. Note that, by default, gosh will"+
+			" automatically populate the import statements"+
+			" using a standard tool. It runs the first of "+importerCmds()+
+			" that can be executed. This should populate the import"+
+			" statements for you but adding an import comment"+
+			" can ensure that the snippet works even if no import"+
+			" generator is available. This also avoids any possible"+
+			" mismatch where the import populator finds the"+
 			" wrong package."+
 			alternativeSnippetPartNames(snippet.ImportPart)+
 			"\n\n"+
@@ -216,12 +217,13 @@ func addNotes(ps *param.PSet) error {
 			" interpreted as gosh parameters so you can add extra"+
 			" code to be run."+
 			"\n\n"+
-			"You can skip the formatting stage by passing"+
-			" the "+paramNameDontFormat+" parameter."+
+			"You can skip the stage where import statements are"+
+			" populated by passing"+
+			" the "+paramNameDontPopImports+" parameter."+
 			" This makes your script run a little faster"+
 			" and, more importantly, removes the dependency on"+
-			" additional commands (like gofmt or goimports)."+
-			" If you do skip formatting though you will need to"+
+			" additional commands (like gopls or goimports)."+
+			" If you skip import generation you will need to"+
 			" provide the packages to be imported"+
 			" through "+paramNameImport+" parameters."+
 			"\n\n"+
@@ -234,7 +236,7 @@ func addNotes(ps *param.PSet) error {
 		param.NoteSeeParam(
 			paramNameBeforeFile, paramNameExecFile,
 			paramNameAfterFile, paramNameGlobalFile,
-			paramNameDontFormat, paramNameImport,
+			paramNameDontPopImports, paramNameImport,
 			paramNameSetGoCmd),
 	)
 

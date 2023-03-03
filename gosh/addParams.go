@@ -38,9 +38,13 @@ const (
 	paramNameWorkspaceUse        = "workspace-use"
 	paramNameIgnoreGoModTidyErrs = "ignore-go-mod-tidy-errors"
 
-	paramNameDontFormat    = "dont-format"
+	paramNameFormat        = "format"
 	paramNameFormatter     = "formatter"
 	paramNameFormatterArgs = "formatter-args"
+
+	paramNameDontPopImports = "dont-populate-imports"
+	paramNameImporter       = "importer"
+	paramNameImporterArgs   = "importer-args"
 
 	paramNameSetGoCmd = "set-go-cmd"
 
@@ -67,8 +71,14 @@ var editParamNames = []string{
 	paramNameScriptEditor,
 }
 
+var importerParamNames = []string{
+	paramNameDontPopImports,
+	paramNameImporter,
+	paramNameImporterArgs,
+}
+
 var formatterParamNames = []string{
-	paramNameDontFormat,
+	paramNameFormat,
 	paramNameFormatter,
 	paramNameFormatterArgs,
 }
@@ -951,9 +961,57 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.GroupName(paramGroupNameGosh),
 		)
 
+		ps.Add(paramNameImporter, psetter.String{Value: &g.importPopulator},
+			"the name of the command to run in order to populate the"+
+				" import statements. If no"+
+				" value is given then one of "+importerCmds()+
+				" will be used."+
+				" They are checked in the order given and the first"+
+				" which is installed and executable will be used."+
+				" Note that you should give just the executable"+
+				" name with this parameter and any arguments separately.",
+			param.PostAction(paction.SetBool(&g.formatterSet, true)),
+			param.Attrs(param.DontShowInStdUsage),
+			param.GroupName(paramGroupNameGosh),
+			param.SeeAlso(importerParamNames...),
+		)
+
+		ps.Add(paramNameImporterArgs,
+			psetter.StrList{Value: &g.importPopulatorArgs},
+			"the arguments to pass to the import populating command."+
+				" Note that the final argument will always be the name"+
+				" of the generated program.",
+			param.Attrs(param.DontShowInStdUsage),
+			param.GroupName(paramGroupNameGosh),
+			param.SeeAlso(importerParamNames...),
+		)
+
+		ps.Add(paramNameDontPopImports,
+			psetter.Bool{Value: &g.dontPopulateImports},
+			"dont automatically generate the import statements"+
+				" - if this is set the"+
+				" generated code will not have the import statements"+
+				" automatically populated."+
+				"\n\n"+
+				"This can be useful with shebang scripts where you"+
+				" want the marginal performance improvement. An"+
+				" additional advantage is that the script will run"+
+				" successfully even if you don't have access to"+
+				" any of the default import populators."+
+				"\n\n"+
+				"Note that you will have to give any missing imports on the"+
+				" command line using the "+paramNameImport+" parameter.",
+			param.AltNames("dont-auto-import"),
+			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
+			param.GroupName(paramGroupNameGosh),
+			param.SeeAlso(paramNameImport),
+			param.SeeAlso(importerParamNames...),
+		)
+
 		ps.Add(paramNameFormatter, psetter.String{Value: &g.formatter},
 			"the name of the formatter command to run. If no"+
-				" value is given then one of "+formatterCmds()+
+				" value is given and the "+paramNameFormat+
+				" is set then one of "+formatterCmds()+
 				" will be used."+
 				" They are checked in the order given and the first"+
 				" which is installed and executable will be used."+
@@ -974,19 +1032,14 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.SeeAlso(formatterParamNames...),
 		)
 
-		ps.Add(paramNameDontFormat, psetter.Bool{Value: &g.dontFormat},
-			"don't format the generated code - this prevents the"+
-				" generated code from being run through the formatter."+
+		ps.Add(paramNameFormat, psetter.Bool{Value: &g.formatCode},
+			"format the generated code - unless this is set the"+
+				" generated code will not be formatted."+
 				"\n\n"+
-				"This can be useful with shebang scripts where you"+
-				" want the marginal performance improvement. An"+
-				" additional advantage is that the script will run"+
-				" successfully even if you don't have access to"+
-				" any of the default formatters."+
-				"\n\n"+
-				"Note that you will have to give any imports on the"+
-				" command line using the "+paramNameImport+" parameter.",
-			param.AltNames("dont-fmt", "no-format", "no-fmt"),
+				"You might want to format the code if you are going"+
+				" to keep the generated code for later reuse or if"+
+				" you are going to edit it in an edit loop.",
+			param.AltNames("fmt"),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
 			param.GroupName(paramGroupNameGosh),
 			param.SeeAlso(paramNameImport),
