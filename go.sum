@@ -24,8 +24,8 @@ github.com/nickwells/pager.mod v1.0.11 h1:actfWhNh1TPtRpMPwJcRvYeuL2iRd+JQ44l+4K
 github.com/nickwells/pager.mod v1.0.11/go.mod h1:rRmwJHKd/xaSpi/xqJv7P7IJUtFeoJ9s/8yoJ+mh+tM=
 github.com/nickwells/param.mod/v5 v5.15.6 h1:cXTDpW36OB8dH1pBbdTAS1UMBTDPaBDlrRpagbEFROw=
 github.com/nickwells/param.mod/v5 v5.15.6/go.mod h1:9WBD8RUMvvAQtIV9KorGG9XpJdbOTV5iBUeke+Nomas=
-github.com/nickwells/snippet.mod v1.1.17 h1:hnM7T+Keks4xvts4tkw8nThG/EZ8Nr5TnvVyHB4+hcs=
-github.com/nickwells/snippet.mod v1.1.17/go.mod h1:NA/3Mt7ZSVG76fbF3DYnuX6WmnDnsx4dFXe3r7RUgB0=
+github.com/nickwells/snippet.mod v1.2.0 h1:hzzQPSw+LmOb1/87uwl7BGsN0V6HaEoFMicN0x/UdtI=
+github.com/nickwells/snippet.mod v1.2.0/go.mod h1:NA/3Mt7ZSVG76fbF3DYnuX6WmnDnsx4dFXe3r7RUgB0=
 github.com/nickwells/strdist.mod v1.1.8 h1:zDaosOm1+nVdjeFZcEzqGfXUqVOAp9MJFya8MrlHm7k=
 github.com/nickwells/strdist.mod v1.1.8/go.mod h1:/w8HuJ7vwkF16QO84JmvcSSrTWDTaasmzKZv20iQB0U=
 github.com/nickwells/tempus.mod v1.0.1 h1:ZYWXemio4k89MvKyH98uvcnf4nkRy1k5tCSTSeob80Y=
@@ -47,8 +47,8 @@ github.com/nickwells/versionparams.mod v1.1.7 h1:g710lIP2NVmpBa+3LGt8JAtQ+PGmkZl
 github.com/nickwells/versionparams.mod v1.1.7/go.mod h1:tSgOjjQqbsakpoUQsGHZuqmI/KrOBkl5NKDzcSHDHXw=
 github.com/nickwells/xdg.mod v1.0.9 h1:IQhytP6QBCC2xrSVXTE0GDbYJSD8E25H6sSqd7jtCHA=
 github.com/nickwells/xdg.mod v1.0.9/go.mod h1:WbQC4EaiIUSCgzmgYCqGq1zhYnWDe+pBODhx8HzlStM=
-golang.org/x/exp v0.0.0-20230223210539-50820d90acfd h1:wtFuj4DoOcAdb82Zh2PI90xiaqgp7maYA7KxjQXVtkY=
-golang.org/x/exp v0.0.0-20230223210539-50820d90acfd/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
+golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2 h1:Jvc7gsqn21cJHCmAWx0LiimpP18LZmUxkT5Mp7EZ1mI=
+golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
 golang.org/x/sys v0.5.0 h1:MUK/U/4lj1t1oPg0HfuXDN/Z1wv31ZJ/YcPiGccS4DU=
 golang.org/x/sys v0.5.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.5.0 h1:n2a8QNdAb0sZNpU9R1ALUXBbY+w51fCQDN+7EdxNBsY=
