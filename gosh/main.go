@@ -212,13 +212,6 @@ func (g *Gosh) createGoshTmpDir() {
 	g.initWorkspace()
 }
 
-// makeFile will create the go file and exit if it fails
-func (g *Gosh) makeFile() {
-	var err error
-	g.w, err = os.Create(g.filepath)
-	g.reportFatalError("create the Go file", g.filepath, err)
-}
-
 // makeExecutable runs go build to make the executable file
 func (g *Gosh) makeExecutable() bool {
 	defer g.dbgStack.Start("makeExecutable", "Building the program")()
