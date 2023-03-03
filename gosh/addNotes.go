@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/nickwells/english.mod/english"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/snippet.mod/snippet"
 )
@@ -15,6 +16,21 @@ const (
 	noteCodeSections     = "Gosh - code sections"
 	noteShebangScripts   = "Gosh - shebang scripts"
 )
+
+// alternativeSnippetPartNames returns a string describing alternative names
+// for the given snippet part
+func alternativeSnippetPartNames(name string) string {
+	alts := snippet.AltPartNames(name)
+	switch {
+	case len(alts) == 0:
+		return ""
+	case len(alts) == 1:
+		return "\n" +
+			"An alternative value is '" + alts[0] + "'"
+	}
+	return "\n" +
+		"Alternative values are '" + english.Join(alts, "', '", "' or '") + "'"
+}
 
 // addNotes will add any notes to the param PSet
 func addNotes(ps *param.PSet) error {
@@ -93,8 +109,7 @@ func addNotes(ps *param.PSet) error {
 			"\n"+
 			"The following text is reported as documentation"+
 			" when the snippets are listed."+
-			"\n"+
-			"Alternative values are 'notes', 'doc' or 'docs'"+
+			alternativeSnippetPartNames(snippet.DocsPart)+
 			"\n\n"+
 			"- '"+snippet.ImportStr+"'"+
 			"\n"+
@@ -107,8 +122,7 @@ func addNotes(ps *param.PSet) error {
 			" formatter is available. This also avoids"+
 			" any possible mismatch where the formatter finds the"+
 			" wrong package."+
-			"\n"+
-			"An alternative value is 'import'"+
+			alternativeSnippetPartNames(snippet.ImportPart)+
 			"\n\n"+
 			"- '"+snippet.ExpectStr+"'"+
 			"\n"+
@@ -119,8 +133,7 @@ func addNotes(ps *param.PSet) error {
 			" of the snippet chain."+
 			"\n"+
 			"This is enforced by the Gosh command."+
-			"\n"+
-			"An alternative value is 'expect'"+
+			alternativeSnippetPartNames(snippet.ExpectPart)+
 			"\n\n"+
 			"- '"+snippet.AfterStr+"'"+
 			"\n"+
@@ -130,8 +143,7 @@ func addNotes(ps *param.PSet) error {
 			" parts have been used in the right order."+
 			"\n"+
 			"This is enforced by the Gosh command."+
-			"\n"+
-			"Alternative values are 'follow' or 'comesafter'"+
+			alternativeSnippetPartNames(snippet.FollowPart)+
 			"\n\n"+
 			"- '"+snippet.TagStr+"'"+
 			"\n"+
@@ -150,7 +162,8 @@ func addNotes(ps *param.PSet) error {
 			"\n"+
 			"   'Env'      for an environment variable the snippet uses"+
 			"\n"+
-			"   'Declares' for a variable that it declares.",
+			"   'Declares' for a variable that it declares."+
+			alternativeSnippetPartNames(snippet.TagPart),
 		param.NoteSeeNote(noteSnippets))
 
 	ps.AddNote(noteSnippetsDirs,

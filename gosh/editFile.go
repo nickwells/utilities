@@ -82,8 +82,7 @@ func (g *Gosh) editGoFile() {
 	intro := g.dbgStack.Tag()
 
 	args := append(g.editorArgs, g.filepath) // nolint:gocritic
-	verbose.Println(intro,
-		" Command: "+g.editor+" "+strings.Join(args, " "))
+	verbose.Println(intro, " Command: "+g.editor+" "+strings.Join(args, " "))
 	cmd := exec.Command(g.editor, args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
