@@ -150,13 +150,12 @@ func (g *Gosh) clearFiles() {
 // formatFile runs the formatter over the populated (and possibly edited)
 // program file
 func (g *Gosh) formatFile() {
-	defer g.dbgStack.Start("formatFile", "Formatting the Go file")()
-	intro := g.dbgStack.Tag()
-
 	if !g.formatCode {
-		verbose.Println(intro, " Skipping formatting")
 		return
 	}
+
+	defer g.dbgStack.Start("formatFile", "Formatting the Go file")()
+	intro := g.dbgStack.Tag()
 
 	if !g.formatterSet {
 		f, path, ok := findFormatter(g)
