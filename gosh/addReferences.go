@@ -15,5 +15,14 @@ func addReferences(ps *param.PSet) error {
 			"\n\n"+
 			"go install github.com/nickwells/utilities/findCmpRm@latest")
 
+	ps.AddReference("gosh.snippet",
+		"This program can be used to install the standard snippets,"+
+			" to compare snippets between one directory and another"+
+			" or to install a new directory of snippets"+
+			"\n\n"+
+			"To get this program:"+
+			"\n\n"+
+			"go install github.com/nickwells/utilities/gosh.snippet@latest")
+
 	return nil
 }

@@ -14,6 +14,15 @@ original content
 To get this program:
 
 go install github\.com/nickwells/utilities/findCmpRm@latest
+```
+gosh.snippet
+```
+This program can be used to install the standard snippets, to compare snippets
+between one directory and another or to install a new directory of snippets
+
+To get this program:
+
+go install github\.com/nickwells/utilities/gosh\.snippet@latest
 ## Gosh tips
 There is a page of tips on how to
 use `gosh` [here](https://nickwells.github.io/GoRecipes/gosh.html).
