@@ -93,6 +93,7 @@ type Gosh struct {
 	localModules        map[string]string
 	workspace           []string
 	ignoreGoModTidyErrs bool
+	dontRunGoModTidy    bool
 
 	importPopulator     string
 	importPopulatorSet  bool

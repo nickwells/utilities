@@ -37,7 +37,8 @@ const (
 
 	paramNameImport              = "import"
 	paramNameWorkspaceUse        = "workspace-use"
-	paramNameIgnoreGoModTidyErrs = "ignore-go-mod-tidy-errors"
+	paramNameIgnoreGoModTidyErrs = "go-mod-tidy-ignore-errors"
+	paramNameDontRunGoModTidy    = "go-mod-tidy-dont-run"
 
 	paramNameFormat        = "format"
 	paramNameFormatter     = "formatter"
@@ -1165,6 +1166,21 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				"\n\n"+
 				" This should only be set when a workspace is in use",
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
+			param.AltNames("ignore-go-mod-tidy-errors"),
+			param.SeeAlso(paramNameWorkspaceUse),
+			param.GroupName(paramGroupNameGosh),
+		)
+
+		ps.Add(paramNameDontRunGoModTidy,
+			psetter.Bool{
+				Value: &g.dontRunGoModTidy,
+			},
+			"don't run the 'go mod tidy' command"+
+				"\n\n"+
+				" This should only be set if you know that no"+
+				" non-standard packages are being used",
+			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
+			param.AltNames("dont-run-go-mod-tidy"),
 			param.SeeAlso(paramNameWorkspaceUse),
 			param.GroupName(paramGroupNameGosh),
 		)

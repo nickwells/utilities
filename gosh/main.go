@@ -378,6 +378,11 @@ func (g *Gosh) tidyModule() {
 	defer g.dbgStack.Start("tidyModule", "Tidying & populating module files")()
 	intro := g.dbgStack.Tag()
 
+	if g.dontRunGoModTidy {
+		verbose.Println(intro, " Skipping - go mod tidy is not being run")
+		return
+	}
+
 	if os.Getenv("GO111MODULE") == "off" {
 		verbose.Println(intro, " Skipping - GO111MODULES == 'off'")
 		return
