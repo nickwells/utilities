@@ -53,7 +53,17 @@ const (
 	paramNameScriptEditor = "editor"
 	envVisual             = "VISUAL"
 	envEditor             = "EDITOR"
+
+	paramNameReadloop     = "run-in-readloop"
+	paramNameSplitLine    = "split-line"
+	paramNameSplitPattern = "split-pattern"
 )
+
+var readloopParamNames = []string{
+	paramNameReadloop,
+	paramNameSplitLine,
+	paramNameSplitPattern,
+}
 
 var fileParamNames = []string{
 	paramNameExecFile,
@@ -445,41 +455,51 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 			"parameters relating to building a script with a read-loop.")
 
 		g.runInReadloopSetters = append(g.runInReadloopSetters,
-			ps.Add("run-in-readloop", psetter.Bool{Value: &g.runInReadLoop},
-				"have the script code being run within a loop that reads"+
-					" from stdin one a line at a time. The value of each"+
-					" line can be accessed by calling 'line.Text()'. Note"+
+			ps.Add(paramNameReadloop, psetter.Bool{Value: &g.runInReadLoop},
+				"have the script code run within a loop that reads"+
+					" from stdin one line at a time. The value of each"+
+					" line can be accessed by calling '_l.Text()'. Note"+
 					" that any newline will have been removed and will"+
-					" need to be added back if you want to print the line.",
+					" need to be added back if you want to print the line."+
+					"\n\n"+
+					"You can give filenames to read from instead of stdin"+
+					" as residual parameters"+
+					" (after "+ps.TerminalParam()+").",
 				param.AltNames("n"),
 				param.GroupName(paramGroupNameReadloop),
+				param.SeeAlso(readloopParamNames...),
 			),
 		)
 
 		g.runInReadloopSetters = append(g.runInReadloopSetters,
-			ps.Add("split-line", psetter.Bool{Value: &g.splitLine},
+			ps.Add(paramNameSplitLine, psetter.Bool{Value: &g.splitLine},
 				"split the lines into fields around runs of whitespace"+
 					" characters. The fields will be available in a slice"+
 					" of strings (see the Note '"+noteVars+"')."+
 					" Setting this will also force"+
-					" the script to be run in a loop reading from stdin.",
-				param.AltNames("s"),
+					" the script to be run in a loop reading from stdin"+
+					" or from a list of files.",
+				param.AltNames("s", "split"),
 				param.PostAction(paction.SetBool(&g.runInReadLoop, true)),
 				param.GroupName(paramGroupNameReadloop),
+				param.SeeAlso(readloopParamNames...),
 			),
 		)
 
 		g.runInReadloopSetters = append(g.runInReadloopSetters,
-			ps.Add("split-pattern", psetter.String{Value: &g.splitPattern},
+			ps.Add(paramNameSplitPattern,
+				psetter.String{Value: &g.splitPattern},
 				"change the behaviour when splitting the line into"+
 					" fields. The provided string must compile into a"+
 					" regular expression. Setting this will also force"+
 					" the script to be run in a loop reading from stdin"+
+					" or from a list of files"+
 					" and for each line to be split.",
 				param.AltNames("sp"),
 				param.PostAction(paction.SetBool(&g.runInReadLoop, true)),
 				param.PostAction(paction.SetBool(&g.splitLine, true)),
 				param.GroupName(paramGroupNameReadloop),
+				param.SeeAlso(readloopParamNames...),
 			),
 		)
 
