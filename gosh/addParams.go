@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go/token"
+	"os"
 	"regexp"
 	"strings"
 
@@ -174,6 +175,28 @@ func scriptPAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
 	}
 }
 
+// parseShebangConfig creates a temporary config file, populates it with the
+// supplied config and passes it to be read as a config file
+func parseShebangConfig(loc location.L, p *param.ByName, config []byte) error {
+	f, err := os.CreateTemp("", "gosh-shebang-*.cfg")
+	if err != nil {
+		return fmt.Errorf(
+			"Could not create the temporary shebang config file: %w",
+			err)
+	}
+	defer os.Remove(f.Name())
+
+	_, err = f.Write(config)
+	if err != nil {
+		return fmt.Errorf(
+			"Could not write the temporary shebang config file: %w",
+			err)
+	}
+
+	return param.ConfigFileActionFunc(
+		loc, p, []string{"shebang-config-file", f.Name()})
+}
+
 // shebangFilePAF generates the Post-Action func (PAF) that adds the contents
 // of the shebang file to the named script. If the first line starts with
 // '#!' it is removed before adding the rest of the contents.
@@ -183,12 +206,18 @@ func scriptPAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
 // the PAF is being generated not at the point where the parameter value is
 // given.
 func shebangFilePAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
-	return func(_ location.L, _ *param.ByName, _ []string) error {
-		contents, err := shebangFileContents(*text)
+	return func(loc location.L, p *param.ByName, _ []string) error {
+		script, config, err := shebangFileContents(*text)
 		if err != nil {
 			return err
 		}
-		g.AddScriptEntry(scriptName, contents, verbatim)
+
+		g.AddScriptEntry(scriptName, string(script), verbatim)
+
+		if len(config) != 0 {
+			return parseShebangConfig(loc, p, config)
+		}
+
 		return nil
 	}
 }
@@ -1021,7 +1050,8 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				"\n\n"+
 				"Note that you will have to give any missing imports on the"+
 				" command line using the "+paramNameImport+" parameter.",
-			param.AltNames("dont-auto-import"),
+			param.AltNames(
+				"dont-auto-import", "no-auto-import", "no-import-gen"),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
 			param.GroupName(paramGroupNameGosh),
 			param.SeeAlso(paramNameImport),

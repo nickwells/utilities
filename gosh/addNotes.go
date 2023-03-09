@@ -219,23 +219,37 @@ func addNotes(ps *param.PSet) error {
 			"\n\n"+
 			"You can skip the stage where import statements are"+
 			" populated by passing"+
-			" the "+paramNameDontPopImports+" parameter."+
+			" the '"+paramNameDontPopImports+"' parameter."+
 			" This makes your script run a little faster"+
 			" and, more importantly, removes the dependency on"+
 			" additional commands (like gopls or goimports)."+
 			" If you skip import generation you will need to"+
 			" provide the packages to be imported"+
-			" through "+paramNameImport+" parameters."+
+			" through '"+paramNameImport+"' parameters."+
 			"\n\n"+
 			"You might also want to consider setting the full"+
 			" path of the Go command using"+
-			" the "+paramNameSetGoCmd+" parameter. This will"+
+			" the '"+paramNameSetGoCmd+"' parameter. This will"+
 			" remove the need for the person running the"+
 			" shebang script to even have the go command in"+
-			" their path.",
+			" their path."+
+			"\n\n"+
+			"These parameters to the shebang script cannot be"+
+			" passed on the '#!' line which must only contain"+
+			" the gosh command and -"+paramNameExecFile+"."+
+			" The parameters must be given on lines immediately after"+
+			" the '#!' line and must start with '"+shebangGoshParam+"'."+
+			" The form of these lines after the '"+shebangGoshParam+"'"+
+			" is as for a config file: each parameter and its value (if any)"+
+			" on a separate line with the parameter name and value"+
+			" separated by '='. There must be no blank lines between"+
+			" the '#!' line and the '"+shebangGoshParam+"' lines. All"+
+			" lines at the start of the file starting with a '#' are"+
+			" removed.",
 		param.NoteSeeParam(
 			paramNameBeforeFile, paramNameExecFile,
 			paramNameAfterFile, paramNameGlobalFile,
+			paramNameInnerBeforeFile, paramNameInnerAfterFile,
 			paramNameDontPopImports, paramNameImport,
 			paramNameSetGoCmd),
 	)

@@ -86,16 +86,29 @@ parameters so you can add extra code to be run\.
 
 
 You can skip the stage where import statements are populated by passing the
-dont\-populate\-imports parameter\. This makes your script run a little faster
-and, more importantly, removes the dependency on additional commands \(like
-gopls or goimports\)\. If you skip import generation you will need to provide
-the packages to be imported through import parameters\.
+&apos;dont\-populate\-imports&apos; parameter\. This makes your script run a
+little faster and, more importantly, removes the dependency on additional
+commands \(like gopls or goimports\)\. If you skip import generation you will
+need to provide the packages to be imported through &apos;import&apos;
+parameters\.
 
 
 
 You might also want to consider setting the full path of the Go command using
-the set\-go\-cmd parameter\. This will remove the need for the person running
-the shebang script to even have the go command in their path\.
+the &apos;set\-go\-cmd&apos; parameter\. This will remove the need for the
+person running the shebang script to even have the go command in their path\.
+
+
+
+These parameters to the shebang script cannot be passed on the &apos;\#\!&apos;
+line which must only contain the gosh command and \-exec\-file\. The parameters
+must be given on lines immediately after the &apos;\#\!&apos; line and must
+start with &apos;\#gosh\.param:&apos;\. The form of these lines after the
+&apos;\#gosh\.param:&apos; is as for a config file: each parameter and its value
+\(if any\) on a separate line with the parameter name and value separated by
+&apos;=&apos;\. There must be no blank lines between the &apos;\#\!&apos; line
+and the &apos;\#gosh\.param:&apos; lines\. All lines at the start of the file
+starting with a &apos;\#&apos; are removed\.
 ### See Parameters
 * after\-file
 * before\-file
@@ -103,6 +116,8 @@ the shebang script to even have the go command in their path\.
 * exec\-file
 * global\-file
 * import
+* inner\-after\-file
+* inner\-before\-file
 * set\-go\-cmd
 
 
