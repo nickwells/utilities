@@ -1020,7 +1020,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" which is installed and executable will be used."+
 				" Note that you should give just the executable"+
 				" name with this parameter and any arguments separately.",
-			param.PostAction(paction.SetBool(&g.formatterSet, true)),
+			param.PostAction(paction.SetBool(&g.importPopulatorSet, true)),
 			param.Attrs(param.DontShowInStdUsage),
 			param.GroupName(paramGroupNameGosh),
 			param.SeeAlso(importerParamNames...),
