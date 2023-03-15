@@ -83,6 +83,7 @@ type Gosh struct {
 	execName      string
 
 	args        []string
+	skipArgLoop bool
 	filesToRead bool
 	errMap      *errutil.ErrMap
 

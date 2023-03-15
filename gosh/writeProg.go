@@ -91,21 +91,20 @@ func (g *Gosh) writeImports() {
 func (g *Gosh) writeArgsLoop() {
 	tag := argTag
 
-	g.gDecl("_arg", "", tag)
-
 	g.writeScript(beforeSect)
 	g.writeScript(beforeInnerSect)
 
-	g.gPrint("for _, _arg = range os.Args[1:] {", tag)
-	{
+	if !g.skipArgLoop {
+		g.gPrint("for _, _arg := range os.Args[1:] {", tag)
 		g.in()
 		g.gPrint("_ = _arg", tag) // force the use of _arg
-
-		g.writeScript(execSect)
-
-		g.out()
 	}
-	g.gPrint("}", tag)
+	g.writeScript(execSect)
+
+	if !g.skipArgLoop {
+		g.out()
+		g.gPrint("}", tag)
+	}
 	g.writeScript(afterInnerSect)
 	g.writeScript(afterSect)
 }

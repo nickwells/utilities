@@ -914,6 +914,21 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
 
+		ps.Add("dont-loop-on-args",
+			psetter.Bool{
+				Value: &g.skipArgLoop,
+			},
+			"don't loop over the program arguments."+
+				"\n\n"+
+				"Without this any arguments to the generated program"+
+				" (after"+ps.TerminalParam()+") are processed in a loop."+
+				" Note that this parameter cannot be used if gosh is"+
+				" running in a readloop over named files",
+			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
+			param.AltNames("skip-arg-loop", "no-arg-loop"),
+			param.SeeAlso(paramNameReadloop),
+		)
+
 		ps.AddFinalCheck(func() error {
 			if g.runAsWebserver && g.runInReadLoop {
 				errStr := "gosh cannot run in a read-loop" +

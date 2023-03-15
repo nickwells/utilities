@@ -22,7 +22,7 @@ var origFileProvisos = filecheck.IsNew()
 // filesToRead. Otherwise they are added to the list of args and that is
 // looped over instead.
 func (g *Gosh) HandleRemainder(ps *param.PSet, _ *location.L) {
-	if g.runInReadLoop {
+	if g.runInReadLoop && !g.skipArgLoop {
 		g.populateFilesToRead(ps.Remainder())
 	} else {
 		g.args = append(g.args, ps.Remainder()...)
