@@ -291,7 +291,7 @@ func (g *Gosh) executeProgram() {
 	defer g.dbgStack.Start("executeProgram",
 		"Executing the program: "+g.execName)()
 
-	cmd := exec.Command(filepath.Join(g.goshDir, g.execName))
+	cmd := exec.Command(filepath.Join(g.goshDir, g.execName), g.args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

@@ -251,30 +251,26 @@ a single underscore so provided you start all your variable names with a letter
 
 
 
-\_arg  string               the current argument
+\_arg string               the current argument
 
-\_args \[\]string             the list of arguments
+\_err error                an error
 
-\_err  error                an error
+\_f   \*os\.File             the file being read
 
-\_f    \*os\.File             the file being read
+\_fl  int                  the current line number in the file
 
-\_fl   int                  the current line number in the file
+\_fn  string               the name of the file \(or stdin\)
 
-\_fn   string               the name of the file \(or stdin\)
+\_l   \*bufio\.Scanner       a buffered scanner used to read the files
 
-\_fns  \[\]string             the list of names of the files
+\_lp  \[\]string             the parts of the line \(when split\)
 
-\_l    \*bufio\.Scanner       a buffered scanner used to read the files
+\_req \*http\.Request        the request to the web server
 
-\_lp   \[\]string             the parts of the line \(when split\)
+\_rw  http\.ResponseWriter  the response writer for the web server
 
-\_req  \*http\.Request        the request to the web server
+\_sre \*regexp\.Regexp       the regexp used to split lines
 
-\_rw   http\.ResponseWriter  the response writer for the web server
-
-\_sre  \*regexp\.Regexp       the regexp used to split lines
-
-\_w    \*os\.File             the file written to if editing in place
+\_w   \*os\.File             the file written to if editing in place
 
 

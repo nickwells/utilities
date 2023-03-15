@@ -66,11 +66,11 @@ func (g *Gosh) writeScript(scriptName string) {
 
 // writeImports writes the import statements into the Go file
 func (g *Gosh) writeImports() {
+	if len(g.args) > 0 {
+		g.imports = append(g.imports, "os")
+	}
 	if g.runInReadLoop {
 		g.imports = append(g.imports, "bufio")
-		if len(g.filesToRead) == 0 {
-			g.imports = append(g.imports, "os")
-		}
 		if g.inPlaceEdit {
 			g.imports = append(g.imports, "path/filepath")
 		}
@@ -92,16 +92,11 @@ func (g *Gosh) writeArgsLoop() {
 	tag := argTag
 
 	g.gDecl("_arg", "", tag)
-	g.gDecl("_args", " = []string{", tag)
-	for _, arg := range g.args {
-		g.gPrint(fmt.Sprintf("%q,", arg), tag)
-	}
-	g.gPrint("}", tag)
 
 	g.writeScript(beforeSect)
 	g.writeScript(beforeInnerSect)
 
-	g.gPrint("for _, _arg = range _args {", tag)
+	g.gPrint("for _, _arg = range os.Args[1:] {", tag)
 	{
 		g.in()
 		g.gPrint("_ = _arg", tag) // force the use of _arg
@@ -128,13 +123,10 @@ func (g *Gosh) writeReadLoop() {
 			fmt.Sprintf(" = regexp.MustCompile(%q)", g.splitPattern),
 			tag+splitSfx)
 	}
-	if len(g.filesToRead) > 0 {
-		g.writeFileNameList(tag + filesSfx)
-	}
 
 	g.writeScript(beforeSect)
 
-	if len(g.filesToRead) > 0 {
+	if g.filesToRead {
 		g.writeFileLoopOpen(tag + filesSfx)
 		g.gDecl("_l", " = bufio.NewScanner(_f)", tag)
 	} else {
@@ -149,7 +141,7 @@ func (g *Gosh) writeReadLoop() {
 	g.writeScanLoopClose(tag)
 	g.writeScript(afterInnerSect)
 
-	if len(g.filesToRead) > 0 {
+	if g.filesToRead {
 		g.writeFileLoopClose(tag + filesSfx)
 	}
 	g.writeScript(afterSect)
@@ -178,19 +170,9 @@ func (g *Gosh) writeScanLoopClose(tag string) {
 	g.gPrint("}", tag)
 }
 
-// writeFileNameList writes the declaration and initialisation of the slice
-// of file names.
-func (g *Gosh) writeFileNameList(tag string) {
-	g.gDecl("_fns", " = []string{", tag)
-	for _, fn := range g.filesToRead {
-		g.gPrint(fmt.Sprintf("%q,", fn), tag)
-	}
-	g.gPrint("}", tag)
-}
-
 // writeFileLoopOpen writes the opening of the loop over the list of filenames.
 func (g *Gosh) writeFileLoopOpen(tag string) {
-	g.gPrint("for _, _fn = range _fns {", tag)
+	g.gPrint("for _, _fn = range os.Args[1:] {", tag)
 	{
 		g.in()
 		g.gDecl("_f", "", tag)
@@ -279,7 +261,6 @@ func (g *Gosh) writeInPlaceEditOpen(tag string) {
 		g.out()
 	}
 	g.gPrint("}", tag)
-
 }
 
 // writeInPlaceEditClose writes the code to complete the operation of the

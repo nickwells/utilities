@@ -32,10 +32,11 @@ func (g *Gosh) HandleRemainder(ps *param.PSet, _ *location.L) {
 // populateFilesToRead will populate the filenames in the filesToRead value
 // in the Gosh struct and record any errors found.
 //
-// It will first check that there are no duplicate filess, that they all
-// exist, that they are all files, that there are no existing files with the
-// same name plus the '.orig' extension. If any of these conditions is not
-// met it will report the error, add it to the ErrMap and return.
+// It will first check that there are no duplicate files, that they all
+// exist, that they are all files, that, if in-line editing is being done,
+// there are no existing files with the same name plus the '.orig'
+// extension. If any of these conditions is not met it will report the error,
+// add it to the ErrMap and return.
 
 func (g *Gosh) populateFilesToRead(names []string) {
 	goodNames := make([]string, 0, len(names))
@@ -66,5 +67,8 @@ func (g *Gosh) populateFilesToRead(names []string) {
 
 		goodNames = append(goodNames, name)
 	}
-	g.filesToRead = goodNames
+	if len(goodNames) > 0 {
+		g.filesToRead = true
+	}
+	g.args = goodNames
 }

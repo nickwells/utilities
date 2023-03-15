@@ -352,7 +352,8 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 		testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
 			g.runInReadLoop = true
 			g.inPlaceEdit = true
-			g.filesToRead = []string{testDataFile1, testDataFile2}
+			g.filesToRead = true
+			g.args = []string{testDataFile1, testDataFile2}
 		}, p, "--", testDataFile1, testDataFile2))
 	}
 
@@ -367,7 +368,8 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 
 		testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
 			g.runInReadLoop = true
-			g.filesToRead = []string{testDataFile1, testDataFile2}
+			g.filesToRead = true
+			g.args = []string{testDataFile1, testDataFile2}
 		}, p, "--", testDataFile1, testDataFile2))
 	}
 
@@ -430,7 +432,8 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 					g.imports = []string{"fmt"}
 					g.inPlaceEdit = true
 					g.runInReadLoop = true
-					g.filesToRead = []string{testDataFile1}
+					g.filesToRead = true
+					g.args = []string{testDataFile1}
 					g.scripts[execSect] = []ScriptEntry{printValSE[p.idx]}
 				}, p.param, printVal[p.idx],
 				"-"+paramNameInPlaceEdit, "--", testDataFile1))

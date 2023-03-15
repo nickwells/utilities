@@ -83,7 +83,7 @@ type Gosh struct {
 	execName      string
 
 	args        []string
-	filesToRead []string
+	filesToRead bool
 	errMap      *errutil.ErrMap
 
 	snippetDirs []string
@@ -306,10 +306,6 @@ var knownVarMap = varMap{
 		typeName: "string",
 		desc:     "the current argument",
 	},
-	"_args": {
-		typeName: "[]string",
-		desc:     "the list of arguments",
-	},
 	"_rw": {
 		typeName: "http.ResponseWriter",
 		desc:     "the response writer for the web server",
@@ -333,10 +329,6 @@ var knownVarMap = varMap{
 	"_fn": {
 		typeName: "string",
 		desc:     "the name of the file (or stdin)",
-	},
-	"_fns": {
-		typeName: "[]string",
-		desc:     "the list of names of the files",
 	},
 	"_f": {
 		typeName: "*os.File",
