@@ -1183,7 +1183,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" This should only be set if you know that no"+
 				" non-standard packages are being used",
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
-			param.AltNames("dont-run-go-mod-tidy"),
+			param.AltNames("dont-run-go-mod-tidy", "no-go-mod-tidy"),
 			param.SeeAlso(paramNameWorkspaceUse),
 			param.GroupName(paramGroupNameGosh),
 		)
