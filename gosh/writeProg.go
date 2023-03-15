@@ -247,6 +247,39 @@ func (g *Gosh) writeInPlaceEditOpen(tag string) {
 		g.out()
 	}
 	g.gPrint("}", tag)
+
+	g.gPrint("{", tag)
+	{
+		g.in()
+		g.gPrint(`_fi, _err := _f.Stat()`, tag)
+		g.gPrint(`if _err != nil {`, tag)
+		{
+			g.in()
+			g.gPrintErr(
+				`"Warning: Couldn't get status for %q: %v\n", _fn, _err`,
+				tag)
+			g.out()
+		}
+		g.gPrint("} else {", tag)
+		{
+			g.in()
+			g.gPrint(`_err = _w.Chmod(_fi.Mode())`, tag)
+			g.gPrint(`if _err != nil {`, tag)
+			{
+				g.in()
+				g.gPrintErr(
+					`"Warning: Couldn't set mode for %q: %v\n", _fn, _err`,
+					tag)
+				g.out()
+			}
+			g.gPrint("}", tag)
+			g.out()
+		}
+		g.gPrint("}", tag)
+		g.out()
+	}
+	g.gPrint("}", tag)
+
 }
 
 // writeInPlaceEditClose writes the code to complete the operation of the
