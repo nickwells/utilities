@@ -43,7 +43,7 @@ func main() {
 
 	module := gogen.GetModuleOrDie()
 
-	trimSemver := regexp.MustCompile(`\.v([2-9]|[1-9][0-9]+)$`)
+	trimSemver := regexp.MustCompile(`/v([2-9]|[1-9][0-9]+)$`)
 	repo := trimSemver.ReplaceAllLiteralString(module, "")
 
 	comment("START")
@@ -55,8 +55,9 @@ func main() {
 		"(https://pkg.go.dev/mod/" + module + ")")
 
 	fmt.Println("[" +
-		"![Go Report Card]" + "(https://goreportcard.com/badge/" + repo + ")]" +
-		"(https://goreportcard.com/report/" + repo + ")")
+		"![Go Report Card]" +
+		"(https://goreportcard.com/badge/" + module + ")]" +
+		"(https://goreportcard.com/report/" + module + ")")
 
 	if strings.HasPrefix(repo, githubPfx) {
 		fmt.Println("![GitHub License]" +
