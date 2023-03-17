@@ -139,7 +139,7 @@ func makeShebangFileHelpText(sect string) string {
 		"\n\n" +
 		"Note that if the first line of the file starts with '#!' then" +
 		" that first line is removed before the rest of the file is copied" +
-		" in. This is to allow gosh to be used as an interpreter in Linux" +
+		" in. This allows gosh to be used as an interpreter in" +
 		" Shebang files."
 }
 
