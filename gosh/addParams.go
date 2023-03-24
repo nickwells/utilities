@@ -910,7 +910,8 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				" that the file must exist and will be copied with a name"+
 				" guaranteeing uniqueness so you don't need to worry"+
 				" about the files being copied having different names."+
-				" Note also that the file must be in package 'main'.",
+				" If the file is not already in package 'main' the"+
+				" package name will be changed so it is.",
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
 

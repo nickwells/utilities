@@ -364,10 +364,10 @@ func (g *Gosh) copyFiles() {
 			fromName = filepath.Clean(filepath.Join(g.runDir, fromName))
 		}
 
-		content, err := os.ReadFile(fromName)
+		content, err := packageRename(fromName)
 		g.reportFatalError("read the file to be copied", fromName, err)
 
-		err = os.WriteFile(toName, content, 0o644)
+		err = os.WriteFile(toName, content, 0o600)
 		g.reportFatalError("write the file to be copied", toName, err)
 	}
 }
