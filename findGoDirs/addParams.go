@@ -29,7 +29,7 @@ type remHandler struct {
 // HandleRemainder checks that each trailing argument is a directory and adds
 // them to the directory list. It records an error if any parameter is not a
 // directory.
-func (rh remHandler) HandleRemainder(ps *param.PSet, loc *location.L) {
+func (rh remHandler) HandleRemainder(ps *param.PSet, _ *location.L) {
 	for _, dirName := range ps.Remainder() {
 		if err := rh.provisos.StatusCheck(dirName); err != nil {
 			ps.AddErr("bad directory", err)

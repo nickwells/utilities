@@ -354,7 +354,7 @@ func addParams(ps *param.PSet) error {
 
 // setFileNameForGroup sets the outputFileName to the group variant unless it
 // is already set to some non-default value
-func setFileNameForGroup(_loc location.L, _ *param.ByName, _ []string) error {
+func setFileNameForGroup(_ location.L, _ *param.ByName, _ []string) error {
 	if outputFileName == dfltFileName {
 		outputFileName = groupFileNameBase + makeGroupSuffix(groupName) + ".go"
 	}
