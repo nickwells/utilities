@@ -92,20 +92,24 @@ func (g *Gosh) writeArgsLoop() {
 	tag := argTag
 
 	g.writeScript(beforeSect)
-	g.writeScript(beforeInnerSect)
 
 	if !g.skipArgLoop {
 		g.gPrint("for _, _arg := range os.Args[1:] {", tag)
 		g.in()
 		g.gPrint("_ = _arg", tag) // force the use of _arg
 	}
+
+	g.writeScript(beforeInnerSect)
+
 	g.writeScript(execSect)
+
+	g.writeScript(afterInnerSect)
 
 	if !g.skipArgLoop {
 		g.out()
 		g.gPrint("}", tag)
 	}
-	g.writeScript(afterInnerSect)
+
 	g.writeScript(afterSect)
 }
 
