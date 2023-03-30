@@ -137,10 +137,11 @@ func makeFileHelpText(sect string) string {
 func makeShebangFileHelpText(sect string) string {
 	return makeFileHelpText(sect) +
 		"\n\n" +
-		"Note that if the first line of the file starts with '#!' then" +
-		" that first line is removed before the rest of the file is copied" +
-		" in. This allows gosh to be used as an interpreter in" +
-		" Shebang files."
+		"Note that any lines at the beginning of the file starting" +
+		" with '#' are removed before the rest of the file is copied in." +
+		" This includes a first line starting" +
+		" with '#!/path/to/gosh -...file'" +
+		" allowing this to function as a Shebang file."
 }
 
 // snippetPAF generates the Post-Action func (PAF) that adds the snippet name
