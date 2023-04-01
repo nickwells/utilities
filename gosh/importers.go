@@ -5,33 +5,55 @@ import (
 	"strings"
 
 	"github.com/nickwells/english.mod/english"
-	"github.com/nickwells/verbose.mod/verbose"
 )
 
-// Importer holds the name of a program that can generate import statements
-// for a Go file.
+// Importer holds the details of a program that can generate import
+// statements for a Go file.
 type Importer struct {
-	name string
-	args []string
+	name       string
+	args       []string
+	installCmd string
 }
 
-// importers is a list of default commands that can be used to
-// populate the import statement.
+// importers is a list of default commands that can be used to populate the
+// import statement. They are attempted in order with the first one found use
+// to populate the import statement.
 var importers = []Importer{
-	{name: "gopls", args: []string{"imports", "-w"}},
-	{name: "goimports", args: []string{"-w"}},
+	{
+		name:       "gopls",
+		args:       []string{"imports", "-w"},
+		installCmd: "go install golang.org/x/tools/gopls@latest",
+	},
+	{
+		name:       "goimports",
+		args:       []string{"-w"},
+		installCmd: "go install golang.org/x/tools/cmd/goimports@latest",
+	},
 }
 
 // importerCmds will return a string describing the available commands
 func importerCmds() string {
-	fCmds := make([]string, 0, len(importers))
+	iCmds := make([]string, 0, len(importers))
 
 	for _, f := range importers {
 		cmd := "'" + f.name + " " + strings.Join(f.args, " ") + "'"
-		fCmds = append(fCmds, cmd)
+		iCmds = append(iCmds, cmd)
 	}
 
-	return english.Join(fCmds, ", ", " or ")
+	return english.Join(iCmds, ", ", " or ")
+}
+
+// importerPrograms will return a string giving the name of the importers
+// that will be used if they are available and no importer has been set
+// explicitly
+func importerPrograms() string {
+	iProgs := make([]string, 0, len(importers))
+
+	for _, f := range importers {
+		iProgs = append(iProgs, "'"+f.name+"'")
+	}
+
+	return english.Join(iProgs, ", ", " or ")
 }
 
 // findImporter will find the first available importer in the PATH. it
@@ -40,14 +62,9 @@ func importerCmds() string {
 func findImporter(g *Gosh) (Importer, string, bool) {
 	defer g.dbgStack.Start("findImporter",
 		"Finding the import generating command")()
-	intro := g.dbgStack.Tag()
 
 	for _, f := range importers {
 		if path, err := exec.LookPath(f.name); err == nil {
-			verbose.Println(intro, " Using the default importer: ", f.name)
-			verbose.Println(intro, "                   pathname: ", path)
-			verbose.Println(intro, "                  arguments: ",
-				strings.Join(f.args, " "))
 			return f, path, true
 		}
 	}

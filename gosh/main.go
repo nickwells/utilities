@@ -72,6 +72,8 @@ func main() {
 
 	ps.Parse()
 
+	preCheck(g)
+
 	listSnippets(g, slp)
 
 	defer g.dbgStack.Start("main", os.Args[0])()
@@ -203,6 +205,11 @@ func (g *Gosh) populateImports() {
 				"No importer is available, skipping import population")
 			return
 		}
+		verbose.Println(intro, " Using the default importer: ", f.name)
+		verbose.Println(intro, "                   pathname: ", path)
+		verbose.Println(intro, "                  arguments: ",
+			strings.Join(f.args, " "))
+
 		g.importPopulator = path
 		g.importPopulatorArgs = f.args
 	}

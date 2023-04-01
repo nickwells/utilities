@@ -59,6 +59,8 @@ const (
 	paramNameReadloop     = "run-in-readloop"
 	paramNameSplitLine    = "split-line"
 	paramNameSplitPattern = "split-pattern"
+
+	paramNamePreCheck = "pre-check"
 )
 
 var readloopParamNames = []string{
@@ -1204,6 +1206,18 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" non-standard packages are being used",
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 			param.AltNames("dont-run-go-mod-tidy", "no-go-mod-tidy"),
+			param.SeeAlso(paramNameWorkspaceUse),
+			param.GroupName(paramGroupNameGosh),
+		)
+
+		ps.Add(paramNamePreCheck,
+			psetter.Bool{
+				Value: &g.preCheck,
+			},
+			"don't run any code but instead check that the commands that"+
+				" gosh needs are available and recommend any fixes that"+
+				" should be made",
+			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 			param.SeeAlso(paramNameWorkspaceUse),
 			param.GroupName(paramGroupNameGosh),
 		)

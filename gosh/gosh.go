@@ -49,6 +49,8 @@ type ScriptEntry struct {
 
 // Gosh records all the details needed to build a Gosh program
 type Gosh struct {
+	preCheck bool
+
 	w           *os.File
 	indent      int
 	addComments bool
