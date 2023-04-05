@@ -467,8 +467,8 @@ func (g *Gosh) reportFatalError(action, name string, err error) {
 		fmt.Fprintf(os.Stderr, " %q", name)
 	}
 	fmt.Fprintf(os.Stderr, ": %v\n", err)
-	if g.goshDir != "" {
-		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
-	}
-	os.Exit(1)
+
+	g.reportGoshfiles()
+
+	os.Exit(goshExitStatus_Misc)
 }

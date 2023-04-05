@@ -36,6 +36,12 @@ const (
 	goshFilename = "gosh.go"
 )
 
+const (
+	goshExitStatus_PreCheck = 10 + iota
+	goshExitStatus_BuildFail
+	goshExitStatus_Misc
+)
+
 type expandFunc func(*Gosh, string) ([]string, error)
 
 // ScriptEntry holds the values describing what should be added to the
@@ -115,6 +121,8 @@ type Gosh struct {
 	editorArgs  []string
 
 	buildArgs []string
+
+	exitStatus int
 }
 
 // CacheSnippet will cache the named snippet and copy any imports it requires
@@ -169,7 +177,7 @@ func newGosh() *Gosh {
 	cwd, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't get the working directory:", err)
-		os.Exit(1)
+		os.Exit(goshExitStatus_Misc)
 	}
 
 	g := &Gosh{
@@ -267,7 +275,7 @@ func (g *Gosh) checkScripts() {
 func (g *Gosh) reportErrors() {
 	if g.errMap.HasErrors() {
 		g.errMap.Report(os.Stderr, "gosh")
-		os.Exit(1)
+		os.Exit(goshExitStatus_Misc)
 	}
 }
 
