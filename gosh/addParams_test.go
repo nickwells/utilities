@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/nickwells/errutil.mod/errutil"
@@ -65,7 +64,8 @@ func makePSet(g *Gosh) *param.PSet {
 
 // mkTestParser populates and returns a paramtest.Parser ready to be added to
 // the testcases.
-func mkTestParser(errs errutil.ErrMap, f func(g *Gosh), args ...string,
+func mkTestParser(
+	errs errutil.ErrMap, id testhelper.ID, f func(g *Gosh), args ...string,
 ) paramtest.Parser {
 	actVal := newGosh()
 
@@ -73,7 +73,7 @@ func mkTestParser(errs errutil.ErrMap, f func(g *Gosh), args ...string,
 	f(expVal)
 
 	return paramtest.Parser{
-		ID:             testhelper.MkID("params: " + strings.Join(args, " ")),
+		ID:             id,
 		ExpParseErrors: errs,
 		Val:            actVal,
 		Ps:             makePSet(actVal),
@@ -188,15 +188,18 @@ func TestParseParamsCmdGosh(t *testing.T) {
 	testCases := []paramtest.Parser{}
 
 	// no params; no change
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {}))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {}))
 
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-		g.addComments = true
-	}, "-add-comments"))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			g.addComments = true
+		}, "-add-comments"))
 
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-		g.baseTempDir = "testdata/baseTempDir"
-	}, "-base-temp-dir", "testdata/baseTempDir"))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			g.baseTempDir = "testdata/baseTempDir"
+		}, "-base-temp-dir", "testdata/baseTempDir"))
 
 	{
 		parseErrs := errutil.ErrMap{}
@@ -207,18 +210,19 @@ func TestParseParamsCmdGosh(t *testing.T) {
 At: [command line]: Supplied Parameter:2: -base-temp-dir testdata/nosuchdir`))
 
 		testCases = append(testCases,
-			mkTestParser(parseErrs, func(g *Gosh) {},
+			mkTestParser(parseErrs, testhelper.MkID(""), func(g *Gosh) {},
 				"-base-temp-dir", "testdata/nosuchdir"))
 	}
 
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-		g.buildArgs = []string{"-a", "-b", "-c", "-d", "-e"}
-	},
-		"-build-arg", "-a",
-		"-build-args", "-b",
-		"-args-build", "-c",
-		"-b-arg", "-d",
-		"-b-args", "-e"))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			g.buildArgs = []string{"-a", "-b", "-c", "-d", "-e"}
+		},
+			"-build-arg", "-a",
+			"-build-args", "-b",
+			"-args-build", "-c",
+			"-b-arg", "-d",
+			"-b-args", "-e"))
 
 	for _, p := range []string{
 		"-dont-exec",
@@ -227,11 +231,10 @@ At: [command line]: Supplied Parameter:2: -base-temp-dir testdata/nosuchdir`))
 		"-no-run",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil,
+			mkTestParser(nil, testhelper.MkID(""),
 				func(g *Gosh) {
 					g.dontRun = true
-					g.showFilename = true
-					g.dontClearFile = true
+					g.dontCleanupUserChoice = true
 				},
 				p))
 	}
@@ -241,7 +244,7 @@ At: [command line]: Supplied Parameter:2: -base-temp-dir testdata/nosuchdir`))
 		"-dont-auto-import",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil, func(g *Gosh) {
+			mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
 				g.dontPopulateImports = true
 			}, p))
 	}
@@ -251,11 +254,12 @@ At: [command line]: Supplied Parameter:2: -base-temp-dir testdata/nosuchdir`))
 		"-edit",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil, func(g *Gosh) { g.edit = true }, p))
+			mkTestParser(nil,
+				testhelper.MkID(""), func(g *Gosh) { g.edit = true }, p))
 	}
 
 	testCases = append(testCases,
-		mkTestParser(nil,
+		mkTestParser(nil, testhelper.MkID(""),
 			func(g *Gosh) {
 				g.edit = true
 				g.editRepeat = true
@@ -263,11 +267,12 @@ At: [command line]: Supplied Parameter:2: -base-temp-dir testdata/nosuchdir`))
 			"-edit-repeat"))
 
 	testCases = append(testCases,
-		mkTestParser(nil, func(g *Gosh) { g.editorParam = "xxx" },
+		mkTestParser(nil,
+			testhelper.MkID(""), func(g *Gosh) { g.editorParam = "xxx" },
 			"-"+paramNameScriptEditor, "xxx"))
 
 	testCases = append(testCases,
-		mkTestParser(nil,
+		mkTestParser(nil, testhelper.MkID(""),
 			func(g *Gosh) {
 				g.formatter = "xxx"
 				g.formatterSet = true
@@ -275,14 +280,14 @@ At: [command line]: Supplied Parameter:2: -base-temp-dir testdata/nosuchdir`))
 			"-formatter", "xxx"))
 
 	testCases = append(testCases,
-		mkTestParser(nil,
+		mkTestParser(nil, testhelper.MkID(""),
 			func(g *Gosh) { g.formatterArgs = []string{"-a", "-b", "-c"} },
 			"-formatter-args", "-a,-b,-c"))
 
 	testCases = append(testCases,
-		mkTestParser(nil, func(g *Gosh) {
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
 			g.execName = "TestGosh"
-			g.dontClearFile = true
+			g.dontCleanupUserChoice = true
 		},
 			"-set-exec-name", "TestGosh"))
 
@@ -292,10 +297,9 @@ At: [command line]: Supplied Parameter:2: -base-temp-dir testdata/nosuchdir`))
 		"-keep",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil,
+			mkTestParser(nil, testhelper.MkID(""),
 				func(g *Gosh) {
-					g.showFilename = true
-					g.dontClearFile = true
+					g.dontCleanupUserChoice = true
 				},
 				p))
 	}
@@ -307,7 +311,7 @@ At: [command line]: Supplied Parameter:2: -base-temp-dir testdata/nosuchdir`))
 		"-show-time",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil,
+			mkTestParser(nil, testhelper.MkID(""),
 				func(g *Gosh) { g.dbgStack.ShowTimings = true }, p))
 	}
 
@@ -338,39 +342,44 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 				`You have given the "-in-place-edit"`+
 					` parameter but no filenames have been given`+
 					` (they should be supplied following "--")`))
-		testCases = append(testCases, mkTestParser(parseErrs, func(g *Gosh) {
-			g.runInReadLoop = true
-			g.inPlaceEdit = true
-		}, p))
+		testCases = append(testCases,
+			mkTestParser(parseErrs, testhelper.MkID(""), func(g *Gosh) {
+				g.runInReadLoop = true
+				g.inPlaceEdit = true
+			}, p))
 
-		testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-			g.runInReadLoop = true
-			g.inPlaceEdit = true
-			g.errMap.AddError("file check", errors.New(noSuchFileErrStr))
-		}, p, "--", testNoSuchFile))
+		testCases = append(testCases,
+			mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+				g.runInReadLoop = true
+				g.inPlaceEdit = true
+				g.errMap.AddError("file check", errors.New(noSuchFileErrStr))
+			}, p, "--", testNoSuchFile))
 
-		testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-			g.runInReadLoop = true
-			g.inPlaceEdit = true
-			g.filesToRead = true
-			g.args = []string{testDataFile1, testDataFile2}
-		}, p, "--", testDataFile1, testDataFile2))
+		testCases = append(testCases,
+			mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+				g.runInReadLoop = true
+				g.inPlaceEdit = true
+				g.filesToRead = true
+				g.args = []string{testDataFile1, testDataFile2}
+			}, p, "--", testDataFile1, testDataFile2))
 	}
 
 	for _, p := range []string{
 		"-run-in-readloop",
 		"-n",
 	} {
-		testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-			g.runInReadLoop = true
-			g.errMap.AddError("file check", errors.New(noSuchFileErrStr))
-		}, p, "--", testNoSuchFile))
+		testCases = append(testCases,
+			mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+				g.runInReadLoop = true
+				g.errMap.AddError("file check", errors.New(noSuchFileErrStr))
+			}, p, "--", testNoSuchFile))
 
-		testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-			g.runInReadLoop = true
-			g.filesToRead = true
-			g.args = []string{testDataFile1, testDataFile2}
-		}, p, "--", testDataFile1, testDataFile2))
+		testCases = append(testCases,
+			mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+				g.runInReadLoop = true
+				g.filesToRead = true
+				g.args = []string{testDataFile1, testDataFile2}
+			}, p, "--", testDataFile1, testDataFile2))
 	}
 
 	for _, p := range []string{
@@ -378,7 +387,7 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 		"-s",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil,
+			mkTestParser(nil, testhelper.MkID(""),
 				func(g *Gosh) {
 					g.splitLine = true
 					g.runInReadLoop = true
@@ -390,7 +399,7 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 		"-sp",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil,
+			mkTestParser(nil, testhelper.MkID(""),
 				func(g *Gosh) {
 					g.splitLine = true
 					g.runInReadLoop = true
@@ -421,13 +430,13 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 					` standard output with a different printing parameter.`))
 
 		testCases = append(testCases,
-			mkTestParser(parseErrs, func(g *Gosh) {
+			mkTestParser(parseErrs, testhelper.MkID(""), func(g *Gosh) {
 				g.imports = []string{"fmt"}
 				g.scripts[execSect] = []ScriptEntry{printValSE[p.idx]}
 			}, p.param, printVal[p.idx]))
 
 		testCases = append(testCases,
-			mkTestParser(nil,
+			mkTestParser(nil, testhelper.MkID(""),
 				func(g *Gosh) {
 					g.imports = []string{"fmt"}
 					g.inPlaceEdit = true
@@ -464,7 +473,7 @@ func TestParseParamsCmdWeb(t *testing.T) {
 		{"-web-pf", printTypeWebPf},
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil,
+			mkTestParser(nil, testhelper.MkID(""),
 				func(g *Gosh) {
 					g.imports = []string{"fmt"}
 					g.runAsWebserver = true
@@ -478,7 +487,7 @@ func TestParseParamsCmdWeb(t *testing.T) {
 	} {
 		const handlerName = "HTTPHandler"
 		testCases = append(testCases,
-			mkTestParser(nil,
+			mkTestParser(nil, testhelper.MkID(""),
 				func(g *Gosh) {
 					g.runAsWebserver = true
 					g.httpHandler = handlerName
@@ -488,7 +497,7 @@ func TestParseParamsCmdWeb(t *testing.T) {
 	{
 		const pathName = "HTTP-Path"
 		testCases = append(testCases,
-			mkTestParser(nil,
+			mkTestParser(nil, testhelper.MkID(""),
 				func(g *Gosh) {
 					g.runAsWebserver = true
 					g.httpPath = pathName
@@ -499,17 +508,20 @@ func TestParseParamsCmdWeb(t *testing.T) {
 		const httpPortNum = 8001
 		const httpPortStr = "8001"
 		testCases = append(testCases,
-			mkTestParser(nil,
+			mkTestParser(nil, testhelper.MkID(""),
 				func(g *Gosh) {
 					g.runAsWebserver = true
 					g.httpPort = httpPortNum
 				}, "-http-port", httpPortStr))
 	}
 	testCases = append(testCases,
-		mkTestParser(nil, func(g *Gosh) { g.runAsWebserver = true },
+		mkTestParser(nil,
+			testhelper.MkID(""), func(g *Gosh) { g.runAsWebserver = true },
 			"-http-server"))
 	testCases = append(testCases,
-		mkTestParser(nil, func(g *Gosh) { g.runAsWebserver = true }, "-http"))
+		mkTestParser(nil,
+			testhelper.MkID(""), func(g *Gosh) { g.runAsWebserver = true },
+			"-http"))
 
 	for _, tc := range testCases {
 		_ = tc.Test(t)
@@ -532,10 +544,11 @@ func TestParseParamsBad(t *testing.T) {
 	[command line]: Supplied Parameter:2: -http
 	[command line]: Supplied Parameter:1: -run-in-readloop`))
 
-		testCases = append(testCases, mkTestParser(parseErrs, func(g *Gosh) {
-			g.runInReadLoop = true
-			g.runAsWebserver = true
-		}, "-run-in-readloop", "-http"))
+		testCases = append(testCases,
+			mkTestParser(parseErrs, testhelper.MkID(""), func(g *Gosh) {
+				g.runInReadLoop = true
+				g.runAsWebserver = true
+			}, "-run-in-readloop", "-http"))
 	}
 
 	{
@@ -546,11 +559,12 @@ func TestParseParamsBad(t *testing.T) {
 			errors.New(`You have provided an HTTP handler but also given`+
 				` lines of code to run. These lines of code will never run.`))
 
-		testCases = append(testCases, mkTestParser(parseErrs, func(g *Gosh) {
-			g.scripts[execSect] = []ScriptEntry{stmtSE[0]}
-			g.httpHandler = httpHandler
-			g.runAsWebserver = true
-		}, "-e", stmt[0], "-http-handler", httpHandler))
+		testCases = append(testCases,
+			mkTestParser(parseErrs, testhelper.MkID(""), func(g *Gosh) {
+				g.scripts[execSect] = []ScriptEntry{stmtSE[0]}
+				g.httpHandler = httpHandler
+				g.runAsWebserver = true
+			}, "-e", stmt[0], "-http-handler", httpHandler))
 	}
 
 	for _, tc := range testCases {
@@ -608,7 +622,7 @@ func TestParseParamsPrinting(t *testing.T) {
 		{"-pf", printTypePf, execSect},
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil,
+			mkTestParser(nil, testhelper.MkID(""),
 				func(g *Gosh) {
 					g.imports = []string{"fmt"}
 					g.scripts[p.scriptPart] = []ScriptEntry{printValSE[p.idx]}
@@ -655,7 +669,7 @@ func TestParseParamsSnippets(t *testing.T) {
 		{"-es", execSect},
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil,
+			mkTestParser(nil, testhelper.MkID(""),
 				func(g *Gosh) {
 					g.scripts[p.scriptPart] = []ScriptEntry{
 						snippetsSE[0],
@@ -682,70 +696,83 @@ func TestParseParamsCmd(t *testing.T) {
 
 	testCases := []paramtest.Parser{}
 
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-		g.scripts[afterSect] = []ScriptEntry{stmtSE[0], stmtSE[1]}
-	}, "-after", stmt[0], "-a", stmt[1]))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			g.scripts[afterSect] = []ScriptEntry{stmtSE[0], stmtSE[1]}
+		}, "-after", stmt[0], "-a", stmt[1]))
 
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-		g.scripts[afterSect] = []ScriptEntry{fileSE[0], fileSE[1]}
-	}, "-after-file", file[0], "-a-f", file[1]))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			g.scripts[afterSect] = []ScriptEntry{fileSE[0], fileSE[1]}
+		}, "-after-file", file[0], "-a-f", file[1]))
 
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-		g.scripts[afterInnerSect] = []ScriptEntry{stmtSE[0], stmtSE[1]}
-	}, "-after-inner", stmt[0], "-ai", stmt[1]))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			g.scripts[afterInnerSect] = []ScriptEntry{stmtSE[0], stmtSE[1]}
+		}, "-after-inner", stmt[0], "-ai", stmt[1]))
 
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-		g.scripts[beforeSect] = []ScriptEntry{stmtSE[0], stmtSE[1]}
-	}, "-before", stmt[0], "-b", stmt[1]))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			g.scripts[beforeSect] = []ScriptEntry{stmtSE[0], stmtSE[1]}
+		}, "-before", stmt[0], "-b", stmt[1]))
 
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-		g.scripts[beforeSect] = []ScriptEntry{fileSE[0], fileSE[1]}
-	}, "-before-file", file[0], "-b-f", file[1]))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			g.scripts[beforeSect] = []ScriptEntry{fileSE[0], fileSE[1]}
+		}, "-before-file", file[0], "-b-f", file[1]))
 
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-		g.scripts[beforeInnerSect] = []ScriptEntry{stmtSE[0], stmtSE[1]}
-	}, "-before-inner", stmt[0], "-bi", stmt[1]))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			g.scripts[beforeInnerSect] = []ScriptEntry{stmtSE[0], stmtSE[1]}
+		}, "-before-inner", stmt[0], "-bi", stmt[1]))
 
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-		g.scripts[execSect] = []ScriptEntry{stmtSE[0], stmtSE[1], stmtSE[2]}
-	}, "-exec", stmt[0], "-e", stmt[1], "-c", stmt[2]))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			g.scripts[execSect] = []ScriptEntry{stmtSE[0], stmtSE[1], stmtSE[2]}
+		}, "-exec", stmt[0], "-e", stmt[1], "-c", stmt[2]))
 
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-		g.scripts[execSect] = []ScriptEntry{fileSE[0], fileSE[1], fileSE[2]}
-	}, "-exec-file", file[0],
-		"-e-f", file[1],
-		"-shebang", file[2]))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			g.scripts[execSect] = []ScriptEntry{fileSE[0], fileSE[1], fileSE[2]}
+		}, "-exec-file", file[0],
+			"-e-f", file[1],
+			"-shebang", file[2]))
 
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-		g.scripts[globalSect] = []ScriptEntry{stmtSE[0], stmtSE[1]}
-	}, "-global", stmt[0], "-g", stmt[1]))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			g.scripts[globalSect] = []ScriptEntry{stmtSE[0], stmtSE[1]}
+		}, "-global", stmt[0], "-g", stmt[1]))
 
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-		g.scripts[globalSect] = []ScriptEntry{fileSE[0], fileSE[1]}
-	}, "-global-file", file[0], "-g-f", file[1]))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			g.scripts[globalSect] = []ScriptEntry{fileSE[0], fileSE[1]}
+		}, "-global-file", file[0], "-g-f", file[1]))
 
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-		g.imports = []string{"a/b", "c/d", "e/f"}
-	}, "-imports", "a/b",
-		"-import", "c/d",
-		"-I", "e/f"))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			g.imports = []string{"a/b", "c/d", "e/f"}
+		}, "-imports", "a/b",
+			"-import", "c/d",
+			"-I", "e/f"))
 
 	cwd, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Cannot find the current working directory:", err)
 	}
-	testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-		g.localModules = map[string]string{
-			"a": filepath.Join(cwd, "testdata"),
-		}
-	}, "-local-module", "a=>testdata"))
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			g.localModules = map[string]string{
+				"a": filepath.Join(cwd, "testdata"),
+			}
+		}, "-local-module", "a=>testdata"))
 
 	{
 		sdPath := filepath.Join("testdata", snippetsDir)
 
-		testCases = append(testCases, mkTestParser(nil, func(g *Gosh) {
-			g.snippetDirs = append([]string{sdPath}, g.snippetDirs...)
-		}, "-snippets-dir", sdPath))
+		testCases = append(testCases,
+			mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+				g.snippetDirs = append([]string{sdPath}, g.snippetDirs...)
+			}, "-snippets-dir", sdPath))
 	}
 
 	for _, tc := range testCases {

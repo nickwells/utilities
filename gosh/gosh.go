@@ -81,13 +81,13 @@ type Gosh struct {
 
 	dbgStack *callstack.Stack
 
-	showFilename  bool
-	dontClearFile bool
-	dontRun       bool
-	goshDir       string
-	baseTempDir   string
-	runDir        string
-	execName      string
+	dontCleanupUserChoice bool
+	dontCleanup           bool
+	dontRun               bool
+	goshDir               string
+	baseTempDir           string
+	runDir                string
+	execName              string
 
 	args        []string
 	skipArgLoop bool

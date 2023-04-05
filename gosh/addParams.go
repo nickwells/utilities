@@ -969,14 +969,13 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" rather than the program it generates.")
 
 		const showFileParam = "show-filename"
-		ps.Add(showFileParam, psetter.Bool{Value: &g.showFilename},
+		ps.Add(showFileParam, psetter.Bool{Value: &g.dontCleanupUserChoice},
 			"show the filename where the program has been constructed."+
 				" This will also prevent the generated code from being"+
 				" cleared after execution has successfully completed,"+
 				" the assumption being that if you want to know the"+
 				" filename you will also want to examine its contents.",
 			param.AltNames("show-file", "keep"),
-			param.PostAction(paction.SetBool(&g.dontClearFile, true)),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
 			param.GroupName(paramGroupNameGosh),
 		)
@@ -1001,7 +1000,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" that if you have set the program name you will want to"+
 				" preserve it.",
 			param.AltNames("program-name"),
-			param.PostAction(paction.SetBool(&g.dontClearFile, true)),
+			param.PostAction(paction.SetBool(&g.dontCleanupUserChoice, true)),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
 			param.GroupName(paramGroupNameGosh),
 		)
@@ -1014,8 +1013,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" the generated code for and now want to save the file "+
 				" for future use.",
 			param.AltNames("dont-run", "no-exec", "no-run"),
-			param.PostAction(paction.SetBool(&g.showFilename, true)),
-			param.PostAction(paction.SetBool(&g.dontClearFile, true)),
+			param.PostAction(paction.SetBool(&g.dontCleanupUserChoice, true)),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
 			param.GroupName(paramGroupNameGosh),
 		)
@@ -1221,6 +1219,13 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.SeeAlso(paramNameWorkspaceUse),
 			param.GroupName(paramGroupNameGosh),
 		)
+
+		ps.AddFinalCheck(func() error {
+			if g.formatCode && !g.edit {
+				g.dontCleanupUserChoice = true
+			}
+			return nil
+		})
 
 		return nil
 	}

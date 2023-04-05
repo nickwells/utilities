@@ -89,6 +89,8 @@ func main() {
 	g.reportErrors()
 
 	for {
+		g.dontCleanup = g.dontCleanupUserChoice
+
 		g.editGoFile()
 		g.populateImports()
 		g.formatFile()
@@ -101,7 +103,7 @@ func main() {
 		g.chdirInto(g.goshDir)
 	}
 
-	g.clearFiles()
+	g.cleanup()
 }
 
 // listSnippets checks the snippet list parameters and lists the snippet
@@ -147,13 +149,13 @@ func (g *Gosh) reportGoshfiles() {
 	fmt.Println()
 }
 
-// clearFiles removes the created program file, any module files and the
+// cleanup removes the created program file, any module files and the
 // containing directory unless the dontClearFile flag is set
-func (g *Gosh) clearFiles() {
-	defer g.dbgStack.Start("clearFiles", "Cleaning-up the Go files")()
+func (g *Gosh) cleanup() {
+	defer g.dbgStack.Start("cleanup", "Cleaning-up the Go files")()
 	intro := g.dbgStack.Tag()
 
-	if g.dontClearFile {
+	if g.dontCleanup {
 		verbose.Println(intro, " Skipping cleanup")
 
 		g.reportGoshfiles()
@@ -281,7 +283,14 @@ func (g *Gosh) makeExecutable() bool {
 	buildCmd := []string{"build"}
 	buildCmd = append(buildCmd, g.buildArgs...)
 	verbose.Println(intro, " Command: go "+strings.Join(buildCmd, " "))
-	return gogen.ExecGoCmdNoExit(gogen.ShowCmdIO, buildCmd...)
+	if !gogen.ExecGoCmdNoExit(gogen.ShowCmdIO, buildCmd...) {
+		verbose.Println(intro, " Build failed")
+		g.exitStatus = goshExitStatus_BuildFail
+		g.dontCleanup = true
+
+		return false
+	}
+	return true
 }
 
 // runGoFile will call go build to generate the executable and then will run
@@ -362,7 +371,7 @@ func (g *Gosh) queryEditAgain() bool {
 	case 'y':
 		return true
 	case 'k':
-		g.dontClearFile = true
+		g.dontCleanup = true
 	}
 	return false
 }
