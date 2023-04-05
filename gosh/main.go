@@ -104,6 +104,7 @@ func main() {
 	}
 
 	g.cleanup()
+	os.Exit(g.exitStatus)
 }
 
 // listSnippets checks the snippet list parameters and lists the snippet
@@ -321,27 +322,30 @@ func (g *Gosh) runGoFile() {
 func (g *Gosh) executeProgram() {
 	defer g.dbgStack.Start("executeProgram",
 		"Executing the program: "+g.execName)()
+	intro := g.dbgStack.Tag()
 
 	cmd := exec.Command(filepath.Join(g.goshDir, g.execName), g.args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
+	g.exitStatus = 0
 	err := cmd.Run()
 	if err != nil {
+		var ec int
 		if ee, ok := err.(*exec.ExitError); ok {
-			exitCode := ee.ProcessState.ExitCode()
-			if exitCode == -1 { // Program exited due to receiving a signal
-				return
-			}
+			ec = ee.ProcessState.ExitCode()
 		}
-		fmt.Fprintf(os.Stderr,
-			"Couldn't execute the program %q: %v\n", g.execName, err)
-		if g.editRepeat {
-			return
+
+		switch {
+		case ec > 0:
+			verbose.Println(intro, fmt.Sprintf(" Program Exit Status: %d", ec))
+			g.exitStatus = ec
+		case ec == -1:
+			verbose.Println(intro, " Program interrupted")
+		default:
+			fmt.Println("Error:", err.Error())
 		}
-		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
-		os.Exit(1) // nolint: gocritic
 	}
 }
 
