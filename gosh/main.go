@@ -133,6 +133,20 @@ func listSnippets(g *Gosh, slp *snippetListParams) {
 	os.Exit(0)
 }
 
+// reportGoshfiles prints out the gosh directory and file names
+func (g *Gosh) reportGoshfiles() {
+	if g.goshDir == "" {
+		fmt.Println("There is no gosh directory")
+		return
+	}
+
+	fmt.Println()
+	fmt.Println("gosh directory   " + g.goshDir)
+	fmt.Println("gosh code        " + filepath.Join(g.goshDir, goshFilename))
+	fmt.Println("gosh executable  " + filepath.Join(g.goshDir, g.execName))
+	fmt.Println()
+}
+
 // clearFiles removes the created program file, any module files and the
 // containing directory unless the dontClearFile flag is set
 func (g *Gosh) clearFiles() {
@@ -140,8 +154,9 @@ func (g *Gosh) clearFiles() {
 	intro := g.dbgStack.Tag()
 
 	if g.dontClearFile {
-		verbose.Println(intro, " Skipping")
-		fmt.Println("Gosh directory:", g.goshDir)
+		verbose.Println(intro, " Skipping cleanup")
+
+		g.reportGoshfiles()
 		return
 	}
 
