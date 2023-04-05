@@ -91,6 +91,6 @@ func (g *Gosh) editGoFile() {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	g.reportFatalError("run the editor",
-		cmd.Path+"\t"+strings.Join(cmd.Args, ""),
+		cmd.Path+" "+strings.Join(cmd.Args, " "),
 		err)
 }
