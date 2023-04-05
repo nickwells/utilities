@@ -84,7 +84,6 @@ type Gosh struct {
 	showFilename  bool
 	dontClearFile bool
 	dontRun       bool
-	filepath      string
 	goshDir       string
 	baseTempDir   string
 	runDir        string

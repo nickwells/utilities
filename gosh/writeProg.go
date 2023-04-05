@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/nickwells/gogen.mod/gogen"
@@ -354,16 +353,11 @@ func (g *Gosh) writeGoFile() {
 	defer g.dbgStack.Start("writeGoFile", "Writing the Go file")()
 	intro := g.dbgStack.Tag()
 
-	g.filepath = filepath.Join(g.goshDir, goshFilename)
 	verbose.Println(intro, " Creating the Go file: ", goshFilename)
 	var err error
 	g.w, err = os.Create(goshFilename)
 	defer g.w.Close()
 	g.reportFatalError("create the Go file", goshFilename, err)
-
-	if g.showFilename {
-		fmt.Println("Gosh filename:", g.filepath)
-	}
 
 	g.gPrint("package main", frameTag)
 
