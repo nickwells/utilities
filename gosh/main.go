@@ -181,11 +181,12 @@ func (g *Gosh) formatFile() {
 		f, path, ok := findFormatter(g)
 		if !ok {
 			verbose.Println(intro,
-				"No formatter is available, skipping formatting")
+				" No formatter is available, skipping formatting")
 			return
 		}
 		g.formatter = path
 		g.formatterArgs = f.args
+		g.formatterSet = true
 	}
 
 	args := append(g.formatterArgs, goshFilename) // nolint:gocritic
@@ -213,7 +214,7 @@ func (g *Gosh) populateImports() {
 		f, path, ok := findImporter(g)
 		if !ok {
 			verbose.Println(intro,
-				"No importer is available, skipping import population")
+				" No importer is available, skipping import population")
 			return
 		}
 		verbose.Println(intro, " Using the default importer: ", f.name)
@@ -223,6 +224,7 @@ func (g *Gosh) populateImports() {
 
 		g.importPopulator = path
 		g.importPopulatorArgs = f.args
+		g.importPopulatorSet = true
 	}
 
 	args := append(g.importPopulatorArgs, goshFilename) // nolint:gocritic
