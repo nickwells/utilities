@@ -28,6 +28,24 @@ appear immediately before or after their corresponding sections\. before\-inner
 appears after before and after\-inner appears before after
 
 
+## Gosh \- exit status values
+if gosh has a problem when building the program it will exit with a non\-zero
+exit status\. Otherwise it will exit with the exit status of the generated
+program \(unless it executed due to a signal\)\. Also, if gosh is in a loop
+where it edits the program repeatedly it will not exit when the program exits
+and so the exit status will be lost\. Various exit statuses indicate different
+problems\.
+
+
+
+\- 10: indicates that the installation checks \(performed when gosh is passed
+the &apos;pre\-check&apos; parameter\) have failed
+
+\- 11: indicates that the building of the executable has failed
+
+\- 12: indicates that some other gosh stage has failed
+
+
 ## Gosh \- filenames
 A list of filenames to be processed can be given at the end of the command line
 \(following \-\-\)\. Each filename will be edited to be an absolute path if it

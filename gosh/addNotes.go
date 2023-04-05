@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/nickwells/english.mod/english"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/snippet.mod/snippet"
@@ -15,6 +17,7 @@ const (
 	noteSnippetsDirs     = "Gosh - snippet directories"
 	noteCodeSections     = "Gosh - code sections"
 	noteShebangScripts   = "Gosh - shebang scripts"
+	noteGoshExitStatus   = "Gosh - exit status values"
 )
 
 // alternativeSnippetPartNames returns a string describing alternative names
@@ -253,6 +256,25 @@ func addNotes(ps *param.PSet) error {
 			paramNameDontPopImports, paramNameImport,
 			paramNameSetGoCmd),
 	)
+
+	ps.AddNote(noteGoshExitStatus,
+		"if gosh has a problem when building the program it will exit"+
+			" with a non-zero exit status. Otherwise it will exit with"+
+			" the exit status of the generated program (unless it"+
+			" executed due to a signal). Also, if gosh is in a loop where"+
+			" it edits the program repeatedly it will not exit when the"+
+			" program exits and so the exit status will be lost. Various"+
+			" exit statuses indicate different problems."+
+			"\n\n"+
+			"- "+strconv.Itoa(goshExitStatus_PreCheck)+": indicates"+
+			" that the installation checks (performed when gosh is passed"+
+			" the '"+paramNamePreCheck+"' parameter) have failed"+
+			"\n"+
+			"- "+strconv.Itoa(goshExitStatus_BuildFail)+": indicates"+
+			" that the building of the executable has failed"+
+			"\n"+
+			"- "+strconv.Itoa(goshExitStatus_Misc)+": indicates"+
+			" that some other gosh stage has failed")
 
 	return nil
 }
