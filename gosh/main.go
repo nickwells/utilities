@@ -193,15 +193,8 @@ func (g *Gosh) formatFile() {
 		" Command: ", g.formatter, " ", strings.Join(args, " "))
 	out, err := exec.Command(g.formatter, args...).CombinedOutput()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Couldn't format the Go file:", err)
-		fmt.Fprintln(os.Stderr, "\tfilename:", goshFilename)
+		fmt.Fprintln(os.Stderr, "gosh couldn't format the Go file:", err)
 		fmt.Fprintln(os.Stderr, string(out))
-
-		if g.editRepeat {
-			return
-		}
-		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
-		os.Exit(1) // nolint:gocritic
 	}
 }
 
@@ -237,15 +230,9 @@ func (g *Gosh) populateImports() {
 		" Command: ", g.importPopulator, " ", strings.Join(args, " "))
 	out, err := exec.Command(g.importPopulator, args...).CombinedOutput()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Couldn't populate the Go file imports:", err)
-		fmt.Fprintln(os.Stderr, "\tfilename:", goshFilename)
+		fmt.Fprintln(os.Stderr,
+			"gosh couldn't populate the Go file imports: ", err)
 		fmt.Fprintln(os.Stderr, string(out))
-
-		if g.editRepeat {
-			return
-		}
-		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
-		os.Exit(1) // nolint:gocritic
 	}
 }
 
@@ -301,11 +288,7 @@ func (g *Gosh) runGoFile() {
 	intro := g.dbgStack.Tag()
 
 	if !g.makeExecutable() {
-		if g.editRepeat {
-			return
-		}
-		fmt.Fprintln(os.Stderr, "Gosh directory:", g.goshDir)
-		os.Exit(1) // nolint:gocritic
+		return
 	}
 
 	if g.dontRun {
