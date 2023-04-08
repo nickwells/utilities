@@ -23,9 +23,8 @@ const (
 	paramGroupNameWeb      = "cmd-web"
 	paramGroupNameGosh     = "cmd-gosh"
 
-	paramNameInPlaceEdit = "in-place-edit"
-	paramNameWPrint      = "w-print"
-	paramNameSnippetDir  = "snippets-dir"
+	paramNameWPrint     = "w-print"
+	paramNameSnippetDir = "snippets-dir"
 
 	paramNameExecFile          = "exec-file"
 	paramNameBeforeFile        = "before-file"
@@ -34,6 +33,7 @@ const (
 	paramNameInnerAfterFile    = "inner-after-file"
 	paramNameGlobalFile        = "global-file"
 	paramNameGlobalPackageFile = "global-package-file"
+	paramNameCopyGoFile        = "copy-go-file"
 
 	paramNameImport              = "import"
 	paramNameWorkspaceUse        = "workspace-use"
@@ -56,17 +56,26 @@ const (
 	envVisual             = "VISUAL"
 	envEditor             = "EDITOR"
 
+	paramNameInPlaceEdit  = "in-place-edit"
 	paramNameReadloop     = "run-in-readloop"
 	paramNameSplitLine    = "split-line"
 	paramNameSplitPattern = "split-pattern"
 
 	paramNamePreCheck = "pre-check"
+
+	paramNameShowFilename = "show-filename"
+
+	paramNameSetExecName    = "set-executable-name"
+	paramNameDontExec       = "dont-exec"
+	paramNameNoMoreParams   = "no-more-params"
+	paramNameDontLoopOnArgs = "dont-loop-on-args"
 )
 
 var readloopParamNames = []string{
 	paramNameReadloop,
 	paramNameSplitLine,
 	paramNameSplitPattern,
+	paramNameInPlaceEdit,
 }
 
 var fileParamNames = []string{
@@ -868,6 +877,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				" the '=' must be a '.' or a valid Go identifier"+
 				" and is used as an alias for the package name.",
 			param.AltNames("imports", "I"),
+			param.ValueName("package"),
 		)
 
 		ps.Add("local-module",
@@ -903,7 +913,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.SeeAlso(paramNameIgnoreGoModTidyErrs),
 		)
 
-		ps.Add("copy-go-file",
+		ps.Add(paramNameCopyGoFile,
 			psetter.PathnameListAppender{
 				Value:       &g.copyGoFiles,
 				Expectation: filecheck.FileExists(),
@@ -921,19 +931,35 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
 
-		ps.Add("dont-loop-on-args",
+		ps.Add(paramNameDontLoopOnArgs,
 			psetter.Bool{
 				Value: &g.skipArgLoop,
 			},
 			"don't loop over the program arguments."+
 				"\n\n"+
 				"Without this any arguments to the generated program"+
-				" (after"+ps.TerminalParam()+") are processed in a loop."+
-				" Note that this parameter cannot be used if gosh is"+
-				" running in a readloop over named files",
+				" (after"+ps.TerminalParam()+") are processed in a loop.",
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 			param.AltNames("skip-arg-loop", "no-arg-loop"),
 			param.SeeAlso(paramNameReadloop),
+		)
+
+		ps.Add(paramNameNoMoreParams,
+			psetter.Nil{},
+			"don't take any more arguments to gosh."+
+				"\n\n"+
+				"If this is given then any subsequent arguments will be"+
+				" passed to the generated program. From the commant line"+
+				" this is more conveniently achieved by given the"+
+				" standard terminal parameter"+
+				" ('"+param.DfltTerminalParam+"') but in shebang scripts"+
+				" this parameter can be given as a script parameter at"+
+				" the start of the shebang file. Then any parameters"+
+				" to the script will be used as parameters to the"+
+				" generated program rather than to gosh.",
+			param.Attrs(param.IsTerminalParam|param.DontShowInStdUsage),
+			param.AltNames("no-more-args"),
+			param.SeeNote(noteShebangScriptParams),
 		)
 
 		ps.AddFinalCheck(func() error {
@@ -968,8 +994,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			"parameters controlling the behaviour of the gosh command"+
 				" rather than the program it generates.")
 
-		const showFileParam = "show-filename"
-		ps.Add(showFileParam, psetter.Bool{Value: &g.dontCleanupUserChoice},
+		ps.Add(paramNameShowFilename, psetter.Bool{Value: &g.dontCleanupUserChoice},
 			"show the filename where the program has been constructed."+
 				" This will also prevent the generated code from being"+
 				" cleared after execution has successfully completed,"+
@@ -981,7 +1006,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		execNameRE := regexp.MustCompile(`^[a-zA-Z][-a-zA-Z0-9+._]*$`)
-		ps.Add("set-exec-name",
+		ps.Add(paramNameSetExecName,
 			psetter.String{
 				Value: &g.execName,
 				Checks: []check.String{
@@ -999,15 +1024,17 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" execution has successfully completed, the assumption being"+
 				" that if you have set the program name you will want to"+
 				" preserve it.",
-			param.AltNames("program-name"),
+			param.AltNames(
+				"set-program-name", "program-name", "executable-name"),
 			param.PostAction(paction.SetBool(&g.dontCleanupUserChoice, true)),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
 			param.GroupName(paramGroupNameGosh),
 		)
 
-		ps.Add("dont-exec", psetter.Bool{Value: &g.dontRun},
+		ps.Add(paramNameDontExec, psetter.Bool{Value: &g.dontRun},
 			"don't run the generated code - this prevents the generated"+
-				" code from being cleared and forces the "+showFileParam+
+				" code from being cleared and forces"+
+				" the "+paramNameShowFilename+
 				" parameter to true. This can be"+
 				" useful if you have completed the work you were using"+
 				" the generated code for and now want to save the file "+

@@ -272,7 +272,7 @@ At: [command line]: Supplied Parameter:2: -base-temp-dir testdata/nosuchdir`))
 			"-"+paramNameScriptEditor, "xxx"))
 
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID(""),
+		mkTestParser(nil, testhelper.MkID("formatter"),
 			func(g *Gosh) {
 				g.formatter = "xxx"
 				g.formatterSet = true
@@ -280,16 +280,38 @@ At: [command line]: Supplied Parameter:2: -base-temp-dir testdata/nosuchdir`))
 			"-formatter", "xxx"))
 
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID(""),
+		mkTestParser(nil, testhelper.MkID("formatter-args"),
 			func(g *Gosh) { g.formatterArgs = []string{"-a", "-b", "-c"} },
 			"-formatter-args", "-a,-b,-c"))
 
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
-			g.execName = "TestGosh"
-			g.dontCleanupUserChoice = true
-		},
-			"-set-exec-name", "TestGosh"))
+		mkTestParser(nil, testhelper.MkID(""),
+			func(g *Gosh) {
+				g.importPopulator = "xxx"
+				g.importPopulatorSet = true
+			},
+			"-importer", "xxx"))
+
+	testCases = append(testCases,
+		mkTestParser(nil, testhelper.MkID("importer-args"),
+			func(g *Gosh) {
+				g.importPopulatorArgs = []string{"-a", "-b", "-c"}
+			},
+			"-importer-args", "-a,-b,-c"))
+
+	for _, p := range []string{
+		"-set-executable-name",
+		"-set-program-name",
+		"-executable-name",
+		"-program-name",
+	} {
+		testCases = append(testCases,
+			mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+				g.execName = "TestGosh"
+				g.dontCleanupUserChoice = true
+			},
+				p, "TestGosh"))
+	}
 
 	for _, p := range []string{
 		"-show-filename",
