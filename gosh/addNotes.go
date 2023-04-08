@@ -10,7 +10,7 @@ import (
 
 const (
 	noteInPlaceEdit         = "Gosh - in-place editing"
-	noteFilenames           = "Gosh - filenames"
+	noteArgsToScript        = "Gosh - arguments to the script"
 	noteVars                = "Gosh - variables"
 	noteSnippets            = "Gosh - snippets"
 	noteSnippetsComments    = "Gosh - snippet comments"
@@ -54,17 +54,21 @@ func addNotes(ps *param.PSet) error {
 			" expected",
 		param.NoteSeeParam(paramNameInPlaceEdit))
 
-	ps.AddNote(noteFilenames,
-		"A list of filenames to be processed can be given at the end"+
-			" of the command line (following "+ps.TerminalParam()+")."+
-			" Each filename will be edited to be an absolute path"+
-			" if it is not already; the current"+
-			" directory will be added at the start of the path."+
-			" If any files are given then some parameter for"+
-			" reading them should be given. See the parameters in"+
-			" group: '"+paramGroupNameReadloop+"'."+
+	ps.AddNote(noteArgsToScript,
+		"Arguments can be supplied to the generated program. These can be"+
+			" given following the end-of-parameters"+
+			" marker '"+ps.TerminalParam()+"'"+
+			" (or '"+paramNameNoMoreParams+"'). The default behaviour is"+
+			" to generate a loop over the arguments if any are present;"+
+			" this can be avoided by giving the"+
+			" '"+paramNameDontLoopOnArgs+"' parameter."+
 			"\n\n"+
-			"Note that it is an error if the same file name"+
+			"Additionally, if the generated program is running in a"+
+			" readloop (see the parameters in"+
+			" group: '"+paramGroupNameReadloop+"') any arguments will be"+
+			" treated as filenames to be processed. Each filename will be"+
+			" checked for existence and edited to be an absolute path if"+
+			" it is not already. It is an error if the same file name"+
 			" appears twice.")
 
 	ps.AddNote(noteVars,
@@ -302,8 +306,8 @@ func addNotes(ps *param.PSet) error {
 	ps.AddNote(noteGoshExitStatus,
 		"if gosh has a problem when building the program it will exit"+
 			" with a non-zero exit status. Otherwise it will exit with"+
-			" the exit status of the generated program (unless it"+
-			" executed due to a signal). Also, if gosh is in a loop where"+
+			" the exit status of the generated program (unless it was"+
+			" ended by a signal). Also, if gosh is in a loop where"+
 			" it edits the program repeatedly it will not exit when the"+
 			" program exits and so the exit status will be lost. Various"+
 			" exit statuses indicate different problems."+
