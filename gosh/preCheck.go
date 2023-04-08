@@ -29,17 +29,17 @@ func preCheck(g *Gosh) {
 
 	if goCmdBad(twc) {
 		problemsFound = true
-		exitStatus = goshExitStatus_PreCheck
+		exitStatus = goshExitStatusPreCheck
 	}
 
 	if importersBad(g, twc) {
 		problemsFound = true
-		exitStatus = goshExitStatus_PreCheck
+		exitStatus = goshExitStatusPreCheck
 	}
 
 	if snippetsBad(g, twc) {
 		problemsFound = true
-		exitStatus = goshExitStatus_PreCheck
+		exitStatus = goshExitStatusPreCheck
 	}
 
 	if problemsFound {

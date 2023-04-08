@@ -275,7 +275,7 @@ func (g *Gosh) makeExecutable() bool {
 	verbose.Println(intro, " Command: go "+strings.Join(buildCmd, " "))
 	if !gogen.ExecGoCmdNoExit(gogen.ShowCmdIO, buildCmd...) {
 		verbose.Println(intro, " Build failed")
-		g.exitStatus = goshExitStatus_BuildFail
+		g.exitStatus = goshExitStatusBuildFail
 		g.dontCleanup = true
 
 		return false
@@ -483,5 +483,5 @@ func (g *Gosh) reportFatalError(action, name string, err error) {
 
 	g.reportGoshfiles()
 
-	os.Exit(goshExitStatus_Misc)
+	os.Exit(goshExitStatusMisc)
 }

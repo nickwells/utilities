@@ -37,9 +37,9 @@ const (
 )
 
 const (
-	goshExitStatus_PreCheck = 10 + iota
-	goshExitStatus_BuildFail
-	goshExitStatus_Misc
+	goshExitStatusPreCheck = 10 + iota
+	goshExitStatusBuildFail
+	goshExitStatusMisc
 )
 
 type expandFunc func(*Gosh, string) ([]string, error)
@@ -176,7 +176,7 @@ func newGosh() *Gosh {
 	cwd, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't get the working directory:", err)
-		os.Exit(goshExitStatus_Misc)
+		os.Exit(goshExitStatusMisc)
 	}
 
 	g := &Gosh{
@@ -274,7 +274,7 @@ func (g *Gosh) checkScripts() {
 func (g *Gosh) reportErrors() {
 	if g.errMap.HasErrors() {
 		g.errMap.Report(os.Stderr, "gosh")
-		os.Exit(goshExitStatus_Misc)
+		os.Exit(goshExitStatusMisc)
 	}
 }
 

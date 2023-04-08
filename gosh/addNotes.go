@@ -312,14 +312,14 @@ func addNotes(ps *param.PSet) error {
 			" program exits and so the exit status will be lost. Various"+
 			" exit statuses indicate different problems."+
 			"\n\n"+
-			"- "+strconv.Itoa(goshExitStatus_PreCheck)+": indicates"+
+			"- "+strconv.Itoa(goshExitStatusPreCheck)+": indicates"+
 			" that the installation checks (performed when gosh is passed"+
 			" the '"+paramNamePreCheck+"' parameter) have failed"+
 			"\n"+
-			"- "+strconv.Itoa(goshExitStatus_BuildFail)+": indicates"+
+			"- "+strconv.Itoa(goshExitStatusBuildFail)+": indicates"+
 			" that the building of the executable has failed"+
 			"\n"+
-			"- "+strconv.Itoa(goshExitStatus_Misc)+": indicates"+
+			"- "+strconv.Itoa(goshExitStatusMisc)+": indicates"+
 			" that some other gosh stage has failed")
 
 	return nil
