@@ -76,6 +76,7 @@ func main() {
 
 	listSnippets(g, slp)
 
+	defer func() { os.Exit(g.exitStatus) }()
 	defer g.dbgStack.Start("main", os.Args[0])()
 
 	g.snippets.Check(g.errMap)
@@ -104,7 +105,6 @@ func main() {
 	}
 
 	g.cleanup()
-	os.Exit(g.exitStatus)
 }
 
 // listSnippets checks the snippet list parameters and lists the snippet
