@@ -617,11 +617,14 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		var codeVal string
 		var fileName string
 
+		// Exec section params
+
 		ps.Add("exec", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", execSect),
-			param.AltNames("e", "c"), // python and bash use '-c'
+			param.AltNames("e", "c", "code"), // python and bash use '-c'
 			param.PostAction(scriptPAF(g, &codeVal, execSect)),
+			param.ValueName("Go-code"),
 		)
 
 		ps.Add(paramNameExecFile,
@@ -654,18 +657,14 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 		)
 
+		// Before section params
+
 		ps.Add("before", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", beforeSect),
 			param.AltNames("b"),
 			param.PostAction(scriptPAF(g, &codeVal, beforeSect)),
-		)
-
-		ps.Add("inner-before", psetter.String{Value: &codeVal},
-			"follow this with Go code."+
-				makeCodeSectionHelpText("", beforeInnerSect),
-			param.AltNames("before-inner", "ib", "bi"),
-			param.PostAction(scriptPAF(g, &codeVal, beforeInnerSect)),
+			param.ValueName("Go-code"),
 		)
 
 		ps.Add(paramNameBeforeFile,
@@ -676,30 +675,6 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			makeShebangFileHelpText(beforeSect),
 			param.AltNames("b-f"),
 			param.PostAction(shebangFilePAF(g, &fileName, beforeSect)),
-			param.SeeAlso(fileParamNames...),
-			param.SeeNote(noteShebangScripts),
-		)
-
-		ps.Add(paramNameInnerBeforeFile,
-			psetter.Pathname{
-				Value:       &fileName,
-				Expectation: filecheck.FileNonEmpty(),
-			},
-			makeShebangFileHelpText(beforeInnerSect),
-			param.AltNames("before-inner-file", "ib-f", "bi-f"),
-			param.PostAction(shebangFilePAF(g, &fileName, beforeInnerSect)),
-			param.SeeAlso(fileParamNames...),
-			param.SeeNote(noteShebangScripts),
-		)
-
-		ps.Add(paramNameInnerAfterFile,
-			psetter.Pathname{
-				Value:       &fileName,
-				Expectation: filecheck.FileNonEmpty(),
-			},
-			makeShebangFileHelpText(afterInnerSect),
-			param.AltNames("after-inner-file", "ia-f", "ai-f"),
-			param.PostAction(shebangFilePAF(g, &fileName, afterInnerSect)),
 			param.SeeAlso(fileParamNames...),
 			param.SeeNote(noteShebangScripts),
 		)
@@ -718,6 +693,28 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				"b-p", "b-pf", "b-pln"),
 			param.PostAction(scriptPAF(g, &codeVal, beforeSect)),
 			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
+		)
+
+		// Inner-Before section params
+
+		ps.Add("inner-before", psetter.String{Value: &codeVal},
+			"follow this with Go code."+
+				makeCodeSectionHelpText("", beforeInnerSect),
+			param.AltNames("before-inner", "ib", "bi"),
+			param.PostAction(scriptPAF(g, &codeVal, beforeInnerSect)),
+			param.ValueName("Go-code"),
+		)
+
+		ps.Add(paramNameInnerBeforeFile,
+			psetter.Pathname{
+				Value:       &fileName,
+				Expectation: filecheck.FileNonEmpty(),
+			},
+			makeShebangFileHelpText(beforeInnerSect),
+			param.AltNames("before-inner-file", "ib-f", "bi-f"),
+			param.PostAction(shebangFilePAF(g, &fileName, beforeInnerSect)),
+			param.SeeAlso(fileParamNames...),
+			param.SeeNote(noteShebangScripts),
 		)
 
 		ps.Add("inner-before-print",
@@ -743,28 +740,24 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 		)
 
+		// Inner-After section params
+
 		ps.Add("inner-after", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", afterInnerSect),
 			param.AltNames("after-inner", "ia", "ai"),
 			param.PostAction(scriptPAF(g, &codeVal, afterInnerSect)),
+			param.ValueName("Go-code"),
 		)
 
-		ps.Add("after", psetter.String{Value: &codeVal},
-			"follow this with Go code."+
-				makeCodeSectionHelpText("", afterSect),
-			param.AltNames("a"),
-			param.PostAction(scriptPAF(g, &codeVal, afterSect)),
-		)
-
-		ps.Add(paramNameAfterFile,
+		ps.Add(paramNameInnerAfterFile,
 			psetter.Pathname{
 				Value:       &fileName,
 				Expectation: filecheck.FileNonEmpty(),
 			},
-			makeShebangFileHelpText(afterSect),
-			param.AltNames("a-f"),
-			param.PostAction(shebangFilePAF(g, &fileName, afterSect)),
+			makeShebangFileHelpText(afterInnerSect),
+			param.AltNames("after-inner-file", "ia-f", "ai-f"),
+			param.PostAction(shebangFilePAF(g, &fileName, afterInnerSect)),
 			param.SeeAlso(fileParamNames...),
 			param.SeeNote(noteShebangScripts),
 		)
@@ -792,6 +785,28 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 		)
 
+		// Inner-After section params
+
+		ps.Add("after", psetter.String{Value: &codeVal},
+			"follow this with Go code."+
+				makeCodeSectionHelpText("", afterSect),
+			param.AltNames("a"),
+			param.PostAction(scriptPAF(g, &codeVal, afterSect)),
+			param.ValueName("Go-code"),
+		)
+
+		ps.Add(paramNameAfterFile,
+			psetter.Pathname{
+				Value:       &fileName,
+				Expectation: filecheck.FileNonEmpty(),
+			},
+			makeShebangFileHelpText(afterSect),
+			param.AltNames("a-f"),
+			param.PostAction(shebangFilePAF(g, &fileName, afterSect)),
+			param.SeeAlso(fileParamNames...),
+			param.SeeNote(noteShebangScripts),
+		)
+
 		ps.Add("after-print",
 			psetter.String{
 				Value: &codeVal,
@@ -808,6 +823,8 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 		)
 
+		// Global section params
+
 		ps.Add("global", psetter.String{Value: &codeVal},
 			"follow this with Go code."+
 				" For instance, functions that you might want to call from"+
@@ -815,6 +832,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				makeCodeSectionHelpText("", globalSect),
 			param.AltNames("g"),
 			param.PostAction(scriptPAF(g, &codeVal, globalSect)),
+			param.ValueName("Go-code"),
 		)
 
 		ps.Add(paramNameGlobalFile,
@@ -861,6 +879,8 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.PostAction(scriptPAF(g, &codeVal, globalSect)),
 			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
 		)
+
+		// Miscellaneous other params
 
 		ps.Add(paramNameImport,
 			psetter.StrListAppender{
@@ -962,6 +982,8 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			param.SeeNote(noteShebangScriptParams),
 		)
 
+		// Final checks
+
 		ps.AddFinalCheck(func() error {
 			if g.runAsWebserver && g.runInReadLoop {
 				errStr := "gosh cannot run in a read-loop" +
@@ -994,7 +1016,8 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			"parameters controlling the behaviour of the gosh command"+
 				" rather than the program it generates.")
 
-		ps.Add(paramNameShowFilename, psetter.Bool{Value: &g.dontCleanupUserChoice},
+		ps.Add(paramNameShowFilename,
+			psetter.Bool{Value: &g.dontCleanupUserChoice},
 			"show the filename where the program has been constructed."+
 				" This will also prevent the generated code from being"+
 				" cleared after execution has successfully completed,"+
@@ -1058,6 +1081,8 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.GroupName(paramGroupNameGosh),
 		)
 
+		// Import-populator params
+
 		ps.Add(paramNameImporter, psetter.String{Value: &g.importPopulator},
 			"the name of the command to run in order to populate the"+
 				" import statements. If no"+
@@ -1106,6 +1131,8 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.SeeAlso(importerParamNames...),
 		)
 
+		// Formatter params
+
 		ps.Add(paramNameFormatter, psetter.String{Value: &g.formatter},
 			"the name of the formatter command to run. If no"+
 				" value is given and the "+paramNameFormat+
@@ -1144,35 +1171,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.SeeAlso(formatterParamNames...),
 		)
 
-		ps.Add("build-arg", psetter.StrListAppender{Value: &g.buildArgs},
-			"add an argument to pass to the go build command.",
-			param.AltNames("build-args", "args-build", "b-args", "b-arg"),
-			param.Attrs(param.DontShowInStdUsage),
-			param.GroupName(paramGroupNameGosh),
-		)
-
-		ps.Add("add-comments", psetter.Bool{Value: &g.addComments},
-			"add end-of-line comments to show the lines of code"+
-				" generated by gosh.",
-			param.AltNames("add-comment",
-				"comments", "comment",
-				"gosh-comments"),
-			param.Attrs(param.DontShowInStdUsage),
-			param.GroupName(paramGroupNameGosh),
-		)
-
-		ps.Add("base-temp-dir",
-			psetter.Pathname{
-				Value:       &g.baseTempDir,
-				Expectation: filecheck.DirExists(),
-			},
-			"set the directory where the temporary directories in which"+
-				" the gosh program will be generated",
-			param.Attrs(param.DontShowInStdUsage),
-			param.GroupName(paramGroupNameGosh),
-		)
-
-		stdparams.AddTiming(ps, g.dbgStack, param.GroupName(paramGroupNameGosh))
+		// Edit params
 
 		ps.Add(paramNameEditScript, psetter.Bool{Value: &g.edit},
 			"edit the generated code just before running it.",
@@ -1207,6 +1206,8 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.GroupName(paramGroupNameGosh),
 		)
 
+		// go mod tidy params
+
 		ps.Add(paramNameIgnoreGoModTidyErrs,
 			psetter.Bool{
 				Value: &g.ignoreGoModTidyErrs,
@@ -1235,6 +1236,38 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.GroupName(paramGroupNameGosh),
 		)
 
+		// Miscellaneous params
+
+		ps.Add("build-arg", psetter.StrListAppender{Value: &g.buildArgs},
+			"add an argument to pass to the go build command.",
+			param.AltNames("build-args", "args-build", "b-args", "b-arg"),
+			param.Attrs(param.DontShowInStdUsage),
+			param.GroupName(paramGroupNameGosh),
+		)
+
+		ps.Add("add-comments", psetter.Bool{Value: &g.addComments},
+			"add end-of-line comments to show the lines of code"+
+				" generated by gosh.",
+			param.AltNames("add-comment",
+				"comments", "comment",
+				"gosh-comments"),
+			param.Attrs(param.DontShowInStdUsage),
+			param.GroupName(paramGroupNameGosh),
+		)
+
+		ps.Add("base-temp-dir",
+			psetter.Pathname{
+				Value:       &g.baseTempDir,
+				Expectation: filecheck.DirExists(),
+			},
+			"set the directory where the temporary directories in which"+
+				" the gosh program will be generated",
+			param.Attrs(param.DontShowInStdUsage),
+			param.GroupName(paramGroupNameGosh),
+		)
+
+		stdparams.AddTiming(ps, g.dbgStack, param.GroupName(paramGroupNameGosh))
+
 		ps.Add(paramNamePreCheck,
 			psetter.Bool{
 				Value: &g.preCheck,
@@ -1246,6 +1279,8 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.SeeAlso(paramNameWorkspaceUse),
 			param.GroupName(paramGroupNameGosh),
 		)
+
+		// Final checks
 
 		ps.AddFinalCheck(func() error {
 			if g.formatCode && !g.edit {
