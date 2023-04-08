@@ -65,7 +65,7 @@ func (g *Gosh) writeScript(scriptName string) {
 
 // writeImports writes the import statements into the Go file
 func (g *Gosh) writeImports() {
-	if len(g.args) > 0 {
+	if len(g.args) > 0 && !g.skipArgLoop {
 		g.imports = append(g.imports, "os")
 	}
 	if g.runInReadLoop {
