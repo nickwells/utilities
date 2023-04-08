@@ -2,6 +2,22 @@
 
 # Notes
 
+## Gosh \- arguments to the script
+Arguments can be supplied to the generated program\. These can be given
+following the end\-of\-parameters marker &apos;\-\-&apos; \(or
+&apos;no\-more\-params&apos;\)\. The default behaviour is to generate a loop
+over the arguments if any are present; this can be avoided by giving the
+&apos;dont\-loop\-on\-args&apos; parameter\.
+
+
+
+Additionally, if the generated program is running in a readloop \(see the
+parameters in group: &apos;cmd\-readloop&apos;\) any arguments will be treated
+as filenames to be processed\. Each filename will be checked for existence and
+edited to be an absolute path if it is not already\. It is an error if the same
+file name appears twice\.
+
+
 ## Gosh \- code sections
 The program that gosh will generate is split up into several sections and you
 can add code to these sections\. The sections are:
@@ -31,9 +47,9 @@ appears after before and after\-inner appears before after
 ## Gosh \- exit status values
 if gosh has a problem when building the program it will exit with a non\-zero
 exit status\. Otherwise it will exit with the exit status of the generated
-program \(unless it executed due to a signal\)\. Also, if gosh is in a loop
-where it edits the program repeatedly it will not exit when the program exits
-and so the exit status will be lost\. Various exit statuses indicate different
+program \(unless it was ended by a signal\)\. Also, if gosh is in a loop where
+it edits the program repeatedly it will not exit when the program exits and so
+the exit status will be lost\. Various exit statuses indicate different
 problems\.
 
 
@@ -44,18 +60,6 @@ the &apos;pre\-check&apos; parameter\) have failed
 \- 11: indicates that the building of the executable has failed
 
 \- 12: indicates that some other gosh stage has failed
-
-
-## Gosh \- filenames
-A list of filenames to be processed can be given at the end of the command line
-\(following \-\-\)\. Each filename will be edited to be an absolute path if it
-is not already; the current directory will be added at the start of the path\.
-If any files are given then some parameter for reading them should be given\.
-See the parameters in group: &apos;cmd\-readloop&apos;\.
-
-
-
-Note that it is an error if the same file name appears twice\.
 
 
 ## Gosh \- in\-place editing
@@ -103,40 +107,20 @@ parameters so you can add extra code to be run\.
 
 
 
-You can skip the stage where import statements are populated by passing the
-&apos;dont\-populate\-imports&apos; parameter\. This makes your script run a
-little faster and, more importantly, removes the dependency on additional
-commands \(like gopls or goimports\)\. If you skip import generation you will
-need to provide the packages to be imported through &apos;import&apos;
-parameters\.
-
-
-
-You might also want to consider setting the full path of the Go command using
-the &apos;set\-go\-cmd&apos; parameter\. This will remove the need for the
-person running the shebang script to even have the go command in their path\.
-
-
-
-These parameters to the shebang script cannot be passed on the &apos;\#\!&apos;
-line which must only contain the gosh command and \-exec\-file\. The parameters
-must be given on lines immediately after the &apos;\#\!&apos; line and must
-start with &apos;\#gosh\.param:&apos;\. The form of these lines after the
-&apos;\#gosh\.param:&apos; is as for a config file: each parameter and its value
-\(if any\) on a separate line with the parameter name and value separated by
-&apos;=&apos;\. There must be no blank lines between the &apos;\#\!&apos; line
-and the &apos;\#gosh\.param:&apos; lines\. All lines at the start of the file
-starting with a &apos;\#&apos; are removed\.
+Parameters to the shebang script cannot be passed on the &apos;\#\!&apos; line
+which must only contain the gosh command and \-exec\-file\. The parameters must
+be given on lines immediately after the &apos;\#\!&apos; line and must start
+with &apos;\#gosh\.param:&apos;\.
 ### See Parameters
 * after\-file
 * before\-file
-* dont\-populate\-imports
 * exec\-file
 * global\-file
-* import
 * inner\-after\-file
 * inner\-before\-file
-* set\-go\-cmd
+
+### See Note
+* Gosh \- shebang script parameters
 
 
 
