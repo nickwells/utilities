@@ -9,15 +9,16 @@ import (
 )
 
 const (
-	noteInPlaceEdit      = "Gosh - in-place editing"
-	noteFilenames        = "Gosh - filenames"
-	noteVars             = "Gosh - variables"
-	noteSnippets         = "Gosh - snippets"
-	noteSnippetsComments = "Gosh - snippet comments"
-	noteSnippetsDirs     = "Gosh - snippet directories"
-	noteCodeSections     = "Gosh - code sections"
-	noteShebangScripts   = "Gosh - shebang scripts"
-	noteGoshExitStatus   = "Gosh - exit status values"
+	noteInPlaceEdit         = "Gosh - in-place editing"
+	noteFilenames           = "Gosh - filenames"
+	noteVars                = "Gosh - variables"
+	noteSnippets            = "Gosh - snippets"
+	noteSnippetsComments    = "Gosh - snippet comments"
+	noteSnippetsDirs        = "Gosh - snippet directories"
+	noteCodeSections        = "Gosh - code sections"
+	noteShebangScripts      = "Gosh - shebang scripts"
+	noteShebangScriptParams = "Gosh - shebang script parameters"
+	noteGoshExitStatus      = "Gosh - exit status values"
 )
 
 // alternativeSnippetPartNames returns a string describing alternative names
@@ -220,42 +221,83 @@ func addNotes(ps *param.PSet) error {
 			" interpreted as gosh parameters so you can add extra"+
 			" code to be run."+
 			"\n\n"+
-			"You can skip the stage where import statements are"+
-			" populated by passing"+
-			" the '"+paramNameDontPopImports+"' parameter."+
-			" This makes your script run a little faster"+
-			" and, more importantly, removes the dependency on"+
-			" additional commands (like gopls or goimports)."+
-			" If you skip import generation you will need to"+
-			" provide the packages to be imported"+
-			" through '"+paramNameImport+"' parameters."+
-			"\n\n"+
-			"You might also want to consider setting the full"+
-			" path of the Go command using"+
-			" the '"+paramNameSetGoCmd+"' parameter. This will"+
-			" remove the need for the person running the"+
-			" shebang script to even have the go command in"+
-			" their path."+
-			"\n\n"+
-			"These parameters to the shebang script cannot be"+
+			"Parameters to the shebang script cannot be"+
 			" passed on the '#!' line which must only contain"+
 			" the gosh command and -"+paramNameExecFile+"."+
 			" The parameters must be given on lines immediately after"+
-			" the '#!' line and must start with '"+shebangGoshParam+"'."+
-			" The form of these lines after the '"+shebangGoshParam+"'"+
-			" is as for a config file: each parameter and its value (if any)"+
-			" on a separate line with the parameter name and value"+
-			" separated by '='. There must be no blank lines between"+
-			" the '#!' line and the '"+shebangGoshParam+"' lines. All"+
-			" lines at the start of the file starting with a '#' are"+
-			" removed.",
+			" the '#!' line and must start with '"+shebangGoshParam+"'.",
 		param.NoteSeeParam(
 			paramNameBeforeFile, paramNameExecFile,
 			paramNameAfterFile, paramNameGlobalFile,
-			paramNameInnerBeforeFile, paramNameInnerAfterFile,
-			paramNameDontPopImports, paramNameImport,
-			paramNameSetGoCmd),
+			paramNameInnerBeforeFile, paramNameInnerAfterFile),
+		param.NoteSeeNote(noteShebangScriptParams),
 	)
+
+	ps.AddNote(noteShebangScriptParams,
+		"When writing a shebang script it is useful to set some parameters:"+
+			"\n\n"+
+			"- "+paramNameImport+"=package - use the import parameter to"+
+			" explicitly set the packages to be entered in the import"+
+			" statement."+
+			"\n"+
+			"- "+paramNameDontPopImports+" - if all the necessary import"+
+			" values have been given there is no need to run the"+
+			" auto-importer. This will reduce the dependencies of your"+
+			" script and make it more robust and faster to start."+
+			"\n"+
+			"- "+paramNameDontRunGoModTidy+" - similarly, if there are no"+
+			" packages used outside of the standard library then there is"+
+			" no need to run 'go mod tidy' this will make the script more"+
+			" robust and faster to start"+
+			"\n"+
+			"- "+paramNameSetGoCmd+"=path-to-go - set the full path to the"+
+			" 'go' command. Then the script can be executed even by a"+
+			" user without the 'go' program in their PATH."+
+			"\n"+
+			"- "+paramNameSetExecName+"=script-name - setting the name of the"+
+			" gosh-generated executable to the name of the script will"+
+			" make it easier to make sense of some error messages and"+
+			" will also ensure that the script name is visible in process"+
+			" listings. If you don't do this the executable will be"+
+			" called '"+dfltExecName+"'"+
+			"\n"+
+			"- "+paramNameShowFilename+"=false - the default behaviour"+
+			" when the program name is set (with"+
+			" the '"+paramNameExecFile+"' parameter) is to also configure"+
+			" gosh to keep the generated files and print their"+
+			" names. Force the behaviour back to the default to avoid"+
+			" leaving lots of numerous redundant directories and files"+
+			" lying around."+
+			"\n"+
+			"- "+paramNameNoMoreParams+" - this will stop the processing"+
+			" of command-line arguments and will force any arguments"+
+			" given to the shebang script to be processed by the"+
+			" generated program rather than by gosh. It prevents the"+
+			" caller of the script from adding code to the script"+
+			"\n\n"+
+			"Parameters you might want to add"+
+			"\n"+
+			"- "+paramNameDontLoopOnArgs+" - without this any parameters"+
+			" given to the script will cause gosh to loop over these"+
+			" arguments one at a time. With this gosh will generate the"+
+			" same program regardless of whether arguments are present."+
+			"\n\n"+
+			"These parameters should be set in the script, immediately"+
+			" following the '#!' line with lines"+
+			" starting '"+shebangGoshParam+"'. The first line"+
+			" where the first character is not '#' will stop parameter"+
+			" processing and the remainder of the file will be copied"+
+			" into the gosh-generated program."+
+			" The form of these lines after the '"+shebangGoshParam+"'"+
+			" is as for a config file: each parameter and its value (if any)"+
+			" on a separate line with the parameter name and value"+
+			" separated by '='. There must be no blank lines or any lines"+
+			" not starting with '#' between"+
+			" the '#!' line and the '"+shebangGoshParam+"' lines. All"+
+			" lines at the start of the file starting with a '#' are"+
+			" removed.",
+		param.NoteSeeNote(noteShebangScripts),
+		param.NoteAttrs(param.DontShowNoteInStdUsage))
 
 	ps.AddNote(noteGoshExitStatus,
 		"if gosh has a problem when building the program it will exit"+
