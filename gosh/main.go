@@ -313,6 +313,11 @@ func (g *Gosh) executeProgram() {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	env := os.Environ()
+	if g.clearEnv {
+		env = []string{}
+	}
+	cmd.Env = g.populateEnv(env)
 
 	g.exitStatus = 0
 	err := cmd.Run()

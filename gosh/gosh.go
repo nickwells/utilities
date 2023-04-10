@@ -122,6 +122,9 @@ type Gosh struct {
 
 	buildArgs []string
 
+	env      []string
+	clearEnv bool
+
 	exitStatus int
 }
 

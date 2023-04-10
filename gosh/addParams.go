@@ -69,6 +69,9 @@ const (
 	paramNameDontExec       = "dont-exec"
 	paramNameNoMoreParams   = "no-more-params"
 	paramNameDontLoopOnArgs = "dont-loop-on-args"
+
+	paramNameEnv      = "env"
+	paramNameClearEnv = "clear-env"
 )
 
 var readloopParamNames = []string{
@@ -878,6 +881,33 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				"g-p", "g-pf", "g-pln"),
 			param.PostAction(scriptPAF(g, &codeVal, globalSect)),
 			param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
+		)
+
+		// Env params
+
+		ps.Add(paramNameEnv,
+			psetter.StrListAppender{
+				Value: &g.env,
+				Checks: []check.String{
+					check.StringLength[string](check.ValGT(0)),
+					check.StringContains[string]("="),
+				},
+			},
+			"provide values to be added to the environment when the"+
+				" generated program is run.",
+			param.SeeAlso(paramNameClearEnv),
+			param.ValueName("key=val"),
+		)
+
+		ps.Add(paramNameClearEnv,
+			psetter.Bool{Value: &g.clearEnv},
+			"clear environment before the generated program is run."+
+				" Unfortunately a completely empty environment will be"+
+				" automatically populated by the Go exec package with"+
+				" the environment of the calling program. Consequently "+
+				"'_' is always set to the full path of the generated"+
+				" executable.",
+			param.SeeAlso(paramNameEnv),
 		)
 
 		// Miscellaneous other params
