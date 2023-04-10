@@ -320,7 +320,10 @@ func addNotes(ps *param.PSet) error {
 			" that the building of the executable has failed"+
 			"\n"+
 			"- "+strconv.Itoa(goshExitStatusMisc)+": indicates"+
-			" that some other gosh stage has failed")
+			" that some other gosh stage has failed"+
+			"\n"+
+			"- "+strconv.Itoa(goshExitStatusRunFail)+": indicates"+
+			" that the built executable could not be run")
 
 	return nil
 }

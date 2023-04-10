@@ -330,6 +330,8 @@ func (g *Gosh) executeProgram() {
 			verbose.Println(intro, " Program interrupted")
 		default:
 			fmt.Println("Error:", err.Error())
+			g.exitStatus = goshExitStatusRunFail
+			g.dontCleanup = true
 		}
 	}
 }

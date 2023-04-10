@@ -61,6 +61,8 @@ the &apos;pre\-check&apos; parameter\) have failed
 
 \- 12: indicates that some other gosh stage has failed
 
+\- 13: indicates that the built executable could not be run
+
 
 ## Gosh \- in\-place editing
 The files given for editing are checked to make sure that they all exist, that

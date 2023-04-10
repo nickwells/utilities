@@ -40,6 +40,7 @@ const (
 	goshExitStatusPreCheck = 10 + iota
 	goshExitStatusBuildFail
 	goshExitStatusMisc
+	goshExitStatusRunFail
 )
 
 type expandFunc func(*Gosh, string) ([]string, error)
