@@ -28,25 +28,7 @@ const (
 	usedSpStr   = "used"
 	fileCntStr  = "totalFiles"
 	freeFCntStr = "freeFiles"
-	maxNameStr  = "maxNameLen"
-	flagsStr    = "flags"
 )
-
-const (
-	maxFlagsLen = 30
-)
-
-var mountFlags = map[int64]string{
-	unix.MS_MANDLOCK:    "mandatory locking permitted",
-	unix.MS_NOATIME:     "access times not updated",
-	unix.MS_NODEV:       "no device special file access",
-	unix.MS_NODIRATIME:  "directory access times not updated",
-	unix.MS_NOEXEC:      "program execution disallowed",
-	unix.MS_NOSUID:      "set-user/group-id bits ignored",
-	unix.MS_RDONLY:      "mounted readonly",
-	unix.MS_RELATIME:    "atime is relative to mtime/ctime",
-	unix.MS_SYNCHRONOUS: "writes are synched immediately",
-}
 
 // valFunc is the type of a fieldVal function in the fieldInfo struct
 type valFunc func(name string, s *unix.Statfs_t) any
@@ -156,34 +138,6 @@ var fiMap = map[string]fieldInfo{
 			return col.New(&colfmt.Int{W: 12}, "files", "remaining")
 		},
 	},
-	maxNameStr: {
-		fieldVal: func(name string, s *unix.Statfs_t) any {
-			return s.Namelen
-		},
-		format:   func() string { return "%d" },
-		shortFmt: func() string { return "%d" },
-		col: func(_ int) *col.Col {
-			return col.New(&colfmt.Int{W: 4}, "max file", "name length")
-		},
-	},
-	flagsStr: {
-		fieldVal: func(name string, s *unix.Statfs_t) any {
-			rval := ""
-			sep := ""
-			for f, flagName := range mountFlags {
-				if (s.Flags & f) != 0 {
-					rval += sep + flagName
-					sep = ", "
-				}
-			}
-			return rval
-		},
-		format:   func() string { return "%s" },
-		shortFmt: func() string { return "%s" },
-		col: func(_ int) *col.Col {
-			return col.New(colfmt.String{W: maxFlagsLen}, "FS", "flags")
-		},
-	},
 }
 
 var allowedFields = psetter.AllowedVals{
@@ -194,8 +148,6 @@ var allowedFields = psetter.AllowedVals{
 	usedSpStr:   "the amount of disk space used",
 	fileCntStr:  "the number of files on the filesystem",
 	freeFCntStr: "the number of files that can still be created",
-	maxNameStr:  "the maximum length of filenames",
-	flagsStr:    "show the mount flags",
 }
 
 var fields = []string{
@@ -322,6 +274,9 @@ func getFieldInfo(f string) fieldInfo {
 }
 
 func main() {
+	addAllowedFields()
+	addFieldInfo()
+
 	ps := paramset.NewOrDie(
 		versionparams.AddParams,
 
