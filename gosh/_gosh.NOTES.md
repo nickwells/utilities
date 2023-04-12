@@ -13,9 +13,16 @@ over the arguments if any are present; this can be avoided by giving the
 
 Additionally, if the generated program is running in a readloop \(see the
 parameters in group: &apos;cmd\-readloop&apos;\) any arguments will be treated
-as filenames to be processed\. Each filename will be checked for existence and
-edited to be an absolute path if it is not already\. It is an error if the same
-file name appears twice\.
+as filenames to be processed\.
+
+\- Each filename will be checked for existence and an error reported if it does
+not exist\.
+
+\- It is an error if the same file name appears twice\.
+
+\- If the program is being generated to perform in\-place editing \(see the
+parameter &apos;in\-place\-edit&apos;\) then an error is reported if a file with
+the same name plus a &apos;\.orig&apos; extension exists\.
 
 
 ## Gosh \- code sections

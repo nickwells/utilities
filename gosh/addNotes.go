@@ -66,10 +66,17 @@ func addNotes(ps *param.PSet) error {
 			"Additionally, if the generated program is running in a"+
 			" readloop (see the parameters in"+
 			" group: '"+paramGroupNameReadloop+"') any arguments will be"+
-			" treated as filenames to be processed. Each filename will be"+
-			" checked for existence and edited to be an absolute path if"+
-			" it is not already. It is an error if the same file name"+
-			" appears twice.")
+			" treated as filenames to be processed."+
+			"\n"+
+			"- Each filename will be checked for existence and an error"+
+			" reported if it does not exist."+
+			"\n"+
+			"- It is an error if the same file name appears twice."+
+			"\n"+
+			"- If the program is being generated to perform in-place"+
+			" editing (see the parameter '"+paramNameInPlaceEdit+"') then"+
+			" an error is reported if a file with the same name plus"+
+			" a '"+origExt+"' extension exists.")
 
 	ps.AddNote(noteVars,
 		"gosh will create some variables as it builds the program."+
