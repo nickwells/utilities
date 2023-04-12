@@ -59,6 +59,32 @@ func TestPopulateFilesToRead(t *testing.T) {
 	{
 		var g *Gosh
 		var eg *Gosh
+		remainder := []string{testDataFile1, testDataFile1}
+
+		g = mkTestGosh(func(g *Gosh) {
+			g.runInReadLoop = true
+		})
+		eg = mkTestGosh(func(g *Gosh) {
+			g.runInReadLoop = true
+			g.filesToRead = true
+			g.args = []string{testDataFile1}
+			g.addError("duplicate filename",
+				errors.New("filename \"testdata/file1\""+
+					" has been given more than once,"+
+					" first at 0 and again at 1"))
+		})
+
+		testCases = append(testCases, tcs{
+			ID:      testhelper.MkID("two files, duplicates, run-in-readloop"),
+			files:   remainder,
+			g:       g,
+			expGosh: eg,
+		})
+	}
+
+	{
+		var g *Gosh
+		var eg *Gosh
 		remainder := []string{testHasOrigFile}
 
 		g = mkTestGosh(func(g *Gosh) {
