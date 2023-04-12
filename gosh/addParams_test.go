@@ -19,8 +19,9 @@ const (
 	testCodeFile1 = "testdata/codeFile1"
 	testCodeFile2 = "testdata/codeFile2"
 
-	testDataFile1 = "testdata/file1"
-	testDataFile2 = "testdata/file2"
+	testDataFile1   = "testdata/file1"
+	testDataFile2   = "testdata/file2"
+	testHasOrigFile = "testdata/hasOrigFile"
 
 	testNoSuchFile = "testdata/nonesuch"
 
@@ -62,15 +63,24 @@ func makePSet(g *Gosh) *param.PSet {
 	)
 }
 
+// mkTestGosh makes a new Gosh and calls the goshSetters on it which are
+// expected to set various fields as required.
+func mkTestGosh(goshSetter ...func(g *Gosh)) *Gosh {
+	g := newGosh()
+	for _, gs := range goshSetter {
+		gs(g)
+	}
+	return g
+}
+
 // mkTestParser populates and returns a paramtest.Parser ready to be added to
 // the testcases.
 func mkTestParser(
-	errs errutil.ErrMap, id testhelper.ID, f func(g *Gosh), args ...string,
+	errs errutil.ErrMap, id testhelper.ID, gs func(g *Gosh), args ...string,
 ) paramtest.Parser {
-	actVal := newGosh()
+	actVal := mkTestGosh()
 
-	expVal := newGosh()
-	f(expVal)
+	expVal := mkTestGosh(gs)
 
 	return paramtest.Parser{
 		ID:             id,
@@ -365,43 +375,81 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 					` parameter but no filenames have been given`+
 					` (they should be supplied following "--")`))
 		testCases = append(testCases,
-			mkTestParser(parseErrs, testhelper.MkID(""), func(g *Gosh) {
-				g.runInReadLoop = true
-				g.inPlaceEdit = true
-			}, p))
+			mkTestParser(parseErrs,
+				testhelper.MkID("in-place edit, no files"),
+				func(g *Gosh) {
+					g.runInReadLoop = true
+					g.inPlaceEdit = true
+				}, p))
 
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
-				g.runInReadLoop = true
-				g.inPlaceEdit = true
-				g.errMap.AddError("file check", errors.New(noSuchFileErrStr))
-			}, p, "--", testNoSuchFile))
+			mkTestParser(nil,
+				testhelper.MkID("in-place edit, bad file"),
+				func(g *Gosh) {
+					g.runInReadLoop = true
+					g.inPlaceEdit = true
+					g.errMap.AddError("file check",
+						errors.New(noSuchFileErrStr))
+				}, p, "--", testNoSuchFile))
 
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
-				g.runInReadLoop = true
-				g.inPlaceEdit = true
-				g.filesToRead = true
-				g.args = []string{testDataFile1, testDataFile2}
-			}, p, "--", testDataFile1, testDataFile2))
+			mkTestParser(nil,
+				testhelper.MkID("in-place edit, has orig file"),
+				func(g *Gosh) {
+					g.runInReadLoop = true
+					g.inPlaceEdit = true
+					g.errMap.AddError("original file check",
+						errors.New("path: \""+
+							testHasOrigFile+
+							".orig\" shouldn't exist but does"))
+				}, p, "--", testHasOrigFile))
+
+		testCases = append(testCases,
+			mkTestParser(nil,
+				testhelper.MkID("in-place edit, good args"),
+				func(g *Gosh) {
+					g.runInReadLoop = true
+					g.inPlaceEdit = true
+					g.filesToRead = true
+					g.args = []string{testDataFile1, testDataFile2}
+				}, p, "--", testDataFile1, testDataFile2))
 	}
 
 	for _, p := range []string{
-		"-run-in-readloop",
+		"-" + paramNameReadloop,
 		"-n",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
-				g.runInReadLoop = true
-				g.errMap.AddError("file check", errors.New(noSuchFileErrStr))
-			}, p, "--", testNoSuchFile))
+			mkTestParser(nil,
+				testhelper.MkID("run-in-readloop - bad file"),
+				func(g *Gosh) {
+					g.runInReadLoop = true
+					g.errMap.AddError("file check",
+						errors.New(noSuchFileErrStr))
+				}, p, "--", testNoSuchFile))
 
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
-				g.runInReadLoop = true
-				g.filesToRead = true
-				g.args = []string{testDataFile1, testDataFile2}
-			}, p, "--", testDataFile1, testDataFile2))
+			mkTestParser(nil,
+				testhelper.MkID("run-in-readloop - good files"),
+				func(g *Gosh) {
+					g.runInReadLoop = true
+					g.filesToRead = true
+					g.args = []string{testDataFile1, testDataFile2}
+				}, p, "--", testDataFile1, testDataFile2))
+
+		testCases = append(testCases,
+			mkTestParser(nil,
+				testhelper.MkID("run-in-readloop - duplicate files"),
+				func(g *Gosh) {
+					g.runInReadLoop = true
+					g.filesToRead = true
+					g.args = []string{testDataFile1}
+					g.errMap.AddError("duplicate filename",
+						errors.New(`filename "`+
+							testDataFile1+
+							`" has been given more than once,`+
+							` first at 0 and again at 1`))
+				}, p, "--", testDataFile1, testDataFile1))
 	}
 
 	for _, p := range []string{
