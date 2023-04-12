@@ -554,9 +554,9 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 					" (after "+ps.TerminalParam()+") and replace its"+
 					" contents with whatever is printed to the '_w' file."+
 					" The original file will be kept in a copy with the"+
-					" original name and  '.orig' extension. If any of the"+
-					" supplied files already has a '.orig' copy then the"+
-					" file will be reported and execution will stop",
+					" original name and a '"+origExt+"' extension. If any"+
+					" of the supplied files already has a '"+origExt+"'"+
+					" copy this is an error.",
 				param.AltNames("i"),
 				param.PostAction(paction.SetBool(&g.runInReadLoop, true)),
 				param.GroupName(paramGroupNameReadloop),
