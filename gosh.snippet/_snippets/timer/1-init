@@ -7,9 +7,12 @@
 // snippet: Note: the default values
 // snippet: Expect: timer/2-start
 // snippet: Expect: timer/3-end
-// snippet: Tag: Declares:__repeats  - number of times to repeat timings
-// snippet: Tag: Declares:__trials   - number of trials to time
-// snippet: Tag: Declares:__showHist - set true for a histogram of times
+// snippet: Import: time
+// snippet: Tag: Declares:__repeats   - number of times to repeat timings
+// snippet: Tag: Declares:__trials    - number of trials to time
+// snippet: Tag: Declares:__showHist  - set true for a histogram of times
+// snippet: Tag: Declares:__timeUnits - the units to record the times in
 var __repeats int64 = 1
 var __trials int64 = 1e6
 var __showHist bool
+var __timeUnits = time.Nanosecond

@@ -5,7 +5,7 @@
 // snippet: Import: time
 // snippet: follows: timer/1-init
 // snippet: follows: timer/2-start
-			__s.Add(float64(time.Since(__start)))
+			__s.Add(float64(time.Since(__start) / __timeUnits))
 		}
 		fmt.Println(__s)
 		if __showHist {

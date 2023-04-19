@@ -6,10 +6,12 @@
 // snippet: Import: time
 // snippet: follows: timer/1-init
 // snippet: Expect: timer/3-end
+// snippet: Tag: Declares: __s     - a simple statistic aggregator
+// snippet: Tag: Declares: __start - the time just before the code to be timed
 	for __repeats > 0 {
 		__repeats--
 
-		__s := smpls.NewStatOrPanic("nanoseconds")
+		__s := smpls.NewStatOrPanic(__timeUnits.String())
 
 		for __i := int64(0); __i < __trials; __i++ {
 			__start := time.Now()
