@@ -18,8 +18,8 @@ github.com/nickwells/gogen.mod v1.11.8 h1:Mz3iEL5v4U8xIdpmx+PNWNIjatZslCZ9AMt/Jw
 github.com/nickwells/gogen.mod v1.11.8/go.mod h1:lfkVuLzvo0Ps/daiBlrQLQN3uTOvoVv31qDy6vB2syA=
 github.com/nickwells/location.mod v1.2.25 h1:mFXVY8f2dnWoqQpO/UiUmxwnaEshoO8GtRslA7fMH1c=
 github.com/nickwells/location.mod v1.2.25/go.mod h1:OEiM0xl/zF2RuRLqDaV0OEmhbVZnxFCU1DCEvHnW1ks=
-github.com/nickwells/mathutil.mod/v2 v2.0.5 h1:8jtTf9Oh6XYxb8t+YIxgexR9iXzUAlPQ0s9vuPyZ3Wg=
-github.com/nickwells/mathutil.mod/v2 v2.0.5/go.mod h1:B5DGbNF2opvtSXREqmmYE4zC8Ijwu4g1HoWEFkTF8Tg=
+github.com/nickwells/mathutil.mod/v2 v2.1.0 h1:nxnNjMocUk6e3Zd7GeC+mJpI3ahKvtNVYZmzi6PJTGI=
+github.com/nickwells/mathutil.mod/v2 v2.1.0/go.mod h1:B5DGbNF2opvtSXREqmmYE4zC8Ijwu4g1HoWEFkTF8Tg=
 github.com/nickwells/pager.mod v1.0.11 h1:actfWhNh1TPtRpMPwJcRvYeuL2iRd+JQ44l+4KKsoJg=
 github.com/nickwells/pager.mod v1.0.11/go.mod h1:rRmwJHKd/xaSpi/xqJv7P7IJUtFeoJ9s/8yoJ+mh+tM=
 github.com/nickwells/param.mod/v5 v5.16.0 h1:lJwv10TS6wojLAVrijippMk81KXPTBiKCOMhtbL5z6w=
@@ -47,8 +47,8 @@ github.com/nickwells/versionparams.mod v1.1.12 h1:zGH/0Scdu3Fq+pc0oOgd04zrh52g6+
 github.com/nickwells/versionparams.mod v1.1.12/go.mod h1:p8c8kOA1yog7PWy6uQhnFQrg2py2Dc3tmI22AG9vhV0=
 github.com/nickwells/xdg.mod v1.0.9 h1:IQhytP6QBCC2xrSVXTE0GDbYJSD8E25H6sSqd7jtCHA=
 github.com/nickwells/xdg.mod v1.0.9/go.mod h1:WbQC4EaiIUSCgzmgYCqGq1zhYnWDe+pBODhx8HzlStM=
-golang.org/x/exp v0.0.0-20230321023759-10a507213a29 h1:ooxPy7fPvB4kwsA2h+iBNHkAbp/4JxTSwCmvdjEYmug=
-golang.org/x/exp v0.0.0-20230321023759-10a507213a29/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
+golang.org/x/exp v0.0.0-20230418202329-0354be287a23 h1:4NKENAGIctmZYLK9W+X1kDK8ObBFqOSCJM6WE7CvkJY=
+golang.org/x/exp v0.0.0-20230418202329-0354be287a23/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
 golang.org/x/sys v0.7.0 h1:3jlCCIQZPdOYu1h8BkNvLz8Kgwtae2cagcG/VamtZRU=
 golang.org/x/sys v0.7.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.7.0 h1:BEvjmm5fURWqcfbSKTdpkDXYBrUS1c0m8agp14W48vQ=
