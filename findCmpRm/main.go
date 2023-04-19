@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"os/exec"
 	"sort"
@@ -16,6 +15,7 @@ import (
 	"github.com/nickwells/dirsearch.mod/v2/dirsearch"
 	"github.com/nickwells/english.mod/english"
 	"github.com/nickwells/filecheck.mod/filecheck"
+	"github.com/nickwells/mathutil.mod/v2/mathutil"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/twrap.mod/twrap"
@@ -154,7 +154,7 @@ func (s *Status) cmpRmFiles(filenames []string) {
 	}
 
 	maxNameLen := getMaxNameLen(shortNames)
-	digits := int(math.Ceil(math.Log10(float64(len(filenames) + 1))))
+	digits := mathutil.Digits(int64(len(filenames)) + 1)
 	nameFormat := fmt.Sprintf("    (%%%dd / %%%dd) %%%d.%ds: ",
 		digits, digits, maxNameLen, maxNameLen)
 	s.indent = len(fmt.Sprintf(nameFormat, 0, 0, ""))
