@@ -30,17 +30,6 @@ func addParams(ps *param.PSet) error {
 		param.Attrs(param.DontShowInStdUsage),
 	)
 
-	ps.Add("recursive", psetter.Bool{Value: &searchSubDirs},
-		"this makes the command search sub-directories for matching"+
-			" files, not just the given directory."+
-			"\n\n"+
-			"Note: this is already the default behaviour so this"+
-			" parameter is redundant but it is kept for backwards"+
-			" compatibility.",
-		param.AltNames("r"),
-		param.Attrs(param.DontShowInStdUsage),
-	)
-
 	ps.Add("extension",
 		psetter.String{
 			Value: &fileExtension,
@@ -53,15 +42,9 @@ func addParams(ps *param.PSet) error {
 	)
 
 	ps.Add("tidy", psetter.Bool{Value: &tidyFiles},
-		"this makes the command tidy any redundant files."+
+		"this makes the command remove any duplicate files."+
 			"\n\n"+
-			"Redundant means files where"+
-			"\n - there is no F corresponding to the F.orig file"+
-			"\n - or the F corresponding to the F.orig is"+
-			" a directory not a file"+
-			"\n - or F is identical to F.orig."+
-			"\n\n"+
-			" Tidy means to remove the F.orig file.",
+			"This will remove the F.orig file corresponding to the file F.",
 	)
 
 	ps.Add("diff-cmd",
