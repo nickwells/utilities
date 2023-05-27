@@ -13,7 +13,6 @@ import (
 	"github.com/nickwells/cli.mod/cli/responder"
 	"github.com/nickwells/dirsearch.mod/v2/dirsearch"
 	"github.com/nickwells/english.mod/english"
-	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/mathutil.mod/v2/mathutil"
 	"github.com/nickwells/param.mod/v5/param"
 	"github.com/nickwells/param.mod/v5/param/paramset"
@@ -28,45 +27,91 @@ const (
 	dfltExtension = ".orig"
 	dfltDir       = "."
 	dfltDiffCmd   = "diff"
+	dfltLessCmd   = "less"
 
 	filenameIndent = 8
 )
-
-var (
-	searchSubDirs = true
-	tidyFiles     bool
-)
-
-var (
-	searchDir     = dfltDir
-	fileExtension = dfltExtension
-
-	diffCmdName = dfltDiffCmd
-	lessCmdName = "less"
-
-	diffCmdParams = []string{}
-	lessCmdParams = []string{}
-)
-
-// fileErr holds details of errors detected when processing files
-type fileErr struct {
-	name string
-	err  error
-}
 
 // Status holds counts of various operations on and problems with the files
 type Status struct {
 	fileCount                                           int
 	dupFileCount                                        int
 	badFileCount                                        int
-	fileErr, diffErr                                    int
+	diffErr                                             int
 	compared, skipped, deleted, reverted, kept, ignored int
 	deleteFail, revertFail                              int
-	shouldQuit, revertAll, deleteAll                    bool
+}
 
-	twc        *twrap.TWConf
-	fileChecks filecheck.Provisos
-	indent     int
+type DupAction string
+
+const (
+	DADelete = DupAction("delete")
+	DAQuery  = DupAction("query")
+	DAKeep   = DupAction("keep")
+)
+
+type CmpAction string
+
+const (
+	CAShowDiff = CmpAction("show-diffs")
+	CAQuery    = CmpAction("query")
+	CAKeep     = CmpAction("keep-all")
+	CADelete   = CmpAction("delete-all")
+	CARevert   = CmpAction("revert-all")
+)
+
+// Prog holds program parameters and status
+type Prog struct {
+	// parameters
+	searchDir     string
+	fileExtension string
+
+	diffCmdName   string
+	diffCmdParams []string
+
+	lessCmdName   string
+	lessCmdParams []string
+
+	searchSubDirs bool
+	tidyFiles     bool
+
+	dupAction DupAction
+	cmpAction CmpAction
+
+	// display
+	twc    *twrap.TWConf
+	indent int
+
+	// record dynamic behaviour choices
+	shouldQuit bool
+	revertAll  bool
+	deleteAll  bool
+
+	// record the behaviour and outcomes
+	status Status
+}
+
+// NewProg returns a new Prog instance with the default values set
+func NewProg() *Prog {
+	return &Prog{
+		searchDir:     dfltDir,
+		fileExtension: dfltExtension,
+
+		diffCmdName: dfltDiffCmd,
+		lessCmdName: dfltLessCmd,
+
+		searchSubDirs: true,
+
+		dupAction: DAQuery,
+
+		twc: twrap.NewTWConfOrPanic(),
+	}
+}
+
+// badFile holds details of errors detected when processing files
+type badFile struct {
+	name string
+	err  error
 }
 
 // reportVal checks that n is greater than zero, reports the value and
@@ -80,46 +125,45 @@ func reportVal(n int, name string, indent int) bool {
 }
 
 // Report will print out the Status structure
-func (s Status) Report() {
-	allFileCount := s.fileCount + s.dupFileCount + s.badFileCount
+func (prog Prog) Report() {
+	allFileCount := prog.status.fileCount +
+		prog.status.dupFileCount +
+		prog.status.badFileCount
 	reportVal(allFileCount,
 		english.Plural("file", allFileCount)+" found", 0)
 
 	if allFileCount == 0 {
 		return
 	}
-	reportVal(s.badFileCount,
-		"   problem "+english.Plural("file", s.badFileCount), 4)
-	reportVal(s.dupFileCount,
-		" duplicate "+english.Plural("file", s.dupFileCount), 4)
-	reportVal(s.fileCount,
-		"comparable "+english.Plural("file", s.fileCount), 4)
+	reportVal(prog.status.badFileCount,
+		"   problem "+english.Plural("file", prog.status.badFileCount), 4)
+	reportVal(prog.status.dupFileCount,
+		" duplicate "+english.Plural("file", prog.status.dupFileCount), 4)
+	reportVal(prog.status.fileCount,
+		"comparable "+english.Plural("file", prog.status.fileCount), 4)
 
-	reportVal(s.skipped, "skipped", 0)
-	if reportVal(s.ignored, "ignored due to error", 0) {
-		fmt.Println("\tof which:")
-		reportVal(s.fileErr, "due to file error", 8)
-		reportVal(s.diffErr, "due to diff error", 8)
-	}
+	reportVal(prog.status.skipped, "skipped", 0)
+	reportVal(prog.status.ignored, "ignored due to error", 0)
 
-	reportVal(s.compared, "compared", 0)
-	reportVal(s.deleted, "deleted", 0)
-	reportVal(s.reverted, "reverted", 0)
-	reportVal(s.kept, "kept", 0)
-	if s.revertAll {
+	reportVal(prog.status.compared, "compared", 0)
+	reportVal(prog.status.deleted, "deleted", 0)
+	reportVal(prog.status.reverted, "reverted", 0)
+	reportVal(prog.status.kept, "kept", 0)
+	if prog.revertAll {
 		fmt.Printf("Some files were reverted without comparison\n")
 	}
-	if s.shouldQuit {
+	if prog.shouldQuit {
 		fmt.Printf("Quit before end\n")
 	}
 }
 
 func main() {
+	prog := NewProg()
 	ps := paramset.NewOrDie(
 		verbose.AddParams,
 		versionparams.AddParams,
 
-		addParams,
+		addParams(prog),
 
 		addExamples,
 		addRefs,
@@ -141,32 +185,24 @@ func main() {
 
 	ps.Parse()
 
-	filenames, duplicates, badFiles := getFiles()
+	filenames, duplicates, badFiles := prog.getFiles()
 
-	s := &Status{
-		twc:          twrap.NewTWConfOrPanic(),
-		fileChecks:   filecheck.FileExists(),
-		fileCount:    len(filenames),
-		dupFileCount: len(duplicates),
-		badFileCount: len(badFiles),
-	}
-
-	s.showBadFiles(badFiles)
-	s.showDuplicates(duplicates)
-
-	s.cmpRmFiles(filenames)
+	prog.showBadFiles(badFiles)
+	prog.showDuplicates(duplicates)
+	prog.cmpRmFiles(filenames)
 
 	fmt.Println()
-	s.Report()
+	prog.Report()
 }
 
 // shortNames returns a list of filenames with the search directory name
 // removed. It also returns the maximum length of the names
-func shortNames(filenames []string) ([]string, int) {
+func (prog Prog) shortNames(filenames []string) ([]string, int) {
 	shortNames := make([]string, 0, len(filenames))
 	maxLen := 0
 	for _, fn := range filenames {
-		shortName := strings.TrimPrefix(fn, searchDir+string(os.PathSeparator))
+		shortName := strings.TrimPrefix(fn,
+			prog.searchDir+string(os.PathSeparator))
 		if len(shortName) > maxLen {
 			maxLen = len(shortName)
 		}
@@ -177,20 +213,21 @@ func shortNames(filenames []string) ([]string, int) {
 }
 
 // showBadFiles displays the list of files for which problems were detected
-func (s *Status) showBadFiles(badFiles []fileErr) {
+func (prog *Prog) showBadFiles(badFiles []badFile) {
 	if len(badFiles) == 0 {
 		return
 	}
+	prog.status.badFileCount = len(badFiles)
 
 	filenames := make([]string, 0, len(badFiles))
 	for _, fe := range badFiles {
 		filenames = append(filenames, fe.name)
 	}
-	shortNames, maxNameLen := shortNames(filenames)
+	shortNames, maxNameLen := prog.shortNames(filenames)
 	fmt.Printf("%d problem %s found\n",
 		len(badFiles),
 		english.Plural("file", len(badFiles)))
-	fmt.Println("in", searchDir)
+	fmt.Println("in", prog.searchDir)
 	for i, name := range shortNames {
 		fmt.Printf("%s%*s - %s\n",
 			strings.Repeat(" ", filenameIndent),
@@ -202,21 +239,22 @@ func (s *Status) showBadFiles(badFiles []fileErr) {
 
 // showDuplicates displays the list of duplicate files and prompts the user
 // to delete them
-func (s *Status) showDuplicates(filenames []string) {
+func (prog *Prog) showDuplicates(filenames []string) {
 	if len(filenames) == 0 {
 		return
 	}
+	prog.status.dupFileCount = len(filenames)
 
-	shortNames, _ := shortNames(filenames)
+	shortNames, _ := prog.shortNames(filenames)
 	fmt.Printf("%d duplicate %s found\n",
 		len(filenames),
 		english.Plural("file", len(filenames)))
-	fmt.Println("in", searchDir)
-	s.twc.NoRptPathList(shortNames, filenameIndent)
+	fmt.Println("in", prog.searchDir)
+	prog.twc.NoRptPathList(shortNames, filenameIndent)
 
-	if tidyFiles || s.queryDeleteDuplicates() {
+	if prog.tidyFiles || prog.queryDeleteDuplicates() {
 		for _, nameOrig := range filenames {
-			s.deleteFile(nameOrig)
+			prog.deleteFile(nameOrig)
 		}
 		fmt.Println("Duplicates deleted")
 	}
@@ -225,51 +263,46 @@ func (s *Status) showDuplicates(filenames []string) {
 // cmpRmFiles loops over the files prompting the user to compare each one
 // with the new instance and then asking if the file should be deleted or the
 // new file reverted.
-func (s *Status) cmpRmFiles(filenames []string) {
+func (prog *Prog) cmpRmFiles(filenames []string) {
 	if len(filenames) == 0 {
 		return
 	}
+	prog.status.fileCount = len(filenames)
 
-	shortNames, maxNameLen := shortNames(filenames)
+	shortNames, maxNameLen := prog.shortNames(filenames)
 
 	digits := mathutil.Digits(int64(len(filenames)) + 1)
 	nameFormat := fmt.Sprintf("    (%%%dd / %%%dd) %%%d.%ds: ",
 		digits, digits, maxNameLen, maxNameLen)
-	s.indent = len(fmt.Sprintf(nameFormat, 0, 0, ""))
+	prog.indent = len(fmt.Sprintf(nameFormat, 0, 0, ""))
 
 	fmt.Printf("%d %s found\n",
 		len(filenames),
 		english.Plural("file", len(filenames)))
-	fmt.Println("in", searchDir)
-	s.twc.IdxNoRptPathList(shortNames, filenameIndent)
+	fmt.Println("in", prog.searchDir)
+	prog.twc.IdxNoRptPathList(shortNames, filenameIndent)
 
 	for i, nameOrig := range filenames {
-		nameNew := strings.TrimSuffix(nameOrig, fileExtension)
-		if s.revertAll {
-			s.revertFile(nameOrig, nameNew)
+		nameNew := strings.TrimSuffix(nameOrig, prog.fileExtension)
+		if prog.revertAll {
+			prog.revertFile(nameOrig, nameNew)
 			continue
 		}
-		if s.deleteAll {
-			s.deleteFile(nameOrig)
+		if prog.deleteAll {
+			prog.deleteFile(nameOrig)
 			continue
 		}
 
 		fmt.Printf(nameFormat, i+1, len(filenames), shortNames[i])
 
-		if err := s.fileOK(nameNew); err != nil {
-			fmt.Println("Ignoring due to:", err)
-			s.ignored++
-			continue
+		prog.queryShowDiff(nameOrig, nameNew)
+		if prog.revertAll {
+			prog.revertFile(nameOrig, nameNew)
 		}
-
-		s.queryShowDiff(nameOrig, nameNew)
-		if s.revertAll {
-			s.revertFile(nameOrig, nameNew)
+		if prog.deleteAll {
+			prog.deleteFile(nameOrig)
 		}
-		if s.deleteAll {
-			s.deleteFile(nameOrig)
-		}
-		if s.shouldQuit {
+		if prog.shouldQuit {
 			break
 		}
 	}
@@ -288,29 +321,18 @@ func fileContentsDiffer(f1, f2 []byte) bool {
 	return false
 }
 
-// fileOK checks that the file passes the status checks and returns true if
-// it does and false otherwise
-func (s *Status) fileOK(file string) error {
-	err := s.fileChecks.StatusCheck(file)
-	if err != nil {
-		s.fileErr++
-		return err
-	}
-	return nil
-}
-
 // queryDeleteDuplicates returns true if the user responds that the
 // duplicates should be deleted
-func (s *Status) queryDeleteDuplicates() bool {
+func (prog *Prog) queryDeleteDuplicates() bool {
 	deleteDuplicatesResp := responder.NewOrPanic(
 		"delete all duplicate files",
 		map[rune]string{
 			'y': "to delete all duplicates files with extension " +
-				fileExtension,
+				prog.fileExtension,
 			'n': "to keep these duplicates",
 		},
 		responder.SetDefault('y'),
-		responder.SetIndents(0, s.indent))
+		responder.SetIndents(0, prog.indent))
 
 	response := deleteDuplicatesResp.GetResponseOrDie()
 	fmt.Println()
@@ -320,153 +342,153 @@ func (s *Status) queryDeleteDuplicates() bool {
 // queryShowDiff asks if the differences between the new file and the
 // original should be shown and then acts accordingly, reporting any errors
 // found.
-func (s *Status) queryShowDiff(nameOrig, nameNew string) {
+func (prog *Prog) queryShowDiff(nameOrig, nameNew string) {
 	showDiffResp := responder.NewOrPanic(
 		"Show differences",
 		map[rune]string{
 			'y': "to show differences",
 			'n': "to skip this file",
 			'd': "delete this and all subsequent files" +
-				" with extension: " + fileExtension,
+				" with extension: " + prog.fileExtension,
 			'r': "revert this and all subsequent base" +
 				" files to the contents of" +
-				" the files with extension: " + fileExtension,
+				" the files with extension: " + prog.fileExtension,
 			'q': "to quit",
 		},
 		responder.SetDefault('y'),
-		responder.SetIndents(0, s.indent))
+		responder.SetIndents(0, prog.indent))
 
 	response := showDiffResp.GetResponseOrDie()
 	fmt.Println()
 
 	switch response {
 	case 'y':
-		err := showDiffs(nameOrig, nameNew)
+		err := prog.showDiffs(nameOrig, nameNew)
 		if err != nil {
-			s.twc.Wrap(fmt.Sprintf("Ignoring due to: %v", err), s.indent)
-			s.ignored++
-			s.diffErr++
+			prog.twc.Wrap(fmt.Sprintf("Ignoring due to: %v", err), prog.indent)
+			prog.status.ignored++
+			prog.status.diffErr++
 			return
 		}
-		s.compared++
+		prog.status.compared++
 
-		s.queryDeleteFile(nameOrig, nameNew)
+		prog.queryDeleteFile(nameOrig, nameNew)
 	case 'n':
-		s.skip()
+		prog.skip()
 	case 'r':
-		s.setRevertAll()
+		prog.setRevertAll()
 	case 'd':
-		s.setDeleteAll()
+		prog.setDeleteAll()
 	case 'q':
-		s.setShouldQuit()
+		prog.setShouldQuit()
 	}
 }
 
 // skip reports the skipping of the file
-func (s *Status) skip() {
-	s.verboseMsg("Skipping...")
-	s.skipped++
+func (prog *Prog) skip() {
+	prog.verboseMsg("Skipping...")
+	prog.status.skipped++
 }
 
 // setRevertAll sets the revertAll flag
-func (s *Status) setRevertAll() {
-	s.verboseMsg("Reverting all...")
-	s.revertAll = true
+func (prog *Prog) setRevertAll() {
+	prog.verboseMsg("Reverting all...")
+	prog.revertAll = true
 }
 
 // setDeleteAll sets the deleteAll flag
-func (s *Status) setDeleteAll() {
-	s.verboseMsg("Deleting all...")
-	s.deleteAll = true
+func (prog *Prog) setDeleteAll() {
+	prog.verboseMsg("Deleting all...")
+	prog.deleteAll = true
 }
 
 // setShouldQuit sets the shouldQuit flag
-func (s *Status) setShouldQuit() {
-	s.verboseMsg("Quitting...")
-	s.shouldQuit = true
+func (prog *Prog) setShouldQuit() {
+	prog.verboseMsg("Quitting...")
+	prog.shouldQuit = true
 }
 
 // queryDeleteFile asks if the file should be deleted and then acts
 // accordingly, reporting any errors found.
-func (s *Status) queryDeleteFile(nameOrig, nameNew string) {
+func (prog *Prog) queryDeleteFile(nameOrig, nameNew string) {
 	deleteFileResp := responder.NewOrPanic(
 		"delete file",
 		map[rune]string{
 			'y': "to delete this file",
 			'n': "to keep this file",
-			'r': "to revert the file to this content",
+			'r': "to revert the base file to this content",
 		},
 		responder.SetDefault('n'),
-		responder.SetIndents(s.indent, s.indent))
+		responder.SetIndents(prog.indent, prog.indent))
 
 	response := deleteFileResp.GetResponseOrDie()
 	fmt.Println()
 
 	switch response {
 	case 'y':
-		s.deleteFile(nameOrig)
+		prog.deleteFile(nameOrig)
 	case 'r':
-		s.revertFile(nameOrig, nameNew)
+		prog.revertFile(nameOrig, nameNew)
 	default:
-		s.kept++
+		prog.status.kept++
 	}
 }
 
 // deleteFile deletes the named file, reporting any errors
-func (s *Status) deleteFile(name string) {
-	s.verboseMsg("Deleting file...")
+func (prog *Prog) deleteFile(name string) {
+	prog.verboseMsg("Deleting file...")
 
 	err := os.Remove(name)
 	if err != nil {
-		s.twc.Wrap(
+		prog.twc.Wrap(
 			fmt.Sprintf("Couldn't delete the file: %v", err),
-			s.indent)
-		s.deleteFail++
+			prog.indent)
+		prog.status.deleteFail++
 		return
 	}
 
-	s.verboseMsg("File deleted")
-	s.deleted++
+	prog.verboseMsg("File deleted")
+	prog.status.deleted++
 }
 
 // revertFile reverts the file to its original contents, reporting any
 // errors.
-func (s *Status) revertFile(nameOrig, nameNew string) {
-	s.verboseMsg(
+func (prog *Prog) revertFile(nameOrig, nameNew string) {
+	prog.verboseMsg(
 		fmt.Sprintf("Reverting to the file with extension %q",
-			fileExtension))
+			prog.fileExtension))
 
 	err := os.Rename(nameOrig, nameNew)
 	if err != nil {
-		s.twc.Wrap(
+		prog.twc.Wrap(
 			fmt.Sprintf("Couldn't revert the file: %v", err),
-			s.indent)
-		s.revertFail++
+			prog.indent)
+		prog.status.revertFail++
 		return
 	}
 
-	s.verboseMsg("File reverted")
-	s.reverted++
+	prog.verboseMsg("File reverted")
+	prog.status.reverted++
 }
 
 // verboseMsg Wraps the message if verbose messaging is on
-func (s *Status) verboseMsg(msg string) {
+func (prog Prog) verboseMsg(msg string) {
 	if verbose.IsOn() {
-		s.twc.Wrap(msg, s.indent)
+		prog.twc.Wrap(msg, prog.indent)
 	}
 }
 
 // showDiffs runs a diff command against the two filenames and pipes the
 // output to less
-func showDiffs(nameOrig, nameNew string) error {
+func (prog Prog) showDiffs(nameOrig, nameNew string) error {
 	r, w := io.Pipe()
 
-	dcp := diffCmdParams
+	dcp := prog.diffCmdParams
 	dcp = append(dcp, nameOrig, nameNew)
-	diffCmd := exec.Command(diffCmdName, dcp...)
+	diffCmd := exec.Command(prog.diffCmdName, dcp...)
 	diffCmd.Stdout = w
 
-	lessCmd := exec.Command(lessCmdName, lessCmdParams...)
+	lessCmd := exec.Command(prog.lessCmdName, prog.lessCmdParams...)
 	lessCmd.Stdin = r
 	lessCmd.Stdout = os.Stdout
 
@@ -509,19 +531,19 @@ func getMaxNameLen(filenames []string) int {
 // those files where there is a corresponding file without the extension,
 // those where the corresponding file is identical and those for which there
 // is some error.
-func makeFileLists(entries map[string]os.FileInfo) (
-	filenames, duplicates []string, badFiles []fileErr,
+func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
+	filenames, duplicates []string, badFiles []badFile,
 ) {
 	filenames = make([]string, 0, len(entries))
 	duplicates = make([]string, 0, len(entries))
-	badFiles = make([]fileErr, 0, len(entries))
+	badFiles = make([]badFile, 0, len(entries))
 
 	for nameOrig := range entries {
-		nameNew := strings.TrimSuffix(nameOrig, fileExtension)
+		nameNew := strings.TrimSuffix(nameOrig, prog.fileExtension)
 		info, err := os.Stat(nameNew)
 		if errors.Is(err, os.ErrNotExist) {
 			badFiles = append(badFiles,
-				fileErr{
+				badFile{
 					name: nameOrig,
 					err: fmt.Errorf("there is no file called %q: %w",
 						nameNew, err),
@@ -531,7 +553,7 @@ func makeFileLists(entries map[string]os.FileInfo) (
 
 		if info.IsDir() {
 			badFiles = append(badFiles,
-				fileErr{
+				badFile{
 					name: nameOrig,
 					err: fmt.Errorf("the corresponding file is a directory: %q",
 						nameNew),
@@ -542,7 +564,7 @@ func makeFileLists(entries map[string]os.FileInfo) (
 		newContent, err := os.ReadFile(nameNew)
 		if err != nil {
 			badFiles = append(badFiles,
-				fileErr{
+				badFile{
 					name: nameOrig,
 					err: fmt.Errorf("cannot read the contents of %q: %w",
 						nameNew, err),
@@ -553,7 +575,7 @@ func makeFileLists(entries map[string]os.FileInfo) (
 		origContent, err := os.ReadFile(nameOrig)
 		if err != nil {
 			badFiles = append(badFiles,
-				fileErr{
+				badFile{
 					name: nameOrig,
 					err: fmt.Errorf("cannot read the contents of %q: %w",
 						nameOrig, err),
@@ -574,15 +596,15 @@ func makeFileLists(entries map[string]os.FileInfo) (
 
 // getFiles finds all the regular files in the directory with the given
 // extension
-func getFiles() (
-	filenames, duplicates []string, badFiles []fileErr,
+func (prog Prog) getFiles() (
+	filenames, duplicates []string, badFiles []badFile,
 ) {
 	findFunc := dirsearch.Find
-	if searchSubDirs {
+	if prog.searchSubDirs {
 		findFunc = dirsearch.FindRecurse
 	}
-	entries, errs := findFunc(searchDir,
-		check.FileInfoName(check.StringHasSuffix[string](fileExtension)),
+	entries, errs := findFunc(prog.searchDir,
+		check.FileInfoName(check.StringHasSuffix[string](prog.fileExtension)),
 		check.FileInfoIsRegular)
 
 	if len(errs) != 0 {
@@ -593,5 +615,5 @@ func getFiles() (
 		os.Exit(1)
 	}
 
-	return makeFileLists(entries)
+	return prog.makeFileLists(entries)
 }
