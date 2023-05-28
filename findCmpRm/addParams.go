@@ -4,14 +4,20 @@ import (
 	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/param.mod/v5/param"
+	"github.com/nickwells/param.mod/v5/param/paction"
 	"github.com/nickwells/param.mod/v5/param/psetter"
 )
 
 // addParams will add parameters to the passed ParamSet
 func addParams(prog *Prog) param.PSetOptFunc {
-	return func(ps *param.PSet) error {
-		const noRecurseParam = "dont-recurse"
+	const (
+		exampleFileName = "F"
+		exampleOrigName = exampleFileName + dfltExtension
+		duplicateAction = "if " + exampleFileName + " and " + exampleOrigName +
+			" are the same, delete " + exampleOrigName
+	)
 
+	return func(ps *param.PSet) error {
 		ps.Add("dir",
 			psetter.Pathname{
 				Value:       &prog.searchDir,
@@ -20,11 +26,12 @@ func addParams(prog *Prog) param.PSetOptFunc {
 			"give the name of the directory to search for files."+
 				"\nNote that both the directory and its,"+
 				" sub-directories are searched unless"+
-				" the "+noRecurseParam+" parameter is also given.",
+				" the "+paramNameNoRecurse+" parameter is also given.",
 			param.AltNames("search-dir", "d"),
+			param.SeeAlso(paramNameNoRecurse),
 		)
 
-		ps.Add(noRecurseParam,
+		ps.Add(paramNameNoRecurse,
 			psetter.Bool{
 				Value:  &prog.searchSubDirs,
 				Invert: true,
@@ -46,10 +53,55 @@ func addParams(prog *Prog) param.PSetOptFunc {
 			param.AltNames("e"),
 		)
 
-		ps.Add("tidy", psetter.Bool{Value: &prog.tidyFiles},
-			"this makes the command remove any duplicate files."+
-				"\n\n"+
-				"This will remove the F.orig file corresponding to the file F.",
+		ps.Add("tidy", psetter.Nil{},
+			"delete all duplicate files."+
+				"\n\n"+duplicateAction,
+			param.SeeAlso(paramNameDupAction),
+			param.PostAction(
+				paction.SetString(
+					(*string)(&prog.dupAction),
+					string(DADelete))),
+		)
+
+		ps.Add(paramNameDupAction, psetter.Enum{
+			Value: (*string)(&prog.dupAction),
+			AllowedVals: psetter.AllowedVals{
+				string(DADelete): "delete all duplicate files" +
+					" without prompting" +
+					" (" + duplicateAction + ")",
+				string(DAQuery): "show all duplicate files and" +
+					" prompt to see what to do with them",
+				string(DAKeep): "keep all duplicate files" +
+					" without prompting",
+			},
+		}, "what action should be performed with duplicate files",
+			param.AltNames("dup-action"),
+			param.SeeAlso(paramNameTidy),
+		)
+
+		ps.Add(paramNameCmpAction,
+			psetter.Enum{
+				Value: (*string)(&prog.cmpAction),
+				AllowedVals: psetter.AllowedVals{
+					string(CAShowDiff): "show file differences" +
+						" without prompting",
+					string(CAQuery): "prompt to show differences" +
+						" (the default action)",
+					string(CAKeepAll): "keep all comparable files" +
+						" without prompting",
+					string(CADeleteAll): "delete all comparable files with" +
+						" the given extension" +
+						" (" + dfltExtension + " by default)" +
+						" without prompting",
+					string(CARevertAll): "revert all comparable files back to" +
+						" the contents of the file with" +
+						" the given extension" +
+						" (" + dfltExtension + " by default)" +
+						" without prompting",
+				},
+			},
+			"what action should be performed with comparable files",
+			param.AltNames("cmp-action"),
 		)
 
 		ps.Add("diff-cmd",
