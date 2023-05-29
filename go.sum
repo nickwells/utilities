@@ -22,8 +22,8 @@ github.com/nickwells/mathutil.mod/v2 v2.2.1 h1:mMZz1JjsUsq0Ctds4Qa/bbfDFh0pjoeI0
 github.com/nickwells/mathutil.mod/v2 v2.2.1/go.mod h1:7boYOp2rBhN5owQS8QIHC1e1e+Ye8EGvmWiGN5X1Vss=
 github.com/nickwells/pager.mod v1.0.11 h1:actfWhNh1TPtRpMPwJcRvYeuL2iRd+JQ44l+4KKsoJg=
 github.com/nickwells/pager.mod v1.0.11/go.mod h1:rRmwJHKd/xaSpi/xqJv7P7IJUtFeoJ9s/8yoJ+mh+tM=
-github.com/nickwells/param.mod/v5 v5.16.2 h1:6cffBnAr9j3Kaq6QRH4qBiJJR8Lnx3DPbV08brKETdM=
-github.com/nickwells/param.mod/v5 v5.16.2/go.mod h1:XhAC54+omNEqotWW6kOP89Jec4ss3vntX19M+MOn6wE=
+github.com/nickwells/param.mod/v5 v5.17.0 h1:UEN4oIsara0SY9vDF0c2GimGLahM/s2oNaRbPLgx7Lo=
+github.com/nickwells/param.mod/v5 v5.17.0/go.mod h1:XhAC54+omNEqotWW6kOP89Jec4ss3vntX19M+MOn6wE=
 github.com/nickwells/snippet.mod v1.2.6 h1:UKVFHukv+Z7NFSNVngK4ql5o+Egsp15FnCdxcKtSIG0=
 github.com/nickwells/snippet.mod v1.2.6/go.mod h1:o0KZt+UP+XvFiOd1tpSdd6kI2T/xqKLQ0QS0N8V5RXQ=
 github.com/nickwells/strdist.mod v1.1.11 h1:pD5g6sHEyLR/89MYjYRAc6cXHZ4f7INqSkahXbzSnNE=

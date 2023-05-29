@@ -217,7 +217,7 @@ func TestParseParamsCmdGosh(t *testing.T) {
 			"base-temp-dir",
 			errors.New(
 				`path: "testdata/nosuchdir" should exist but doesn't
-At: [command line]: Supplied Parameter:2: -base-temp-dir testdata/nosuchdir`))
+At: [command line]: Supplied Parameter:2: "-base-temp-dir" "testdata/nosuchdir"`))
 
 		testCases = append(testCases,
 			mkTestParser(parseErrs, testhelper.MkID(""), func(g *Gosh) {},
@@ -611,8 +611,8 @@ func TestParseParamsBad(t *testing.T) {
 		parseErrs.AddError(
 			"Final Checks",
 			errors.New(`gosh cannot run in a read-loop and run as a webserver at the same time. Parameters set at:
-	[command line]: Supplied Parameter:2: -http
-	[command line]: Supplied Parameter:1: -run-in-readloop`))
+	[command line]: Supplied Parameter:2: "-http"
+	[command line]: Supplied Parameter:1: "-run-in-readloop"`))
 
 		testCases = append(testCases,
 			mkTestParser(parseErrs, testhelper.MkID(""), func(g *Gosh) {
