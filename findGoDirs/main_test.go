@@ -1,7 +1,11 @@
 package main
 
 import (
+	"errors"
+	"fmt"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/nickwells/gogen.mod/gogen"
@@ -13,30 +17,39 @@ func TestCd(t *testing.T) {
 		testhelper.ID
 		dir string
 		testhelper.ExpErr
+		expStdout string
+		expStderr string
 	}{
 		{
 			ID:  testhelper.MkID("good-dir"),
 			dir: "testdata/gopkg",
 		},
 		{
-			ID:     testhelper.MkID("bad-dir"),
-			dir:    "testdata/nonesuch",
-			ExpErr: testhelper.MkExpErr(),
+			ID:  testhelper.MkID("bad-dir"),
+			dir: "testdata/nonesuch",
+			ExpErr: testhelper.MkExpErr(
+				"chdir testdata/nonesuch: no such file or directory"),
+			expStderr: `Cannot chdir to "testdata/nonesuch":` +
+				` chdir testdata/nonesuch: no such file or directory` + "\n",
 		},
 	}
 
 	preTestWD, err := os.Getwd()
 	if err != nil {
-		t.Fatal("cannot get the current directory:", err)
+		t.Fatal("cannot get the current directory (before testing):", err)
 		return
 	}
 	for _, tc := range testCases {
-		err := testCd(tc.dir)
+		fakeIO, err := testhelper.NewStdioFromString("")
+		if err != nil {
+			t.Fatal("Cannot make the fakeIO: ", err)
+		}
+		err = testCd(tc.dir)
 		testhelper.CheckExpErr(t, err, tc)
 		postTestWD, err := os.Getwd()
 		if err != nil {
 			t.Log(tc.IDStr())
-			t.Fatal("cannot get the current directory:", err)
+			t.Fatal("cannot get the current directory (after testing):", err)
 			return
 		}
 		if preTestWD != postTestWD {
@@ -44,6 +57,19 @@ func TestCd(t *testing.T) {
 			t.Log("\t:  pre-test working dir:", preTestWD)
 			t.Log("\t: post-test working dir:", postTestWD)
 			t.Errorf("\t: cd failed\n")
+		}
+		stdout, stderr, err := fakeIO.Done()
+		if string(stdout) != tc.expStdout {
+			t.Log(tc.IDStr())
+			t.Log("\t: expected stdout:", tc.expStdout)
+			t.Log("\t:   actual stdout:", string(stdout))
+			t.Errorf("\t: Unexpected output\n")
+		}
+		if string(stderr) != tc.expStderr {
+			t.Log(tc.IDStr())
+			t.Log("\t: expected stderr:", tc.expStderr)
+			t.Log("\t:   actual stderr:", string(stderr))
+			t.Errorf("\t: Unexpected error output\n")
 		}
 	}
 }
@@ -106,74 +132,144 @@ func TestHasFiles(t *testing.T) {
 	}
 }
 
+// copyDirFromTo copies the contents of "from" into "to". It will call itself
+// recursively for subdirectories and return the first error encountered.
+// Both "from" and "to" directories should exist before it is called.
+func copyDirFromTo(from, to string) error {
+	d, err := os.Open(from)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+
+	toBeCopied, err := d.Readdir(0)
+	if err != nil {
+		return err
+	}
+
+	for _, fi := range toBeCopied {
+		if fi.IsDir() {
+			var (
+				newFromDir = filepath.Join(from, fi.Name())
+				newToDir   = filepath.Join(to, fi.Name())
+			)
+			err = os.Mkdir(newToDir, fi.Mode()&fs.ModePerm)
+			if err != nil {
+				return err
+			}
+			err = copyDirFromTo(newFromDir, newToDir)
+			if err != nil {
+				return err
+			}
+		} else if fi.Mode().IsRegular() {
+			var (
+				fromFile = filepath.Join(from, fi.Name())
+				toFile   = filepath.Join(to, fi.Name())
+			)
+			fromBytes, err := os.ReadFile(fromFile)
+			if err != nil {
+				return err
+			}
+			err = os.WriteFile(toFile, fromBytes, fi.Mode()&fs.ModePerm)
+			if err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf(
+				"only dirs & regular files can be copied, %q is neither",
+				fi.Name())
+		}
+	}
+	return nil
+}
+
+// copyDir makes a temporary directory and copies the contents of the passed
+// directory into the temporary directory. It returns the name of the
+// temporary directory, a cleanup func and any errors encountered.
+func copyDir(fromDir string) (string, func() error, error) {
+	tmpDir, err := os.MkdirTemp("", "testdir.")
+	if err != nil {
+		return "", nil, err
+	}
+
+	err = copyDirFromTo(fromDir, tmpDir)
+	return tmpDir, func() error { return os.RemoveAll(tmpDir) }, err
+}
+
 func TestPkgMatches(t *testing.T) {
 	testCases := []struct {
 		testhelper.ID
-		dir       string
-		pkgNames  []string
-		expResult bool
+		testhelper.ExpErr
+		dir      string
+		pkgNames []string
 	}{
 		{
-			ID:        testhelper.MkID("noPkg-OK"),
-			dir:       "testdata/gopkg",
-			pkgNames:  []string{},
-			expResult: true,
+			ID:       testhelper.MkID("noPkg-OK"),
+			dir:      "testdata/gopkg",
+			pkgNames: []string{},
 		},
 		{
-			ID:       testhelper.MkID("noPkg-NotOK"),
+			ID: testhelper.MkID("noPkg-NotOK"),
+			ExpErr: testhelper.MkExpErr(
+				"gogen.GetPackage error: exit status 1"),
 			dir:      "testdata/notgopkg",
 			pkgNames: []string{},
 		},
 		{
-			ID:        testhelper.MkID("singlePkg-OK"),
-			dir:       "testdata/gopkg",
-			pkgNames:  []string{"gopkg"},
-			expResult: true,
+			ID:       testhelper.MkID("singlePkg-OK"),
+			dir:      "testdata/gopkg",
+			pkgNames: []string{"gopkg"},
 		},
 		{
 			ID:       testhelper.MkID("singlePkg-NotOK"),
+			ExpErr:   testhelper.MkExpErr("no packages match"),
 			dir:      "testdata/gopkg",
 			pkgNames: []string{"notgopkg"},
 		},
 		{
-			ID:        testhelper.MkID("multiPkg-OK"),
-			dir:       "testdata/gopkg",
-			pkgNames:  []string{"notgopkg", "gopkg"},
-			expResult: true,
+			ID:       testhelper.MkID("multiPkg-OK"),
+			dir:      "testdata/gopkg",
+			pkgNames: []string{"notgopkg", "gopkg"},
 		},
 		{
 			ID:       testhelper.MkID("multiPkg-NotOK"),
+			ExpErr:   testhelper.MkExpErr("no packages match"),
 			dir:      "testdata/gopkg",
 			pkgNames: []string{"notgopkg", "othernotgopkg"},
 		},
 	}
 
 	for _, tc := range testCases {
-		if checkPkg(t, tc.dir, tc.pkgNames) != tc.expResult {
-			t.Log(tc.IDStr())
-			t.Errorf("\t: unexpected result\n")
+		dir, cleanup, err := copyDir(tc.dir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = checkPkg(dir, tc.pkgNames)
+		testhelper.CheckExpErr(t, err, tc)
+		if cleanup != nil {
+			cleanup()
 		}
 	}
 }
 
 // checkPkg will check that the directory is a Go package and that it's name
 // matches one of the listed names
-func checkPkg(t *testing.T, dir string, pkgNames []string) bool {
-	t.Helper()
-
+func checkPkg(dir string, pkgNames []string) error {
 	undo, err := cd(dir)
 	if err != nil {
-		t.Fatal("couldn't cd into", dir)
-		return false
+		return fmt.Errorf("cd error: %w", err)
 	}
 	defer undo()
 
 	pkg, err := gogen.GetPackage()
 	if err != nil { // it's not a package directory
-		return false
+		return fmt.Errorf("gogen.GetPackage error: %w", err)
 	}
 
 	fgd := newFindGoDirs()
 	fgd.pkgNames = pkgNames
-	return fgd.pkgMatches(pkg)
+	if !fgd.pkgMatches(pkg) {
+		return errors.New("no packages match")
+	}
+	return nil
 }
