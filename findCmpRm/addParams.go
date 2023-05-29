@@ -8,6 +8,15 @@ import (
 	"github.com/nickwells/param.mod/v5/param/psetter"
 )
 
+const (
+	paramNameDupAction = "duplicate-action"
+	paramNameTidy      = "tidy"
+	paramNameCmpAction = "comparable-action"
+	paramNameDir       = "dir"
+	paramNameNoRecurse = "dont-recurse"
+	paramNameExtension = "extension"
+)
+
 // addParams will add parameters to the passed ParamSet
 func addParams(prog *Prog) param.PSetOptFunc {
 	const (
@@ -18,7 +27,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 	)
 
 	return func(ps *param.PSet) error {
-		ps.Add("dir",
+		ps.Add(paramNameDir,
 			psetter.Pathname{
 				Value:       &prog.searchDir,
 				Expectation: filecheck.DirExists(),
@@ -53,7 +62,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 			param.AltNames("e"),
 		)
 
-		ps.Add("tidy", psetter.Nil{},
+		ps.Add(paramNameTidy, psetter.Nil{},
 			"delete all duplicate files."+
 				"\n\n"+duplicateAction,
 			param.SeeAlso(paramNameDupAction),

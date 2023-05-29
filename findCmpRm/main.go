@@ -30,11 +30,6 @@ const (
 	dfltLessCmd   = "less"
 
 	filenameIndent = 8
-
-	paramNameDupAction = "duplicate-action"
-	paramNameTidy      = "tidy"
-	paramNameCmpAction = "comparable-action"
-	paramNameNoRecurse = "dont-recurse"
 )
 
 // Status holds counts of various operations on and problems with the files
