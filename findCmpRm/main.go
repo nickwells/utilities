@@ -64,6 +64,7 @@ const (
 type Prog struct {
 	// parameters
 	searchDir     string
+	searchSubDirs bool
 	fileExtension string
 
 	diffCmdName   string
@@ -72,19 +73,12 @@ type Prog struct {
 	lessCmdName   string
 	lessCmdParams []string
 
-	searchSubDirs bool
-
 	dupAction DupAction
 	cmpAction CmpAction
 
 	// display
 	twc    *twrap.TWConf
 	indent int
-
-	// record dynamic behaviour choices
-	shouldQuit bool
-	revertAll  bool
-	deleteAll  bool
 
 	// record the behaviour and outcomes
 	status Status
@@ -149,12 +143,6 @@ func (prog Prog) Report() {
 	reportVal(prog.status.deleted, "deleted", 0)
 	reportVal(prog.status.reverted, "reverted", 0)
 	reportVal(prog.status.kept, "kept", 0)
-	if prog.revertAll {
-		fmt.Printf("Some files were reverted without comparison\n")
-	}
-	if prog.shouldQuit {
-		fmt.Printf("Quit before end\n")
-	}
 }
 
 func main() {
@@ -393,7 +381,7 @@ func (prog *Prog) queryShowDiff(nameOrig, nameNew string) bool {
 	case 'd':
 		prog.setDeleteAll()
 	case 'q':
-		prog.setShouldQuit()
+		prog.setKeepAll()
 	}
 
 	return false
@@ -406,21 +394,21 @@ func (prog *Prog) skip() {
 	prog.status.kept++
 }
 
-// setRevertAll sets the revertAll flag
+// setRevertAll sets the comparison action to Revert-All
 func (prog *Prog) setRevertAll() {
 	prog.verboseMsg("Reverting all...")
 	prog.cmpAction = CARevertAll
 }
 
-// setDeleteAll sets the deleteAll flag
+// setDeleteAll sets the comparison action to Delete-All
 func (prog *Prog) setDeleteAll() {
 	prog.verboseMsg("Deleting all...")
 	prog.cmpAction = CADeleteAll
 }
 
-// setShouldQuit sets the shouldQuit flag
-func (prog *Prog) setShouldQuit() {
-	prog.verboseMsg("Quitting...")
+// setKeepAll sets the comparison action to Keep-All
+func (prog *Prog) setKeepAll() {
+	prog.verboseMsg("All remaining files will be kept...")
 	prog.cmpAction = CAKeepAll
 }
 
