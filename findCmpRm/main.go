@@ -110,8 +110,8 @@ func NewProg() *Prog {
 
 // badFile holds details of errors detected when processing files
 type badFile struct {
-	name string
-	err  error
+	name    string
+	problem string
 }
 
 // reportVal checks that n is greater than zero, reports the value and
@@ -232,7 +232,7 @@ func (prog *Prog) showBadFiles(badFiles []badFile) {
 		fmt.Printf("%s%*s - %s\n",
 			strings.Repeat(" ", filenameIndent),
 			maxNameLen,
-			name, badFiles[i].err)
+			name, badFiles[i].problem)
 	}
 	fmt.Println()
 }
@@ -575,9 +575,16 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 		if errors.Is(err, os.ErrNotExist) {
 			badFiles = append(badFiles,
 				badFile{
-					name: nameOrig,
-					err: fmt.Errorf("there is no file called %q: %w",
-						nameNew, err),
+					name:    nameOrig,
+					problem: fmt.Sprintf("there is no file named %q", nameNew),
+				})
+			continue
+		}
+		if err != nil {
+			badFiles = append(badFiles,
+				badFile{
+					name:    nameOrig,
+					problem: err.Error(),
 				})
 			continue
 		}
@@ -585,9 +592,8 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 		if info.IsDir() {
 			badFiles = append(badFiles,
 				badFile{
-					name: nameOrig,
-					err: fmt.Errorf("the corresponding file is a directory: %q",
-						nameNew),
+					name:    nameOrig,
+					problem: fmt.Sprintf("%q is a directory", nameNew),
 				})
 			continue
 		}
@@ -596,9 +602,8 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 		if err != nil {
 			badFiles = append(badFiles,
 				badFile{
-					name: nameOrig,
-					err: fmt.Errorf("cannot read the contents of %q: %w",
-						nameNew, err),
+					name:    nameOrig,
+					problem: fmt.Sprintf("cannot read %q: %s", nameNew, err),
 				})
 			continue
 		}
@@ -607,9 +612,8 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 		if err != nil {
 			badFiles = append(badFiles,
 				badFile{
-					name: nameOrig,
-					err: fmt.Errorf("cannot read the contents of %q: %w",
-						nameOrig, err),
+					name:    nameOrig,
+					problem: fmt.Sprintf("cannot read %q: %s", nameOrig, err),
 				})
 			continue
 		}
