@@ -622,6 +622,11 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 	}
 
 	sort.Strings(filenames)
+	sort.Strings(duplicates)
+	sort.Slice(badFiles,
+		func(i, j int) bool {
+			return badFiles[i].name < badFiles[j].name
+		})
 	return filenames, duplicates, badFiles
 }
 
