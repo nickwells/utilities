@@ -173,7 +173,15 @@ func main() {
 
 	ps.Parse()
 
-	filenames, duplicates, badFiles := prog.getFiles()
+	filenames, duplicates, badFiles, errs := prog.getFiles()
+
+	if len(errs) != 0 {
+		fmt.Fprintln(os.Stderr, "Couldn't find the entries:")
+		for _, err := range errs {
+			fmt.Fprintln(os.Stderr, "\t", err)
+		}
+		os.Exit(1)
+	}
 
 	prog.showBadFiles(badFiles)
 	prog.showDuplicates(duplicates)
@@ -620,7 +628,7 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 // getFiles finds all the regular files in the directory with the given
 // extension
 func (prog Prog) getFiles() (
-	filenames, duplicates []string, badFiles []badFile,
+	filenames, duplicates []string, badFiles []badFile, errs []error,
 ) {
 	findFunc := dirsearch.Find
 	if prog.searchSubDirs {
@@ -631,12 +639,9 @@ func (prog Prog) getFiles() (
 		check.FileInfoIsRegular)
 
 	if len(errs) != 0 {
-		fmt.Fprintln(os.Stderr, "Couldn't find the entries:")
-		for _, err := range errs {
-			fmt.Fprintln(os.Stderr, "\t", err)
-		}
-		os.Exit(1)
+		return nil, nil, nil, errs
 	}
 
-	return prog.makeFileLists(entries)
+	filenames, duplicates, badFiles = prog.makeFileLists(entries)
+	return filenames, duplicates, badFiles, errs
 }
