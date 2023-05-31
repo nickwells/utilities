@@ -288,7 +288,7 @@ func (prog *Prog) cmpRmFiles(filenames []string) {
 		switch prog.cmpAction {
 		case CAQuery:
 			fmt.Printf(nameFormat, i+1, len(filenames), shortNames[i])
-			if prog.queryShowDiff(nameOrig, nameNew) {
+			if prog.queryShowDiff() {
 				prog.showDiff(nameOrig, nameNew)
 			}
 		case CAShowDiff:
@@ -360,7 +360,7 @@ func (prog *Prog) showDiff(nameOrig, nameNew string) {
 // queryShowDiff asks if the differences between the new file and the
 // original should be shown and then acts accordingly, reporting any errors
 // found.
-func (prog *Prog) queryShowDiff(nameOrig, nameNew string) bool {
+func (prog *Prog) queryShowDiff() bool {
 	showDiffResp := responder.NewOrPanic(
 		"Show differences",
 		map[rune]string{
