@@ -18,12 +18,20 @@ func addExamples(ps *param.PSet) error {
 			" file so that you don't have to repeatedly set them on each"+
 			" use of the program.")
 	ps.AddExample(
-		"findCmpRm -d testdata -r",
+		"findCmpRm -d testdata",
 		"This will search the testdata directory and any"+
 			" subdirectories for the files to process."+
 			"\n\n"+
-			"Any directory called 'testdata' is ignored"+
-			" by the go tools as are directories with"+
-			" names starting with an '_'")
+			"It searches for files with names"+
+			" ending with '"+dfltExtension+"'.")
+	ps.AddExample(
+		"findCmpRm -d testdata -dont-recurse",
+		"This will search the testdata directory but not any"+
+			" subdirectories for the files to process.")
+	ps.AddExample(
+		"findCmpRm -d testdata -extension .old",
+		"This will search the testdata directory for files"+
+			" with names ending with '.old'.")
+
 	return nil
 }
