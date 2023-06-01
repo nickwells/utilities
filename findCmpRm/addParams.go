@@ -115,7 +115,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 
 		ps.Add("diff-cmd",
 			psetter.String{
-				Value: &prog.diffCmdName,
+				Value: &prog.diff.name,
 				Checks: []check.String{
 					check.StringLength[string](check.ValGT(0))},
 			},
@@ -127,7 +127,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 
 		ps.Add("diff-cmd-params",
 			psetter.StrList{
-				Value: &prog.diffCmdParams,
+				Value: &prog.diff.params,
 				Checks: []check.StringSlice{
 					check.SliceLength[[]string](check.ValGT(0)),
 				},
@@ -139,7 +139,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 
 		ps.Add("less-cmd",
 			psetter.String{
-				Value: &prog.lessCmdName,
+				Value: &prog.less.name,
 				Checks: []check.String{
 					check.StringLength[string](check.ValGT(0)),
 				},
@@ -152,7 +152,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 
 		ps.Add("less-cmd-params",
 			psetter.StrList{
-				Value: &prog.lessCmdParams,
+				Value: &prog.less.params,
 				Checks: []check.StringSlice{
 					check.SliceLength[[]string](check.ValGT(0)),
 				},

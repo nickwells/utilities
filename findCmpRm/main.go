@@ -60,6 +60,12 @@ const (
 	CARevertAll = CmpAction("revert-all")
 )
 
+// CmdInfo records the command name and the parameters to be supplied
+type CmdInfo struct {
+	name   string
+	params []string
+}
+
 // Prog holds program parameters and status
 type Prog struct {
 	// parameters
@@ -67,11 +73,8 @@ type Prog struct {
 	searchSubDirs bool
 	fileExtension string
 
-	diffCmdName   string
-	diffCmdParams []string
-
-	lessCmdName   string
-	lessCmdParams []string
+	diff CmdInfo
+	less CmdInfo
 
 	dupAction DupAction
 	cmpAction CmpAction
@@ -88,12 +91,11 @@ type Prog struct {
 func NewProg() *Prog {
 	return &Prog{
 		searchDir:     dfltDir,
+		searchSubDirs: true,
 		fileExtension: dfltExtension,
 
-		diffCmdName: dfltDiffCmd,
-		lessCmdName: dfltLessCmd,
-
-		searchSubDirs: true,
+		diff: CmdInfo{name: dfltDiffCmd},
+		less: CmdInfo{name: dfltLessCmd},
 
 		dupAction: DAQuery,
 		cmpAction: CAQuery,
@@ -510,12 +512,12 @@ func (prog Prog) verboseMsg(msg string) {
 func (prog Prog) showDiffs(nameOrig, nameNew string) error {
 	r, w := io.Pipe()
 
-	dcp := prog.diffCmdParams
+	dcp := prog.diff.params
 	dcp = append(dcp, nameOrig, nameNew)
-	diffCmd := exec.Command(prog.diffCmdName, dcp...)
+	diffCmd := exec.Command(prog.diff.name, dcp...)
 	diffCmd.Stdout = w
 
-	lessCmd := exec.Command(prog.lessCmdName, prog.lessCmdParams...)
+	lessCmd := exec.Command(prog.less.name, prog.less.params...)
 	lessCmd.Stdin = r
 	lessCmd.Stdout = os.Stdout
 
