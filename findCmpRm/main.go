@@ -14,11 +14,8 @@ import (
 	"github.com/nickwells/dirsearch.mod/v2/dirsearch"
 	"github.com/nickwells/english.mod/english"
 	"github.com/nickwells/mathutil.mod/v2/mathutil"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/twrap.mod/twrap"
 	"github.com/nickwells/verbose.mod/verbose"
-	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Wed Oct 23 18:05:24 2019
@@ -149,30 +146,7 @@ func (prog Prog) Report() {
 
 func main() {
 	prog := NewProg()
-	ps := paramset.NewOrDie(
-		verbose.AddParams,
-		versionparams.AddParams,
-
-		addParams(prog),
-
-		addExamples,
-		addRefs,
-		SetGlobalConfigFile,
-		SetConfigFile,
-
-		param.SetProgramDescription(
-			"This finds any files in the given directory"+
-				" (by default: "+dfltDir+") with the given extension"+
-				" (by default: "+dfltExtension+"). It presents each"+
-				" file and gives the user the chance to compare it"+
-				" with the corresponding file without the"+
-				" extension. The user is then asked whether to"+
-				" remove the file with the extension. The command name"+
-				" echoes this: find, compare, remove. You will also have"+
-				" the opportunity to revert the file back to the original"+
-				" contents."),
-	)
-
+	ps := makeParamSet(prog)
 	ps.Parse()
 
 	filenames, duplicates, badFiles, errs := prog.getFiles()
