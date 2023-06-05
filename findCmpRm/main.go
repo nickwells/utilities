@@ -160,8 +160,12 @@ func main() {
 	}
 
 	prog.showBadFiles(badFiles)
-	prog.showDuplicates(duplicates)
-	prog.cmpRmFiles(filenames)
+
+	prog.showDuplicateFiles(duplicates)
+	prog.processDuplicateFiles(duplicates)
+
+	prog.showComparableFiles(filenames)
+	prog.processComparableFiles(filenames)
 
 	fmt.Println()
 	prog.Report()
@@ -209,9 +213,9 @@ func (prog *Prog) showBadFiles(badFiles []badFile) {
 	fmt.Println()
 }
 
-// showDuplicates displays the list of duplicate files and prompts the user
+// showDuplicateFiles displays the list of duplicate files and prompts the user
 // to delete them
-func (prog *Prog) showDuplicates(filenames []string) {
+func (prog *Prog) showDuplicateFiles(filenames []string) {
 	if len(filenames) == 0 {
 		return
 	}
@@ -221,7 +225,11 @@ func (prog *Prog) showDuplicates(filenames []string) {
 	reportFiles(len(filenames), "duplicate", "found")
 	fmt.Println("in", prog.searchDir)
 	prog.twc.NoRptPathList(shortNames, filenameIndent)
+}
 
+// processDuplicateFiles checks the duplicate action and then either deletes
+// all the duplicates, keeps them all or queries the user.
+func (prog *Prog) processDuplicateFiles(filenames []string) {
 	switch prog.dupAction {
 	case DADelete:
 		prog.deleteAllFiles(filenames, "duplicate")
@@ -238,15 +246,29 @@ func (prog *Prog) showDuplicates(filenames []string) {
 	fmt.Println()
 }
 
-// cmpRmFiles loops over the files prompting the user to compare each one
-// with the new instance and then asking if the file should be deleted or the
-// new file reverted.
-func (prog *Prog) cmpRmFiles(filenames []string) {
+// showComparableFiles loops over the files prompting the user to compare
+// each one with the new instance and then asking if the file should be
+// deleted or the new file reverted.
+func (prog *Prog) showComparableFiles(filenames []string) {
 	if len(filenames) == 0 {
 		return
 	}
 	prog.status.fileCount = len(filenames)
 
+	shortNames, _ := prog.shortNames(filenames)
+
+	reportFiles(len(filenames), "comparable", "found")
+	fmt.Println("in", prog.searchDir)
+	prog.twc.IdxNoRptPathList(shortNames, filenameIndent)
+}
+
+// processComparableFiles checks the comparable action and then, for each
+// file it will either show the difference automatically or else prompt the
+// user whether or not to show the difference between the file and its
+// corresponding other. One of the choices of action is to delete all the
+// files, to revert them to their original state or to keep both members of
+// the pair.
+func (prog *Prog) processComparableFiles(filenames []string) {
 	shortNames, maxNameLen := prog.shortNames(filenames)
 
 	digits := mathutil.Digits(int64(len(filenames)) + 1)
@@ -254,10 +276,7 @@ func (prog *Prog) cmpRmFiles(filenames []string) {
 		digits, digits, maxNameLen, maxNameLen)
 	prog.indent = len(fmt.Sprintf(nameFormat, 0, 0, ""))
 
-	reportFiles(len(filenames), "comparable", "found")
-	fmt.Println("in", prog.searchDir)
-	prog.twc.IdxNoRptPathList(shortNames, filenameIndent)
-
+loop:
 	for i, nameOrig := range filenames {
 		nameNew := strings.TrimSuffix(nameOrig, prog.fileExtension)
 
@@ -282,7 +301,7 @@ func (prog *Prog) cmpRmFiles(filenames []string) {
 			filesRemaining := len(filenames) - i
 			prog.status.kept += filesRemaining
 			reportFiles(filesRemaining, "comparable", "kept")
-			break
+			break loop
 		}
 	}
 }
@@ -516,18 +535,6 @@ func (prog Prog) showDiffs(nameOrig, nameNew string) error {
 		return fmt.Errorf("The less command finished with an error: %w", err)
 	}
 	return nil
-}
-
-// getMaxNameLen returns the length of the longest file name
-func getMaxNameLen(filenames []string) int {
-	maxNameLen := 0
-
-	for _, name := range filenames {
-		if len(name) > maxNameLen {
-			maxNameLen = len(name)
-		}
-	}
-	return maxNameLen
 }
 
 // makeFileLists takes the files in entries and splits them into three sets:
