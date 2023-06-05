@@ -59,18 +59,10 @@ func TestCd(t *testing.T) {
 			t.Errorf("\t: cd failed\n")
 		}
 		stdout, stderr, err := fakeIO.Done()
-		if string(stdout) != tc.expStdout {
-			t.Log(tc.IDStr())
-			t.Log("\t: expected stdout:", tc.expStdout)
-			t.Log("\t:   actual stdout:", string(stdout))
-			t.Errorf("\t: Unexpected output\n")
-		}
-		if string(stderr) != tc.expStderr {
-			t.Log(tc.IDStr())
-			t.Log("\t: expected stderr:", tc.expStderr)
-			t.Log("\t:   actual stderr:", string(stderr))
-			t.Errorf("\t: Unexpected error output\n")
-		}
+		testhelper.DiffString[string](t, tc.IDStr(), "stdout",
+			string(stdout), tc.expStdout)
+		testhelper.DiffString[string](t, tc.IDStr(), "stderr",
+			string(stderr), tc.expStderr)
 	}
 }
 
@@ -242,12 +234,16 @@ func TestPkgMatches(t *testing.T) {
 	for _, tc := range testCases {
 		dir, cleanup, err := copyDir(tc.dir)
 		if err != nil {
+			t.Log("copyDir failed")
 			t.Fatal(err)
 		}
 		err = checkPkg(dir, tc.pkgNames)
 		testhelper.CheckExpErr(t, err, tc)
 		if cleanup != nil {
-			cleanup()
+			if err := cleanup(); err != nil {
+				t.Log("cleanup failed")
+				t.Fatal(err)
+			}
 		}
 	}
 }
