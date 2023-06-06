@@ -117,7 +117,8 @@ func addParams(prog *Prog) param.PSetOptFunc {
 			psetter.String{
 				Value: &prog.diff.name,
 				Checks: []check.String{
-					check.StringLength[string](check.ValGT(0))},
+					check.StringLength[string](check.ValGT(0)),
+				},
 			},
 			"give the name of the command to use when showing the"+
 				" differences between files",

@@ -29,16 +29,6 @@ const (
 	filenameIndent = 8
 )
 
-// Status holds counts of various operations on and problems with the files
-type Status struct {
-	fileCount                                           int
-	dupFileCount                                        int
-	badFileCount                                        int
-	diffErr                                             int
-	compared, skipped, deleted, reverted, kept, ignored int
-	deleteFail, revertFail                              int
-}
-
 type DupAction string
 
 const (
@@ -98,6 +88,8 @@ func NewProg() *Prog {
 		cmpAction: CAQuery,
 
 		twc: twrap.NewTWConfOrPanic(),
+
+		status: InitStatus(),
 	}
 }
 
@@ -105,43 +97,6 @@ func NewProg() *Prog {
 type badFile struct {
 	name    string
 	problem string
-}
-
-// reportVal checks that n is greater than zero, reports the value and
-// returns true, false otherwise
-func reportVal(n int, name string, indent int) bool {
-	if n <= 0 {
-		return false
-	}
-	fmt.Printf("%s%3d %s\n", strings.Repeat(" ", indent), n, name)
-	return true
-}
-
-// Report will print out the Status structure
-func (prog Prog) Report() {
-	allFileCount := prog.status.fileCount +
-		prog.status.dupFileCount +
-		prog.status.badFileCount
-	reportVal(allFileCount,
-		english.Plural("file", allFileCount)+" found", 0)
-
-	if allFileCount == 0 {
-		return
-	}
-	reportVal(prog.status.badFileCount,
-		"   problem "+english.Plural("file", prog.status.badFileCount), 4)
-	reportVal(prog.status.dupFileCount,
-		" duplicate "+english.Plural("file", prog.status.dupFileCount), 4)
-	reportVal(prog.status.fileCount,
-		"comparable "+english.Plural("file", prog.status.fileCount), 4)
-
-	reportVal(prog.status.skipped, "skipped", 0)
-	reportVal(prog.status.ignored, "ignored due to error", 0)
-
-	reportVal(prog.status.compared, "compared", 0)
-	reportVal(prog.status.deleted, "deleted", 0)
-	reportVal(prog.status.reverted, "reverted", 0)
-	reportVal(prog.status.kept, "kept", 0)
 }
 
 func main() {
@@ -167,8 +122,7 @@ func main() {
 	prog.showComparableFiles(filenames)
 	prog.processComparableFiles(filenames)
 
-	fmt.Println()
-	prog.Report()
+	prog.status.Report()
 }
 
 // shortNames returns a list of filenames with the search directory name
@@ -193,8 +147,7 @@ func (prog *Prog) showBadFiles(badFiles []badFile) {
 	if len(badFiles) == 0 {
 		return
 	}
-	prog.status.badFileCount = len(badFiles)
-	prog.status.kept += len(badFiles)
+	prog.status.badFile.total = len(badFiles)
 
 	filenames := make([]string, 0, len(badFiles))
 	for _, fe := range badFiles {
@@ -219,7 +172,7 @@ func (prog *Prog) showDuplicateFiles(filenames []string) {
 	if len(filenames) == 0 {
 		return
 	}
-	prog.status.dupFileCount = len(filenames)
+	prog.status.dupFile.total = len(filenames)
 
 	shortNames, _ := prog.shortNames(filenames)
 	reportFiles(len(filenames), "duplicate", "found")
@@ -230,18 +183,17 @@ func (prog *Prog) showDuplicateFiles(filenames []string) {
 // processDuplicateFiles checks the duplicate action and then either deletes
 // all the duplicates, keeps them all or queries the user.
 func (prog *Prog) processDuplicateFiles(filenames []string) {
+	if len(filenames) == 0 {
+		return
+	}
+
 	switch prog.dupAction {
 	case DADelete:
-		prog.deleteAllFiles(filenames, "duplicate")
+		prog.deleteAllFiles(filenames, &prog.status.dupFile)
 	case DAQuery:
 		if prog.queryDeleteDuplicates() {
-			prog.deleteAllFiles(filenames, "duplicate")
-		} else {
-			prog.status.kept += len(filenames)
-			reportFiles(len(filenames), "duplicate", "kept")
+			prog.deleteAllFiles(filenames, &prog.status.dupFile)
 		}
-	case DAKeep:
-		reportFiles(len(filenames), "duplicate", "kept")
 	}
 	fmt.Println()
 }
@@ -253,7 +205,7 @@ func (prog *Prog) showComparableFiles(filenames []string) {
 	if len(filenames) == 0 {
 		return
 	}
-	prog.status.fileCount = len(filenames)
+	prog.status.cmpFile.total = len(filenames)
 
 	shortNames, _ := prog.shortNames(filenames)
 
@@ -284,22 +236,21 @@ loop:
 		case CAQuery:
 			fmt.Printf(nameFormat, i+1, len(filenames), shortNames[i])
 			if prog.queryShowDiff() {
-				prog.showDiff(nameOrig, nameNew)
+				prog.showDiff(nameOrig, nameNew, &prog.status.cmpFile)
 			}
 		case CAShowDiff:
 			fmt.Printf(nameFormat, i+1, len(filenames), shortNames[i])
-			prog.showDiff(nameOrig, nameNew)
+			prog.showDiff(nameOrig, nameNew, &prog.status.cmpFile)
 		}
 
 		// queryShowDiff can change the value of prog.cmpAction so switch again
 		switch prog.cmpAction {
 		case CARevertAll:
-			prog.revertFile(nameOrig, nameNew)
+			prog.revertFile(nameOrig, nameNew, &prog.status.cmpFile)
 		case CADeleteAll:
-			prog.deleteFile(nameOrig)
+			prog.deleteFile(nameOrig, &prog.status.cmpFile)
 		case CAKeepAll:
 			filesRemaining := len(filenames) - i
-			prog.status.kept += filesRemaining
 			reportFiles(filesRemaining, "comparable", "kept")
 			break loop
 		}
@@ -339,15 +290,14 @@ func (prog *Prog) queryDeleteDuplicates() bool {
 
 // showDiff shows the differences between the new file and the original and
 // then queries for further actions.
-func (prog *Prog) showDiff(nameOrig, nameNew string) {
-	err := prog.showDiffs(nameOrig, nameNew)
+func (prog *Prog) showDiff(nameOrig, nameNew string, counts *Counts) {
+	err := prog.diffs(nameOrig, nameNew)
 	if err != nil {
 		prog.twc.Wrap(fmt.Sprintf("Ignoring due to: %v", err), prog.indent)
-		prog.status.ignored++
-		prog.status.diffErr++
+		counts.cmpErrs++
 		return
 	}
-	prog.status.compared++
+	counts.compared++
 
 	prog.queryDeleteFile(nameOrig, nameNew)
 }
@@ -378,7 +328,7 @@ func (prog *Prog) queryShowDiff() bool {
 	case 'y':
 		return true
 	case 'n':
-		prog.skip()
+		prog.verboseMsg("Skipping...")
 	case 'r':
 		prog.setRevertAll()
 	case 'd':
@@ -388,13 +338,6 @@ func (prog *Prog) queryShowDiff() bool {
 	}
 
 	return false
-}
-
-// skip reports the skipping of the file
-func (prog *Prog) skip() {
-	prog.verboseMsg("Skipping...")
-	prog.status.skipped++
-	prog.status.kept++
 }
 
 // setRevertAll sets the comparison action to Revert-All
@@ -433,57 +376,53 @@ func (prog *Prog) queryDeleteFile(nameOrig, nameNew string) {
 
 	switch response {
 	case 'y':
-		prog.deleteFile(nameOrig)
+		prog.deleteFile(nameOrig, &prog.status.cmpFile)
 	case 'r':
-		prog.revertFile(nameOrig, nameNew)
-	default:
-		prog.status.kept++
+		prog.revertFile(nameOrig, nameNew, &prog.status.cmpFile)
 	}
 }
 
 // deleteAllFiles deletes all of the given files
-func (prog *Prog) deleteAllFiles(filenames []string, desc string) {
+func (prog *Prog) deleteAllFiles(filenames []string, count *Counts) {
 	for _, fName := range filenames {
-		prog.deleteFile(fName)
+		prog.deleteFile(fName, count)
 	}
-	reportFiles(len(filenames), desc, "deleted")
+	reportFiles(len(filenames), count.name, "deleted")
 }
 
 // deleteFile deletes the named file, reporting any errors
-func (prog *Prog) deleteFile(name string) {
-	prog.verboseMsg("Deleting file...")
+func (prog *Prog) deleteFile(name string, counts *Counts) {
+	prog.verboseMsg("Deleting " + name + "...")
 
 	err := os.Remove(name)
 	if err != nil {
 		prog.twc.Wrap(
 			fmt.Sprintf("Couldn't delete the file: %v", err),
 			prog.indent)
-		prog.status.deleteFail++
+		counts.delErrs++
 		return
 	}
 
-	prog.verboseMsg("File deleted")
-	prog.status.deleted++
+	prog.verboseMsg(name + " deleted")
+	counts.deleted++
 }
 
 // revertFile reverts the file to its original contents, reporting any
 // errors.
-func (prog *Prog) revertFile(nameOrig, nameNew string) {
-	prog.verboseMsg(
-		fmt.Sprintf("Reverting to the file with extension %q",
-			prog.fileExtension))
+func (prog *Prog) revertFile(nameOrig, nameNew string, counts *Counts) {
+	prog.verboseMsg("Reverting " + nameNew + " to " + nameOrig + "...")
 
 	err := os.Rename(nameOrig, nameNew)
 	if err != nil {
 		prog.twc.Wrap(
 			fmt.Sprintf("Couldn't revert the file: %v", err),
 			prog.indent)
-		prog.status.revertFail++
+		counts.revErrs++
 		return
 	}
 
-	prog.verboseMsg("File reverted")
-	prog.status.reverted++
+	prog.verboseMsg(nameNew + " reverted to " + nameOrig)
+	counts.reverted++
 }
 
 // reportFiles reports the number of files, their type and the action
@@ -500,9 +439,9 @@ func (prog Prog) verboseMsg(msg string) {
 	}
 }
 
-// showDiffs runs a diff command against the two filenames and pipes the
+// diffs runs a diff command against the two filenames and pipes the
 // output to less
-func (prog Prog) showDiffs(nameOrig, nameNew string) error {
+func (prog Prog) diffs(nameOrig, nameNew string) error {
 	r, w := io.Pipe()
 
 	dcp := prog.diff.params
@@ -520,6 +459,9 @@ func (prog Prog) showDiffs(nameOrig, nameNew string) error {
 	}
 	err = lessCmd.Start()
 	if err != nil {
+		w.Close()
+		r.Close()
+		_ = diffCmd.Wait()
 		return fmt.Errorf("Couldn't start the less command: %w", err)
 	}
 	err = diffCmd.Wait()
