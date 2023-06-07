@@ -367,6 +367,7 @@ func (prog *Prog) queryDeleteFile(nameOrig, nameNew string) {
 			'y': "to delete this file",
 			'n': "to keep this file",
 			'r': "to revert the base file to this content",
+			'q': "to quit, keeping all subsequent files",
 		},
 		responder.SetDefault('n'),
 		responder.SetIndents(prog.indent, prog.indent))
@@ -379,6 +380,8 @@ func (prog *Prog) queryDeleteFile(nameOrig, nameNew string) {
 		prog.deleteFile(nameOrig, &prog.status.cmpFile)
 	case 'r':
 		prog.revertFile(nameOrig, nameNew, &prog.status.cmpFile)
+	case 'q':
+		prog.setKeepAll()
 	}
 }
 
