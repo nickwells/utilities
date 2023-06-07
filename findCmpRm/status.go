@@ -59,7 +59,7 @@ func (c Counts) reportFile() {
 		reportVal(c.compared, "compared", 8)
 		reportVal(c.cmpErrs,
 			"comparison "+english.Plural("error", c.cmpErrs), 8)
-		reportVal(c.total-c.cmpErrs-c.compared, "skipped", 8)
+		reportVal(c.total-c.cmpErrs-c.compared, "skipped (not checked)", 8)
 		fmt.Println()
 	}
 
