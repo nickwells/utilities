@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/nickwells/check.mod/v2 v2.1.10
-	github.com/nickwells/cli.mod v1.0.43
+	github.com/nickwells/cli.mod v1.1.0
 	github.com/nickwells/col.mod/v3 v3.0.15
 	github.com/nickwells/dirsearch.mod/v2 v2.0.10
 	github.com/nickwells/english.mod v1.1.4

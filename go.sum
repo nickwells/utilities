@@ -1,7 +1,7 @@
 github.com/nickwells/check.mod/v2 v2.1.10 h1:OSHCxYdF9LLa/09Wth1LHkEaFHFBK62Ah6Uo8WCXbfM=
 github.com/nickwells/check.mod/v2 v2.1.10/go.mod h1:7mQeHzBP/hXXLpurLxtYAWC/ObtpST0eYixy10+cTP4=
-github.com/nickwells/cli.mod v1.0.43 h1:t8TQ8pNVhgocPJv6NKXUkT+O+EPVxsD3UF50gBV28NQ=
-github.com/nickwells/cli.mod v1.0.43/go.mod h1:8gIopNGsfpCudbFB6h8UmRuL/ZOqCpkvjKunD8Chtis=
+github.com/nickwells/cli.mod v1.1.0 h1:aOhVknXJqt6yOo2iUie1K4bLt+Klh5CFY1O+ddjIWY0=
+github.com/nickwells/cli.mod v1.1.0/go.mod h1:8gIopNGsfpCudbFB6h8UmRuL/ZOqCpkvjKunD8Chtis=
 github.com/nickwells/col.mod/v3 v3.0.15 h1:q9q/uirG/A/xNR7vai0Vxa9sqLKeHJg54OEPbh3/CUE=
 github.com/nickwells/col.mod/v3 v3.0.15/go.mod h1:a+cDAOUeVino2G6rKywv2xRfH3I2o3jkyzi7eXnl37w=
 github.com/nickwells/dirsearch.mod/v2 v2.0.10 h1:mABLX1msqTHpKBGKztdg3U6ULZlt5Y1dSS+aH2VvMLs=
