@@ -63,6 +63,10 @@ type Prog struct {
 	diff CmdInfo
 	less CmdInfo
 
+	showDiffR  responder.Responder
+	deleteDupR responder.Responder
+	postDiffR  responder.Responder
+
 	dupAction DupAction
 	cmpAction CmpAction
 
@@ -93,7 +97,43 @@ func NewProg() *Prog {
 	}
 }
 
-// badFile holds details of errors detected when processing files
+// setResponders sets the responders on the Prog
+func (prog *Prog) setResponders() {
+	prog.showDiffR = responder.NewOrPanic(
+		"Show differences",
+		map[rune]string{
+			'y': "to show differences",
+			'n': "to skip this file",
+			'd': "delete this and all subsequent files" +
+				" with extension " + prog.fileExtension,
+			'r': "revert this and all subsequent base files to" +
+				" the contents of the files with extension " +
+				prog.fileExtension,
+			'q': "to quit, keeping all subsequent files",
+		},
+		responder.SetDefault('y'))
+
+	prog.postDiffR = responder.NewOrPanic(
+		"delete file",
+		map[rune]string{
+			'y': "to delete this file",
+			'n': "to keep this file",
+			'r': "to revert the base file to this content",
+			'q': "to quit, keeping all subsequent files",
+		},
+		responder.SetDefault('n'))
+
+	prog.deleteDupR = responder.NewOrPanic(
+		"delete all duplicate files",
+		map[rune]string{
+			'y': "to delete all duplicates files with extension " +
+				prog.fileExtension,
+			'n': "to keep these duplicates",
+		},
+		responder.SetDefault('y'))
+}
+
+// badFile holds details of errors detected when processng files
 type badFile struct {
 	name    string
 	problem string
@@ -103,6 +143,7 @@ func main() {
 	prog := NewProg()
 	ps := makeParamSet(prog)
 	ps.Parse()
+	prog.setResponders()
 
 	filenames, duplicates, badFiles, errs := prog.getFiles()
 
@@ -163,7 +204,6 @@ func (prog *Prog) showBadFiles(badFiles []badFile) {
 			maxNameLen,
 			name, badFiles[i].problem)
 	}
-	fmt.Println()
 }
 
 // showDuplicateFiles displays the list of duplicate files and prompts the user
@@ -191,11 +231,10 @@ func (prog *Prog) processDuplicateFiles(filenames []string) {
 	case DADelete:
 		prog.deleteAllFiles(filenames, &prog.status.dupFile)
 	case DAQuery:
-		if prog.queryDeleteDuplicates() {
+		if prog.queryDeleteDuplicates() == 'y' {
 			prog.deleteAllFiles(filenames, &prog.status.dupFile)
 		}
 	}
-	fmt.Println()
 }
 
 // showComparableFiles loops over the files prompting the user to compare
@@ -272,20 +311,10 @@ func fileContentsDiffer(f1, f2 []byte) bool {
 
 // queryDeleteDuplicates returns true if the user responds that the
 // duplicates should be deleted
-func (prog *Prog) queryDeleteDuplicates() bool {
-	deleteDuplicatesResp := responder.NewOrPanic(
-		"delete all duplicate files",
-		map[rune]string{
-			'y': "to delete all duplicates files with extension " +
-				prog.fileExtension,
-			'n': "to keep these duplicates",
-		},
-		responder.SetDefault('y'),
-		responder.SetIndents(0, prog.indent))
-
-	response := deleteDuplicatesResp.GetResponseOrDie()
+func (prog *Prog) queryDeleteDuplicates() rune {
+	response := prog.deleteDupR.GetResponseIndentOrDie(0, prog.indent)
 	fmt.Println()
-	return response == 'y'
+	return response
 }
 
 // showDiff shows the differences between the new file and the original and
@@ -293,7 +322,7 @@ func (prog *Prog) queryDeleteDuplicates() bool {
 func (prog *Prog) showDiff(nameOrig, nameNew string, counts *Counts) {
 	err := prog.diffs(nameOrig, nameNew)
 	if err != nil {
-		prog.twc.Wrap(fmt.Sprintf("Ignoring due to: %v", err), prog.indent)
+		prog.twc.Wrap(fmt.Sprintf("Error: %v", err), prog.indent)
 		counts.cmpErrs++
 		return
 	}
@@ -306,22 +335,7 @@ func (prog *Prog) showDiff(nameOrig, nameNew string, counts *Counts) {
 // original should be shown and then acts accordingly, reporting any errors
 // found.
 func (prog *Prog) queryShowDiff() bool {
-	showDiffResp := responder.NewOrPanic(
-		"Show differences",
-		map[rune]string{
-			'y': "to show differences",
-			'n': "to skip this file",
-			'd': "delete this and all subsequent files" +
-				" with extension " + prog.fileExtension,
-			'r': "revert this and all subsequent base files to" +
-				" the contents of the files with extension " +
-				prog.fileExtension,
-			'q': "to quit, keeping all subsequent files",
-		},
-		responder.SetDefault('y'),
-		responder.SetIndents(0, prog.indent))
-
-	response := showDiffResp.GetResponseOrDie()
+	response := prog.showDiffR.GetResponseIndentOrDie(0, prog.indent)
 	fmt.Println()
 
 	switch response {
@@ -361,18 +375,7 @@ func (prog *Prog) setKeepAll() {
 // queryDeleteFile asks if the file should be deleted and then acts
 // accordingly, reporting any errors found.
 func (prog *Prog) queryDeleteFile(nameOrig, nameNew string) {
-	deleteFileResp := responder.NewOrPanic(
-		"delete file",
-		map[rune]string{
-			'y': "to delete this file",
-			'n': "to keep this file",
-			'r': "to revert the base file to this content",
-			'q': "to quit, keeping all subsequent files",
-		},
-		responder.SetDefault('n'),
-		responder.SetIndents(prog.indent, prog.indent))
-
-	response := deleteFileResp.GetResponseOrDie()
+	response := prog.postDiffR.GetResponseIndentOrDie(prog.indent, prog.indent)
 	fmt.Println()
 
 	switch response {
@@ -390,7 +393,8 @@ func (prog *Prog) deleteAllFiles(filenames []string, count *Counts) {
 	for _, fName := range filenames {
 		prog.deleteFile(fName, count)
 	}
-	reportFiles(len(filenames), count.name, "deleted")
+	reportFiles(count.deleted, count.name, "deleted")
+	reportFiles(count.delErrs, count.name, "could not be deleted")
 }
 
 // deleteFile deletes the named file, reporting any errors
@@ -431,6 +435,10 @@ func (prog *Prog) revertFile(nameOrig, nameNew string, counts *Counts) {
 // reportFiles reports the number of files, their type and the action
 // performed on them
 func reportFiles(count int, desc, action string) {
+	if count == 0 {
+		return
+	}
+
 	fmt.Printf("%d %s %s %s\n", count, desc,
 		english.Plural("file", count), action)
 }
