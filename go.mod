@@ -10,18 +10,18 @@ require (
 	github.com/nickwells/english.mod v1.1.4
 	github.com/nickwells/errutil.mod v1.2.12
 	github.com/nickwells/filecheck.mod v1.1.20
-	github.com/nickwells/gogen.mod v1.11.10
+	github.com/nickwells/gogen.mod v1.11.12
 	github.com/nickwells/location.mod v1.2.26
 	github.com/nickwells/mathutil.mod/v2 v2.2.1
-	github.com/nickwells/param.mod/v5 v5.18.0
+	github.com/nickwells/param.mod/v5 v5.19.0
 	github.com/nickwells/snippet.mod v1.2.6
 	github.com/nickwells/testhelper.mod/v2 v2.2.0
 	github.com/nickwells/timer.mod v1.2.3
 	github.com/nickwells/twrap.mod v1.5.2
 	github.com/nickwells/units.mod/v2 v2.1.10
-	github.com/nickwells/unitsetter.mod/v4 v4.2.17
-	github.com/nickwells/verbose.mod v1.0.57
-	github.com/nickwells/versionparams.mod v1.1.14
+	github.com/nickwells/unitsetter.mod/v4 v4.2.18
+	github.com/nickwells/verbose.mod v1.0.59
+	github.com/nickwells/versionparams.mod v1.1.16
 	github.com/nickwells/xdg.mod v1.0.9
 	golang.org/x/sys v0.8.0
 )
