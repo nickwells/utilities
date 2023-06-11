@@ -120,10 +120,6 @@ func (prog *Prog) calcDurationSecs() int64 {
 		return 60 / prog.perMinute
 	}
 
-	fmt.Println("Program error: the sleep setting is not being handled: " +
-		timeParamCounter.SetBy())
-	os.Exit(1)
-
 	return 0
 }
 

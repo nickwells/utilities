@@ -18,17 +18,14 @@ const (
 	paramNameRepeat = "repeat"
 )
 
-var (
-	wakeupActionParamCounter paction.Counter
-	timeParamCounter         paction.Counter
-)
-
 // addActionParams adds the program parameters to the PSet
 func addActionParams(prog *Prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		ps.AddGroup(paramGroupNameActions,
 			"what to do when the sleeping finishes.")
-		countParams := wakeupActionParamCounter.MakeActionFunc()
+
+		var wakeupAction paction.Counter
+		wakeupActionAF := wakeupAction.MakeActionFunc()
 
 		ps.Add("message",
 			psetter.String{
@@ -39,7 +36,7 @@ func addActionParams(prog *Prog) param.PSetOptFunc {
 			},
 			"print this message when you wake up",
 			param.AltNames("msg"),
-			param.PostAction(countParams),
+			param.PostAction(wakeupActionAF),
 			param.GroupName(paramGroupNameActions),
 		)
 
@@ -52,13 +49,13 @@ func addActionParams(prog *Prog) param.PSetOptFunc {
 			},
 			"run the command in a subshell when you wake up",
 			param.AltNames("do"),
-			param.PostAction(countParams),
+			param.PostAction(wakeupActionAF),
 			param.GroupName(paramGroupNameActions),
 		)
 
 		ps.Add("show-time", psetter.Bool{Value: &prog.showTime},
 			"show the target time when you wake up",
-			param.PostAction(countParams),
+			param.PostAction(wakeupActionAF),
 			param.GroupName(paramGroupNameActions),
 		)
 
@@ -66,11 +63,18 @@ func addActionParams(prog *Prog) param.PSetOptFunc {
 			"the format to use when showing the time."+
 				" Setting this value forces the show-time flag on.",
 			param.PostAction(paction.SetBool(&prog.showTime, true)),
-			param.PostAction(countParams),
+			param.PostAction(wakeupActionAF),
 			param.GroupName(paramGroupNameActions),
 		)
 
-		ps.AddFinalCheck(checkActionParams(prog))
+		ps.AddFinalCheck(func() error {
+			if wakeupAction.Count() == 0 && prog.repeat {
+				return errors.New(
+					"you have chosen to repeat the sleep" +
+						" but have not specified any actions")
+			}
+			return nil
+		})
 
 		return nil
 	}
@@ -107,7 +111,9 @@ func addParams(prog *Prog) param.PSetOptFunc {
 func addTimeParams(prog *Prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		ps.AddGroup(paramGroupNameTime, "specify how long to sleep for.")
-		countTimeParams := timeParamCounter.MakeActionFunc()
+
+		var timeVal paction.Counter
+		timeValAF := timeVal.MakeActionFunc()
 
 		var (
 			needAbsTime bool
@@ -115,10 +121,9 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		absTimeLocation, _ := time.LoadLocation("Local")
-
 		var absTimeStr string
-
 		const absTimeFormat = "20060102 15:04:05"
+		var absTimeLen = len(absTimeFormat)
 
 		ps.Add("utc", psetter.Bool{Value: &prog.useUTC},
 			"use UTC time",
@@ -137,13 +142,13 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 			psetter.String{
 				Value: &absTimeStr,
 				Checks: []check.String{
-					check.StringLength[string](check.ValEQ[int](len(absTimeFormat))),
+					check.StringLength[string](check.ValEQ[int](absTimeLen)),
 				},
 			},
 			"the actual time to sleep until. Format: '"+absTimeFormat+"'."+
 				" This cannot be used with the "+paramNameRepeat+" argument",
 			param.AltNames("t"),
-			param.PostAction(countTimeParams),
+			param.PostAction(timeValAF),
 			param.PostAction(paction.SetBool(&hasAbsTime, true)),
 			param.GroupName(paramGroupNameTime),
 		)
@@ -158,7 +163,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 			},
 			"the minute to sleep until",
 			param.AltNames("m", "min", "minutes"),
-			param.PostAction(countTimeParams),
+			param.PostAction(timeValAF),
 			param.GroupName(paramGroupNameTime),
 		)
 
@@ -172,7 +177,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 			},
 			"the second to sleep until",
 			param.AltNames("s", "sec", "seconds"),
-			param.PostAction(countTimeParams),
+			param.PostAction(timeValAF),
 			param.GroupName(paramGroupNameTime),
 		)
 
@@ -186,7 +191,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 			},
 			"the number of parts to split the day into. "+
 				"A value of 24 would sleep until the next hour",
-			param.PostAction(countTimeParams),
+			param.PostAction(timeValAF),
 			param.GroupName(paramGroupNameTime),
 		)
 
@@ -201,7 +206,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 			"the number of parts to split the hour into."+
 				" A value of 20 would sleep until the next 3-minute period."+
 				" This would be minute 00, 03, 06, 09, 12 etc.",
-			param.PostAction(countTimeParams),
+			param.PostAction(timeValAF),
 			param.GroupName(paramGroupNameTime),
 		)
 
@@ -215,7 +220,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 			},
 			"the number of parts to split the minute into."+
 				" A value of 20 would sleep until the next 3-second period.",
-			param.PostAction(countTimeParams),
+			param.PostAction(timeValAF),
 			param.GroupName(paramGroupNameTime),
 		)
 
@@ -230,7 +235,8 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 			},
 			"set an offset to the calculated time (in seconds)."+
 				"\n\n"+
-				" The two offsets are added together to give a combined offset.",
+				" The two offsets are added together to give"+
+				" a combined offset.",
 			param.GroupName(paramGroupNameTime),
 		)
 
@@ -245,7 +251,8 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 			},
 			"set an offset to the calculated time (in minutes)."+
 				"\n\n"+
-				" The two offsets are added together to give a combined offset.",
+				" The two offsets are added together to give"+
+				" a combined offset.",
 			param.GroupName(paramGroupNameTime),
 		)
 
@@ -267,7 +274,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 
 			var err error
 			prog.absTime, err = time.ParseInLocation(
-				"20060102 15:04:05",
+				absTimeFormat,
 				absTimeStr,
 				absTimeLocation)
 			if err != nil {
@@ -279,42 +286,24 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 				now = now.UTC()
 			}
 			if prog.absTime.Sub(now) < 0 {
-				return fmt.Errorf("the target time %q is in the past", prog.absTime)
+				return fmt.Errorf("the target time %q is in the past",
+					prog.absTime)
 			}
 			return nil
 		})
 
-		ps.AddFinalCheck(checkTimeParams(prog))
+		ps.AddFinalCheck(func() error {
+			if timeVal.Count() == 0 {
+				return errors.New("no time specification has been set")
+			}
+			if timeVal.Count() > 1 {
+				return fmt.Errorf(
+					"the time specification has been set more than once: %s",
+					timeVal.SetBy())
+			}
+			return nil
+		})
 
-		return nil
-	}
-}
-
-// checkActionParams checks that at most one of the time specification
-// parameters has been set
-func checkActionParams(prog *Prog) func() error {
-	return func() error {
-		if wakeupActionParamCounter.Count() == 0 && prog.repeat {
-			return errors.New(
-				"you have chosen to repeat the sleep" +
-					" but have not specified any actions")
-		}
-		return nil
-	}
-}
-
-// checkTimeParams checks that at most one of the time specification
-// parameters has been set
-func checkTimeParams(prog *Prog) func() error {
-	return func() error {
-		if timeParamCounter.Count() == 0 {
-			return errors.New("no time specification has been set")
-		}
-		if timeParamCounter.Count() > 1 {
-			return fmt.Errorf(
-				"the time specification has been set more than once: %s",
-				timeParamCounter.SetBy())
-		}
 		return nil
 	}
 }
