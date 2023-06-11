@@ -120,10 +120,12 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 			hasAbsTime  bool
 		)
 
-		absTimeLocation, _ := time.LoadLocation("Local")
-		var absTimeStr string
 		const absTimeFormat = "20060102 15:04:05"
-		var absTimeLen = len(absTimeFormat)
+		var (
+			absTimeLocation, _ = time.LoadLocation("Local")
+			absTimeStr         string
+			absTimeLen         = len(absTimeFormat)
+		)
 
 		ps.Add("utc", psetter.Bool{Value: &prog.useUTC},
 			"use UTC time",
