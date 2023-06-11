@@ -10,7 +10,6 @@ import (
 // addParams will add parameters to the passed ParamSet
 func addParams(prog *Prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
-
 		ps.Add("group",
 			psetter.String{
 				Value:  &prog.groupName,
@@ -35,19 +34,24 @@ func addParams(prog *Prog) param.PSetOptFunc {
 				}),
 		)
 
-		ps.Add("must-exist", psetter.Bool{Value: &prog.mustExist},
+		ps.Add("must-exist",
+			psetter.Bool{Value: &prog.mustExist},
 			"the config file will be checked to ensure that it does exist and"+
 				" it will be an error if it doesn't",
 			param.Attrs(param.DontShowInStdUsage),
 		)
 
-		ps.Add("must-exist-personal", psetter.Bool{Value: &prog.mustExistPersonal},
+		ps.Add("must-exist-personal",
+			psetter.Bool{
+				Value: &prog.mustExistPersonal,
+			},
 			"the personal config file will be checked to ensure that it"+
 				" does exist and it will be an error if it doesn't",
 			param.Attrs(param.DontShowInStdUsage),
 		)
 
-		ps.Add("must-exist-global", psetter.Bool{Value: &prog.mustExistGlobal},
+		ps.Add("must-exist-global",
+			psetter.Bool{Value: &prog.mustExistGlobal},
 			"the global config file will be checked to ensure that it"+
 				" does exist and it will be an error if it doesn't",
 			param.Attrs(param.DontShowInStdUsage),
@@ -55,40 +59,45 @@ func addParams(prog *Prog) param.PSetOptFunc {
 
 		ps.Add("base-dir-personal",
 			psetter.String{
-				Value:  &prog.baseDirPersonal,
-				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
+				Value: &prog.baseDirPersonal,
+				Checks: []check.String{
+					check.StringLength[string](check.ValGT(0)),
+				},
 			},
-			"set the base directory in which the parameter file will be found."+
-				" This value will be used in place of the XDG config directory"+
-				" for personal config files."+
-				" The sub-directories (derived from the import path) will still"+
-				" be used",
+			"set the base directory in which the parameter file will"+
+				" be found. This value will be used in place of the"+
+				" XDG config directory for personal config files."+
+				" The sub-directories (derived from the import path)"+
+				" will still be used",
 			param.Attrs(param.DontShowInStdUsage),
 		)
 
 		ps.Add("base-dir-global",
 			psetter.String{
-				Value:  &prog.baseDirGlobal,
-				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
+				Value: &prog.baseDirGlobal,
+				Checks: []check.String{
+					check.StringLength[string](check.ValGT(0)),
+				},
 			},
-			"set the base directory in which the parameter file will be found."+
-				" This value will be used in place of the XDG config directory"+
-				" for global config files."+
-				" The sub-directories (derived from the import path) will still"+
-				" be used",
+			"set the base directory in which the parameter file will"+
+				" be found. This value will be used in place of the"+
+				" XDG config directory for global config files. The"+
+				" sub-directories (derived from the import path)"+
+				" will still be used",
 			param.Attrs(param.DontShowInStdUsage),
 		)
 
-		ps.Add("funcs", psetter.Enum{
-			Value: &prog.whichFuncs,
-			AllowedVals: psetter.AllowedVals{
-				"all": "create all functions",
-				"personalOnly": "create just the personal config file" +
-					" setter function",
-				"globalOnly": "create just the global config file" +
-					" setter function",
+		ps.Add("funcs",
+			psetter.Enum{
+				Value: &prog.whichFuncs,
+				AllowedVals: psetter.AllowedVals{
+					"all": "create all functions",
+					"personalOnly": "create just the personal config file" +
+						" setter function",
+					"globalOnly": "create just the global config file" +
+						" setter function",
+				},
 			},
-		},
 			"specify which of the two functions (the global or the personal)"+
 				" should be created",
 			param.Attrs(param.DontShowInStdUsage),
