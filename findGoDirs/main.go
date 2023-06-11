@@ -13,16 +13,13 @@ import (
 	"github.com/nickwells/dirsearch.mod/v2/dirsearch"
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/verbose.mod/verbose"
-	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Thu Jun 11 12:43:33 2020
 
 // doPrint will print the name
-func doPrint(fgd *findGoDirs, name string) {
+func doPrint(fgd *Prog, name string) {
 	if fgd.noAction {
 		fmt.Printf("%-20.20s : %s\n", "print", name)
 		return
@@ -32,7 +29,7 @@ func doPrint(fgd *findGoDirs, name string) {
 
 // doContent will show the lines in the files in the directory that match
 // the content checks
-func doContent(fgd *findGoDirs, name string) {
+func doContent(fgd *Prog, name string) {
 	defer fgd.dbgStack.Start("doContent", "Print matching content in : "+name)()
 
 	if fgd.noAction {
@@ -53,7 +50,7 @@ func doContent(fgd *findGoDirs, name string) {
 
 // doFilenames will show the names of the files in the directories that match
 // the content checks
-func doFilenames(fgd *findGoDirs, name string) {
+func doFilenames(fgd *Prog, name string) {
 	defer fgd.dbgStack.Start("doFilenames",
 		"Print files with matching content in : "+name)()
 
@@ -74,27 +71,27 @@ func doFilenames(fgd *findGoDirs, name string) {
 }
 
 // doBuild will run go build
-func doBuild(fgd *findGoDirs, name string) {
+func doBuild(fgd *Prog, name string) {
 	fgd.doGoCommand(name, "build", fgd.buildArgs)
 }
 
 // doTest will run go test
-func doTest(fgd *findGoDirs, name string) {
+func doTest(fgd *Prog, name string) {
 	fgd.doGoCommand(name, "test", fgd.testArgs)
 }
 
 // doInstall will run go install
-func doInstall(fgd *findGoDirs, name string) {
+func doInstall(fgd *Prog, name string) {
 	fgd.doGoCommand(name, "install", fgd.installArgs)
 }
 
 // doGenerate will run go generate
-func doGenerate(fgd *findGoDirs, name string) {
+func doGenerate(fgd *Prog, name string) {
 	fgd.doGoCommand(name, "generate", fgd.generateArgs)
 }
 
 // doGoCommand will run the Go subcommand with the passed args
-func (fgd *findGoDirs) doGoCommand(name, command string, cmdArgs []string) {
+func (fgd *Prog) doGoCommand(name, command string, cmdArgs []string) {
 	defer fgd.dbgStack.Start("doGoCommand", "In : "+name)()
 	intro := fgd.dbgStack.Tag()
 
@@ -109,30 +106,16 @@ func (fgd *findGoDirs) doGoCommand(name, command string, cmdArgs []string) {
 }
 
 func main() {
-	fgd := newFindGoDirs()
-	ps := paramset.NewOrDie(
-		verbose.AddParams,
-		versionparams.AddParams,
-
-		addParams(fgd),
-
-		addExamples,
-		addNotes,
-
-		param.SetProgramDescription(
-			"This will search for directories containing Go packages. You"+
-				" can add extra criteria for selecting the directory."+
-				" Once in each selected directory you can perform certain"+
-				" actions"),
-	)
+	prog := NewProg()
+	ps := makeParamSet(prog)
 
 	ps.Parse()
 
-	defer fgd.dbgStack.Start("main", os.Args[0])()
+	defer prog.dbgStack.Start("main", os.Args[0])()
 
-	sortedDirs := fgd.findMatchingDirs()
+	sortedDirs := prog.findMatchingDirs()
 	for _, d := range sortedDirs {
-		fgd.onMatchDo(d)
+		prog.onMatchDo(d)
 	}
 }
 
@@ -145,7 +128,7 @@ func main() {
 //
 // It does not perform any of the other tests, on package names, file
 // presence etc.
-func (fgd *findGoDirs) findMatchingDirs() []string {
+func (fgd *Prog) findMatchingDirs() []string {
 	defer fgd.dbgStack.Start("findMatchingDirs",
 		"Find dirs matching criteria")()
 
@@ -195,7 +178,7 @@ func (fgd *findGoDirs) findMatchingDirs() []string {
 
 // onMatchDo performs the actions if the directory is a go package directory
 // meeting the criteria
-func (fgd *findGoDirs) onMatchDo(dir string) {
+func (fgd *Prog) onMatchDo(dir string) {
 	defer fgd.dbgStack.Start("onMatchDo", "Act on matching dir: "+dir)()
 	intro := fgd.dbgStack.Tag()
 
@@ -267,7 +250,7 @@ func cd(dir string) (func(), error) {
 // pkgMatches will compare the package name against the list of target
 // packages, if any, and return true only if any of them match. If there are
 // no names to match then any name will match.
-func (fgd *findGoDirs) pkgMatches(pkg string) bool {
+func (fgd *Prog) pkgMatches(pkg string) bool {
 	if len(fgd.pkgNames) == 0 { // any name matches
 		return true
 	}
@@ -318,7 +301,7 @@ func entryFound(name string, entries []fs.DirEntry) bool {
 // content is not in any file. It will only return true if all the required
 // content is present in at least one of the files in the directory. In any
 // case it returns the map of content discovered.
-func (fgd *findGoDirs) hasRequiredContent(dir string) bool {
+func (fgd *Prog) hasRequiredContent(dir string) bool {
 	fgd.dirContent[dir] = contentMap{}
 
 	if len(fgd.contentChecks) == 0 {
@@ -346,7 +329,7 @@ func (fgd *findGoDirs) hasRequiredContent(dir string) bool {
 
 // checkContent opens the file and finds any content matching the checks,
 // writing it into the contentMap
-func (fgd *findGoDirs) checkContent(dir, fname string) error {
+func (fgd *Prog) checkContent(dir, fname string) error {
 	statusChecks := []StatusCheck{}
 	for _, c := range fgd.contentChecks {
 		if c.FileNameOK(fname) {

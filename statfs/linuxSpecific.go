@@ -15,13 +15,13 @@ const (
 )
 
 // addAllowedFields adds the extra Linux-specific allowed fields
-func addAllowedFields() {
-	allowedFields[maxNameStr] = "the maximum length of filenames"
-	allowedFields[flagsStr] = "show the mount flags"
+func (prog *Prog) addAllowedFields() {
+	prog.allowedFields[maxNameStr] = "the maximum length of filenames"
+	prog.allowedFields[flagsStr] = "show the mount flags"
 }
 
 // addFieldInfo adds the extra Linux-specific field info
-func addFieldInfo() {
+func (prog *Prog) addFieldInfo() {
 	const (
 		maxFlagsLen = 30
 	)
@@ -38,7 +38,7 @@ func addFieldInfo() {
 		unix.MS_SYNCHRONOUS: "writes are synched immediately",
 	}
 
-	fiMap[maxNameStr] = fieldInfo{
+	prog.fiMap[maxNameStr] = fieldInfo{
 		fieldVal: func(name string, s *unix.Statfs_t) any {
 			return s.Namelen
 		},
@@ -48,7 +48,7 @@ func addFieldInfo() {
 			return col.New(&colfmt.Int{W: 4}, "max file", "name length")
 		},
 	}
-	fiMap[flagsStr] = fieldInfo{
+	prog.fiMap[flagsStr] = fieldInfo{
 		fieldVal: func(name string, s *unix.Statfs_t) any {
 			rval := ""
 			sep := ""

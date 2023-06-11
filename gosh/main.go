@@ -10,59 +10,11 @@ import (
 
 	"github.com/nickwells/cli.mod/cli/responder"
 	"github.com/nickwells/gogen.mod/gogen"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/snippet.mod/snippet"
 	"github.com/nickwells/verbose.mod/verbose"
-	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Wed Sep  4 09:58:54 2019
-
-// makeParamSet creates the parameter set ready for argument parsing
-func makeParamSet(g *Gosh, slp *snippetListParams) *param.PSet {
-	return paramset.NewOrDie(
-		verbose.AddParams,
-		versionparams.AddParams,
-
-		addSnippetListParams(slp),
-		addSnippetParams(g),
-		addWebParams(g),
-		addReadloopParams(g),
-		addGoshParams(g),
-		addParams(g),
-
-		addNotes,
-		addExamples,
-		addReferences,
-
-		param.SetProgramDescription(
-			"This allows you to write lines of Go code and have them run"+
-				" for you in a framework that provides the main() func"+
-				" and any necessary boilerplate code for some common"+
-				" requirements. The resulting program can be preserved"+
-				" for subsequent editing."+
-				"\n\n"+
-				"You can run the code in a loop that will read lines from"+
-				" the standard input or from a list of files and,"+
-				" optionally, split each line into fields."+
-				"\n\n"+
-				"Alternatively you can quickly generate a simple webserver."+
-				"\n\n"+
-				"It's faster than opening an editor and writing a Go"+
-				" program from scratch especially if there are only a few"+
-				" lines of non-boilerplate code. You can also save the"+
-				" program that it generates and edit that if the few"+
-				" lines become many lines. The workflow would be that you"+
-				" use this to make the first few iterations of the"+
-				" command and if that is sufficient then just stop. If"+
-				" you need to do more then save the file and edit it just"+
-				" like a regular Go program."),
-
-		SetGlobalConfigFile,
-		SetConfigFile,
-	)
-}
 
 func main() {
 	g := newGosh()

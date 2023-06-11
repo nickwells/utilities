@@ -262,7 +262,7 @@ func checkPkg(dir string, pkgNames []string) error {
 		return fmt.Errorf("gogen.GetPackage error: %w", err)
 	}
 
-	fgd := newFindGoDirs()
+	fgd := NewProg()
 	fgd.pkgNames = pkgNames
 	if !fgd.pkgMatches(pkg) {
 		return errors.New("no packages match")

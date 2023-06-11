@@ -7,15 +7,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/gogen.mod/gogen"
-	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paramset"
-	"github.com/nickwells/param.mod/v5/param/psetter"
 	"github.com/nickwells/twrap.mod/twrap"
 	"github.com/nickwells/verbose.mod/verbose"
-	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Sat May 25 16:13:02 2019
@@ -25,52 +19,44 @@ const (
 	groupFileNameBase = "setConfigFile"
 )
 
-var (
+type Prog struct {
+	// parameters
 	mustExist         bool
 	mustExistPersonal bool
 	mustExistGlobal   bool
 	privateFunc       bool
-	makeFile          = true
+	makeFile          bool
 
-	whichFuncs      = "all"
-	outputFileName  = dfltFileName
+	whichFuncs      string
+	outputFileName  string
 	groupName       string
 	baseDirPersonal string
 	baseDirGlobal   string
-)
+
+	// intermediate results
+	pkgName string
+	dirs    []string
+}
+
+// NewProg returns an initialised Prog struct
+func NewProg() *Prog {
+	return &Prog{
+		makeFile: true,
+
+		whichFuncs:     "all",
+		outputFileName: dfltFileName,
+	}
+}
 
 func main() {
-	ps := paramset.NewOrDie(
-		gogen.AddParams(&outputFileName, &makeFile),
-		verbose.AddParams,
-		versionparams.AddParams,
-
-		addParams,
-
-		param.SetProgramDescription(
-			"This creates a Go file defining functions which set the"+
-				" default parameter files for the package or program."+
-				" These can be passed as another argument to the call"+
-				" where you create the parameter set or called"+
-				" directly, passing the parameter set and checking for"+
-				" errors. The paths of the files are derived from the"+
-				" XDG config directories and from the import path of"+
-				" the package."+
-				"\n\nIf a group name is given the output filename and"+
-				" the function names will be derived from the group"+
-				" name."+
-				"\n\nIt may be called multiple times in the same"+
-				" package directory with different group names and"+
-				" with none and each time it will generate the"+
-				" appropriate files, overwriting any previous files"+
-				" with the same name"),
-	)
+	prog := NewProg()
+	ps := makeParamSet(prog)
 
 	ps.Parse()
 
 	f := os.Stdout
-	if makeFile {
-		f = gogen.MakeFileOrDie(outputFileName)
+	if prog.makeFile {
+		f = gogen.MakeFileOrDie(prog.outputFileName)
 		defer f.Close()
 	}
 
@@ -81,22 +67,22 @@ func main() {
 		"github.com/nickwells/param.mod/v5/param",
 		"github.com/nickwells/xdg.mod/xdg")
 
-	pkgName := gogen.GetPackageOrDie()
-	dirs := strings.Split(gogen.GetImportPathOrDie(), "/")
+	prog.pkgName = gogen.GetPackageOrDie()
+	prog.dirs = strings.Split(gogen.GetImportPathOrDie(), "/")
 
-	printFuncPersonal(f, groupName, pkgName, dirs)
-	printFuncGlobal(f, groupName, pkgName, dirs)
+	prog.printFuncPersonal(f)
+	prog.printFuncGlobal(f)
 }
 
 // makeFuncNameGlobal generates the name of the function for setting the
 // global config file that this program will write.
-func makeFuncNameGlobal(groupName string) string {
+func (prog *Prog) makeFuncNameGlobal() string {
 	prefix := "Set"
-	if privateFunc {
+	if prog.privateFunc {
 		prefix = "set"
 	}
 
-	fName := prefix + "GlobalConfigFile" + makeGroupSuffix(groupName)
+	fName := prefix + "GlobalConfigFile" + prog.makeGroupSuffix()
 	verbose.Print("Global function name: ", fName, "\n")
 
 	return fName
@@ -104,13 +90,13 @@ func makeFuncNameGlobal(groupName string) string {
 
 // makeFuncNamePersonal generates the name of the function for setting the
 // personal config file that this program will write.
-func makeFuncNamePersonal(groupName string) string {
+func (prog *Prog) makeFuncNamePersonal() string {
 	prefix := "Set"
-	if privateFunc {
+	if prog.privateFunc {
 		prefix = "set"
 	}
 
-	fName := prefix + "ConfigFile" + makeGroupSuffix(groupName)
+	fName := prefix + "ConfigFile" + prog.makeGroupSuffix()
 	verbose.Print("Personal function name: ", fName, "\n")
 
 	return fName
@@ -119,8 +105,8 @@ func makeFuncNamePersonal(groupName string) string {
 // makeGroupSuffix generates the suffix for the function name from the group
 // name. It cleans up any characters in the name which are invalid characters
 // in a Go function name
-func makeGroupSuffix(groupName string) string {
-	if groupName == "" {
+func (prog *Prog) makeGroupSuffix() string {
+	if prog.groupName == "" {
 		return ""
 	}
 
@@ -128,8 +114,8 @@ func makeGroupSuffix(groupName string) string {
 
 	// Now split the group name into words and Titleise each word, adding it
 	// to the group suffix
-	groupName = strings.ReplaceAll(groupName, "-", ".")
-	groupParts := strings.Split(groupName, ".")
+	prog.groupName = strings.ReplaceAll(prog.groupName, "-", ".")
+	groupParts := strings.Split(prog.groupName, ".")
 	for _, part := range groupParts {
 		r := []rune(part)
 		r[0] = unicode.ToUpper(r[0])
@@ -146,12 +132,12 @@ func makeGroupSuffix(groupName string) string {
 // Note that the opening parenthesis is given as part of the name, this is
 // because for group config files the first parameter (the group name) is
 // generated as part of the name.
-func makeAddCFName(pkgName, groupName string) string {
-	if groupName != "" {
-		return fmt.Sprintf("ps.AddGroupConfigFile(%q,", groupName)
+func (prog *Prog) makeAddCFName() string {
+	if prog.groupName != "" {
+		return fmt.Sprintf("ps.AddGroupConfigFile(%q,", prog.groupName)
 	}
 
-	if pkgName == "main" {
+	if prog.pkgName == "main" {
 		return "ps.AddConfigFileStrict("
 	}
 
@@ -160,22 +146,22 @@ func makeAddCFName(pkgName, groupName string) string {
 
 // makeConfigFileName generates the name of the config file - this varies
 // according to whether or not this is for a group or main
-func makeConfigFileName(groupName string) string {
-	if groupName == "" {
+func (prog *Prog) makeConfigFileName() string {
+	if prog.groupName == "" {
 		return "common.cfg"
 	}
-	return "group-" + groupName + ".cfg"
+	return "group-" + prog.groupName + ".cfg"
 }
 
 // printFuncIntro prints the function comment and the func name and signature
-func printFuncIntro(f io.Writer, name string) {
+func (prog *Prog) printFuncIntro(f io.Writer, name string) {
 	twc := twrap.NewTWConfOrPanic(twrap.SetWriter(f))
 	fmt.Fprintln(f)
 	fmt.Fprintln(f, "/*")
 	twc.Wrap(name+
 		" adds a config file to the set which the param parser will process"+
 		" before checking the command line parameters.", 0)
-	if whichFuncs == "all" {
+	if prog.whichFuncs == "all" {
 		fmt.Fprintln(f)
 		twc.Wrap(
 			"This function is one of a pair which add the global and personal"+
@@ -192,35 +178,35 @@ func printFuncIntro(f io.Writer, name string) {
 }
 
 // printFuncPersonal writes out the function for setting a personal config file
-func printFuncPersonal(f io.Writer, groupName, pkgName string, dirs []string) {
-	if whichFuncs != "all" && whichFuncs != "personalOnly" {
+func (prog *Prog) printFuncPersonal(f io.Writer) {
+	if prog.whichFuncs != "all" && prog.whichFuncs != "personalOnly" {
 		return
 	}
 
-	printFuncIntro(f, makeFuncNamePersonal(groupName))
+	prog.printFuncIntro(f, prog.makeFuncNamePersonal())
 	fmt.Fprint(f, "\n\tbaseDir := ")
-	if baseDirPersonal != "" {
-		fmt.Fprintf(f, "%q\n", baseDirPersonal)
+	if prog.baseDirPersonal != "" {
+		fmt.Fprintf(f, "%q\n", prog.baseDirPersonal)
 	} else {
 		fmt.Fprintln(f, "xdg.ConfigHome()")
 	}
 
-	printAddCF(f, dirs,
-		makeAddCFName(pkgName, groupName),
-		makeConfigFileName(groupName),
-		mustExist || mustExistPersonal)
+	prog.printAddCF(f, prog.dirs,
+		prog.makeAddCFName(),
+		prog.makeConfigFileName(),
+		prog.mustExist || prog.mustExistPersonal)
 	printFuncEnd(f)
 }
 
 // printFuncGlobal writes out the function for setting a shared, global
 // config file
-func printFuncGlobal(f io.Writer, groupName, pkgName string, dirs []string) {
-	if whichFuncs != "all" && whichFuncs != "globalOnly" {
+func (prog *Prog) printFuncGlobal(f io.Writer) {
+	if prog.whichFuncs != "all" && prog.whichFuncs != "globalOnly" {
 		return
 	}
-	printFuncIntro(f, makeFuncNameGlobal(groupName))
-	if baseDirGlobal != "" {
-		fmt.Fprintf(f, "\n\tbaseDir := %q\n", baseDirGlobal)
+	prog.printFuncIntro(f, prog.makeFuncNameGlobal())
+	if prog.baseDirGlobal != "" {
+		fmt.Fprintf(f, "\n\tbaseDir := %q\n", prog.baseDirGlobal)
 	} else {
 		fmt.Fprint(f, `
 	dirs := xdg.ConfigDirs()
@@ -231,16 +217,16 @@ func printFuncGlobal(f io.Writer, groupName, pkgName string, dirs []string) {
 `)
 	}
 
-	printAddCF(f, dirs,
-		makeAddCFName(pkgName, groupName),
-		makeConfigFileName(groupName),
-		mustExist || mustExistGlobal)
+	prog.printAddCF(f, prog.dirs,
+		prog.makeAddCFName(),
+		prog.makeConfigFileName(),
+		prog.mustExist || prog.mustExistGlobal)
 	printFuncEnd(f)
 }
 
 // printAddCF prints the lines of code that will call filepath.Join(...)
 // with the base directory name and the the strings from paramFileParts
-func printAddCF(f io.Writer, dirs []string, funcName, cfgFName string, mustExist bool) {
+func (prog *Prog) printAddCF(f io.Writer, dirs []string, funcName, cfgFName string, mustExist bool) {
 	fmt.Fprint(f, `
 	`+funcName+`
 		filepath.Join(baseDir`)
@@ -265,98 +251,4 @@ func printFuncEnd(f io.Writer) {
 	return nil
 }
 `)
-}
-
-// addParams will add parameters to the passed ParamSet
-func addParams(ps *param.PSet) error {
-	ps.Add("group",
-		psetter.String{
-			Value:  &groupName,
-			Checks: []check.String{param.GroupNameCheck},
-		},
-		"sets the name of the group of parameters for which we are"+
-			" building the functions. If this is not given then only"+
-			" common config file functions will be generated. If a"+
-			" group name is given then only the group-specific config"+
-			" file functions will be generated. Additionally, unless"+
-			" the output file name has been changed from the default,"+
-			" the output file name will be adjusted to reflect the"+
-			" group name.",
-		param.AltNames("g"),
-		param.PostAction(setFileNameForGroup),
-	)
-
-	ps.Add("must-exist", psetter.Bool{Value: &mustExist},
-		"the config file will be checked to ensure that it does exist and"+
-			" it will be an error if it doesn't",
-		param.Attrs(param.DontShowInStdUsage),
-	)
-
-	ps.Add("must-exist-personal", psetter.Bool{Value: &mustExistPersonal},
-		"the personal config file will be checked to ensure that it"+
-			" does exist and it will be an error if it doesn't",
-		param.Attrs(param.DontShowInStdUsage),
-	)
-
-	ps.Add("must-exist-global", psetter.Bool{Value: &mustExistGlobal},
-		"the global config file will be checked to ensure that it"+
-			" does exist and it will be an error if it doesn't",
-		param.Attrs(param.DontShowInStdUsage),
-	)
-
-	ps.Add("base-dir-personal",
-		psetter.String{
-			Value:  &baseDirPersonal,
-			Checks: []check.String{check.StringLength[string](check.ValGT(0))},
-		},
-		"set the base directory in which the parameter file will be found."+
-			" This value will be used in place of the XDG config directory"+
-			" for personal config files."+
-			" The sub-directories (derived from the import path) will still"+
-			" be used",
-		param.Attrs(param.DontShowInStdUsage),
-	)
-
-	ps.Add("base-dir-global",
-		psetter.String{
-			Value:  &baseDirGlobal,
-			Checks: []check.String{check.StringLength[string](check.ValGT(0))},
-		},
-		"set the base directory in which the parameter file will be found."+
-			" This value will be used in place of the XDG config directory"+
-			" for global config files."+
-			" The sub-directories (derived from the import path) will still"+
-			" be used",
-		param.Attrs(param.DontShowInStdUsage),
-	)
-
-	ps.Add("funcs", psetter.Enum{
-		Value: &whichFuncs,
-		AllowedVals: psetter.AllowedVals{
-			"all": "create all functions",
-			"personalOnly": "create just the personal config file" +
-				" setter function",
-			"globalOnly": "create just the global config file" +
-				" setter function",
-		},
-	},
-		"specify which of the two functions (the global or the personal)"+
-			" should be created",
-		param.Attrs(param.DontShowInStdUsage),
-	)
-
-	ps.Add("private", psetter.Bool{Value: &privateFunc},
-		"this will generate private (non-global) function names",
-	)
-
-	return nil
-}
-
-// setFileNameForGroup sets the outputFileName to the group variant unless it
-// is already set to some non-default value
-func setFileNameForGroup(_ location.L, _ *param.ByName, _ []string) error {
-	if outputFileName == dfltFileName {
-		outputFileName = groupFileNameBase + makeGroupSuffix(groupName) + ".go"
-	}
-	return nil
 }

@@ -4,50 +4,83 @@ import (
 	"fmt"
 	"os"
 	"time"
-
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paramset"
-	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Sun Oct 22 11:17:41 2017
 
-func main() {
-	ps := paramset.NewOrDie(
-		versionparams.AddParams,
+const (
+	tsNow = iota
+	tsDateTimeStr
+	tsTimeStr
+)
 
-		addParams,
+// Prog holds program parameters and status
+type Prog struct {
+	fromZone *time.Location
+	toZone   *time.Location
 
-		param.SetProgramDescription(
-			"this will convert the passed date into the equivalent time"+
-				" in the given timezone. If no 'from' timezone is given"+
-				" the local timezone is used. Similarly for the 'to'"+
-				" timezone. If no time or date is given then the current"+
-				" time is used. Only one of the time or date can be"+
-				" given. A time or date must be given if the 'from'"+
-				" timezone is given."),
-	)
-	ps.Parse()
+	inFormat  string
+	outFormat string
 
-	tIn := time.Now()
+	useUSDateOrder bool
+	noSecs         bool
+	noCentury      bool
+	showTimezone   bool
+	showAMPM       bool
+	showMonthName  bool
 
-	if dtParam.HasBeenSet() {
-		var err error
-		tIn, err = time.ParseInLocation(inFormat, dtStr, fromZone)
+	datePartSep string
+	dtStr       string
+	tStr        string
+	timeSource  int
+}
+
+// NewProg returns a new Prog instance with the default values set
+func NewProg() *Prog {
+	return &Prog{
+		fromZone:   time.Local,
+		toZone:     time.Local,
+		inFormat:   dateFmt + " " + timeFmt,
+		outFormat:  dateFmt + " " + timeFmt,
+		timeSource: tsNow,
+	}
+}
+
+// getTime returns the time according to the parameters given
+func (prog *Prog) getTime() time.Time {
+	switch prog.timeSource {
+	case tsNow:
+		return time.Now()
+	case tsDateTimeStr:
+		tIn, err := time.ParseInLocation(
+			prog.inFormat, prog.dtStr, prog.fromZone)
 		if err != nil {
 			fmt.Println("Cannot parse the date and time:", err)
 			os.Exit(1)
 		}
-	} else if tParam.HasBeenSet() {
-		nowDateStr := time.Now().In(fromZone).Format(dateFmt)
-		var err error
-		tIn, err = time.ParseInLocation(inFormat, nowDateStr+" "+tStr, fromZone)
+		return tIn
+	case tsTimeStr:
+		dtStr := time.Now().In(prog.fromZone).Format(dateFmt) + " " + prog.tStr
+		tIn, err := time.ParseInLocation(prog.inFormat, dtStr, prog.fromZone)
 		if err != nil {
 			fmt.Println("Cannot parse the time:", err)
 			os.Exit(1)
 		}
+		return tIn
 	}
 
-	tOut := tIn.In(toZone)
-	fmt.Println(tOut.Format(outFormat))
+	fmt.Println("Unknown time source:", prog.timeSource)
+	os.Exit(1)
+	return time.Time{}
+}
+
+func main() {
+	prog := NewProg()
+	ps := makeParamSet(prog)
+	ps.Parse()
+
+	tIn := prog.getTime()
+
+	tOut := tIn.In(prog.toZone)
+	fmt.Println(tOut.Format(prog.outFormat))
 }

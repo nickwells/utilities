@@ -12,9 +12,7 @@ import (
 
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/param.mod/v5/param/psetter"
-	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Wed Jun 10 11:29:28 2020
@@ -24,6 +22,64 @@ const (
 
 	snippetFile = "_snippet.md"
 )
+
+// Prog holds program parameters and status
+type Prog struct {
+	parts []partParams
+
+	// parameters
+	snippetModSkip []string
+	snippetModPfx  []string
+
+	buildArgs []string
+}
+
+func NewProg() *Prog {
+	var (
+		mainPart = partParams{
+			partName: "intro",
+			headFile: "_headDoc.md",
+			tailFile: "_tailDoc.md",
+			suffix:   docSuffix,
+		}
+		examplesPart = partParams{
+			partName: "examples",
+			headFile: "_headExamples.md",
+			tailFile: "_tailExamples.md",
+			suffix:   ".EXAMPLES.md",
+			subTitle: "Examples",
+			desc:     "examples",
+		}
+		refsPart = partParams{
+			partName: "refs",
+			headFile: "_headReferences.md",
+			tailFile: "_tailReferences.md",
+			suffix:   ".REFERENCES.md",
+			subTitle: "See Also",
+			desc:     "external references",
+		}
+		notesPart = partParams{
+			partName: "notes",
+			headFile: "_headNotes.md",
+			tailFile: "_tailNotes.md",
+			suffix:   ".NOTES.md",
+			subTitle: "Notes",
+			desc:     "additional notes",
+		}
+	)
+
+	return &Prog{
+		parts: []partParams{
+			mainPart,
+			examplesPart,
+			refsPart,
+			notesPart,
+		},
+		snippetModPfx: []string{
+			"github.com/nickwells/",
+		},
+	}
+}
 
 // partParams holds the details for generating the different Markdown files.
 type partParams struct {
@@ -36,93 +92,25 @@ type partParams struct {
 	desc       string
 }
 
-var (
-	mainPart = partParams{
-		partName: "intro",
-		headFile: "_headDoc.md",
-		tailFile: "_tailDoc.md",
-		suffix:   docSuffix,
-	}
-	examplesPart = partParams{
-		partName: "examples",
-		headFile: "_headExamples.md",
-		tailFile: "_tailExamples.md",
-		suffix:   ".EXAMPLES.md",
-		subTitle: "Examples",
-		desc:     "examples",
-	}
-	refsPart = partParams{
-		partName: "refs",
-		headFile: "_headReferences.md",
-		tailFile: "_tailReferences.md",
-		suffix:   ".REFERENCES.md",
-		subTitle: "See Also",
-		desc:     "external references",
-	}
-	notesPart = partParams{
-		partName: "notes",
-		headFile: "_headNotes.md",
-		tailFile: "_tailNotes.md",
-		suffix:   ".NOTES.md",
-		subTitle: "Notes",
-		desc:     "additional notes",
-	}
-)
-
 const (
 	paramSnippetModPfx  = "snippet-mod-prefix"
 	paramSnippetModSkip = "snippet-mod-skip"
 )
 
-// snippetModPfx holds a list of module name prefixes. A module whose name
-// starts with one of these will be searched for a Markdown snippet file to
-// be included in the program documentation.
-var snippetModPfx = []string{
-	"github.com/nickwells/",
-}
-
-// snippetModSkip holds a list of modules to skip - a module named here will
-// not be searched for a Markdown snippet file.
-var snippetModSkip = []string{}
-
-var buildArgs = []string{}
-
 func main() {
-	parts := []partParams{
-		mainPart,
-		examplesPart,
-		refsPart,
-		notesPart,
-	}
-	ps := paramset.NewOrDie(
-		versionparams.AddParams,
-		addParams,
-
-		SetGlobalConfigFile,
-		SetConfigFile,
-		addNotes(parts),
-
-		param.SetProgramDescription(
-			"This creates markdown documentation for any Go program which"+
-				" uses the param package"+
-				" (github.com/nickwells/param.mod/*/param). It will"+
-				" generate Markdown files containing various sections from"+
-				" the program's help documentation."+
-				" On successful completion a brief"+
-				" message giving the text to be added to the README.md"+
-				" file will be printed"),
-	)
+	prog := NewProg()
+	ps := makeParamSet(prog)
 
 	ps.Parse()
 
 	packageIsMainOrExit()
 
-	cmd := buildCmd(commandName())
+	cmd := prog.buildCmd(commandName())
 	defer os.RemoveAll(filepath.Dir(cmd))
-	parts[0].extraFiles = getModuleSnippets(cmd)
+	prog.parts[0].extraFiles = prog.getModuleSnippets(cmd)
 
 	var docText string
-	for _, pp := range parts {
+	for _, pp := range prog.parts {
 		docText += pp.generate(cmd)
 	}
 	if docText == "" {
@@ -130,7 +118,7 @@ func main() {
 		return
 	}
 
-	filename := parts[0].filename(cmd)
+	filename := prog.parts[0].filename(cmd)
 	if makeFile(filename, docText) {
 		fmt.Println("Add the following lines to the README.md file" +
 			" (if not already present).")
@@ -152,7 +140,7 @@ func packageIsMainOrExit() {
 // buildCmd builds the temporary executable instance of the program and
 // returns the full pathname. The file should be removed after the last
 // use of the program.
-func buildCmd(cmdName string) string {
+func (prog *Prog) buildCmd(cmdName string) string {
 	dirName, err := os.MkdirTemp("", "mkdoc_"+cmdName+"_*")
 	if err != nil {
 		fmt.Fprintln(os.Stderr,
@@ -162,7 +150,7 @@ func buildCmd(cmdName string) string {
 	cmd := filepath.Join(dirName, cmdName)
 
 	buildCmd := []string{"build", "-o", cmd}
-	buildCmd = append(buildCmd, buildArgs...)
+	buildCmd = append(buildCmd, prog.buildArgs...)
 	gogen.ExecGoCmd(gogen.NoCmdIO, buildCmd...)
 
 	return cmd
@@ -184,9 +172,9 @@ func commandName() string {
 // skipModule returns true if the module should be skipped, false
 // otherwise. A module should be skipped if either it does not have a prefix
 // in the list of valid module prefixes or else it is explicitly excluded.
-func skipModule(modName string) bool {
+func (prog *Prog) skipModule(modName string) bool {
 	skip := true
-	for _, pfx := range snippetModPfx {
+	for _, pfx := range prog.snippetModPfx {
 		if strings.HasPrefix(modName, pfx) {
 			skip = false
 			break
@@ -196,7 +184,7 @@ func skipModule(modName string) bool {
 	if skip {
 		return true
 	}
-	for _, skipMod := range snippetModSkip {
+	for _, skipMod := range prog.snippetModSkip {
 		if modName == skipMod {
 			return true
 		}
@@ -207,7 +195,7 @@ func skipModule(modName string) bool {
 // getModuleSnippets finds all the dependent modules of the command and if
 // any of them have a '_snippet.md' file in the module directory then the
 // pathname is added to the list of snippet files to return
-func getModuleSnippets(cmd string) []string {
+func (prog *Prog) getModuleSnippets(cmd string) []string {
 	gopath := gogen.GetGopath()
 	if gopath == "" {
 		return []string{}
@@ -226,7 +214,7 @@ func getModuleSnippets(cmd string) []string {
 		}
 		modName := parts[1]
 		vsn := parts[2]
-		if skipModule(modName) {
+		if prog.skipModule(modName) {
 			continue
 		}
 		filename := filepath.Join(gopath,
@@ -371,52 +359,54 @@ func getDocPart(cmdPath, part string) string {
 }
 
 // addParams will add parameters to the passed ParamSet
-func addParams(ps *param.PSet) error {
-	ps.Add("build-args",
-		psetter.StrListAppender{
-			Value: &buildArgs,
-		},
-		"arguments to be passed to go build when building the program",
-		param.AltNames("build-arg", "build-param"),
-	)
+func addParams(prog *Prog) param.PSetOptFunc {
+	return func(ps *param.PSet) error {
+		ps.Add("build-args",
+			psetter.StrListAppender{
+				Value: &prog.buildArgs,
+			},
+			"arguments to be passed to go build when building the program",
+			param.AltNames("build-arg", "build-param"),
+		)
 
-	ps.Add(paramSnippetModPfx,
-		psetter.StrListAppender{
-			Value: &snippetModPfx,
-		},
-		"add the prefix of Go module names to be searched for"+
-			" Markdown snippet files ("+snippetFile+")",
-		param.AltNames("sm-pfx"),
-	)
+		ps.Add(paramSnippetModPfx,
+			psetter.StrListAppender{
+				Value: &prog.snippetModPfx,
+			},
+			"add the prefix of Go module names to be searched for"+
+				" Markdown snippet files ("+snippetFile+")",
+			param.AltNames("sm-pfx"),
+		)
 
-	ps.Add(paramSnippetModSkip,
-		psetter.StrListAppender{
-			Value: &snippetModSkip,
-		},
-		"add the name of Go modules to be skipped when searching for"+
-			" Markdown snippet files ("+snippetFile+")",
-		param.AltNames("sm-skip"),
-	)
+		ps.Add(paramSnippetModSkip,
+			psetter.StrListAppender{
+				Value: &prog.snippetModSkip,
+			},
+			"add the name of Go modules to be skipped when searching for"+
+				" Markdown snippet files ("+snippetFile+")",
+			param.AltNames("sm-skip"),
+		)
 
-	return nil
+		return nil
+	}
 }
 
 // addNotes will add any Notes to the passed Param Set
-func addNotes(parts []partParams) func(ps *param.PSet) error {
+func addNotes(prog *Prog) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		ps.AddNote("Files generated",
 			"Each of the generated Markdown files will have a"+
 				" name starting with an underscore followed by"+
 				" the name of the program itself. The files to"+
 				" be generated are as follows:"+
-				"\n\n"+makePartsNote(parts))
+				"\n\n"+makePartsNote(prog.parts))
 
 		ps.AddNote("Markdown snippets",
 			"This program will discover any modules that the program"+
 				" being documented uses. Having found these packages"+
 				" it will find any whose name starts with one of the"+
 				" standard prefixes"+
-				" (by default: '"+strings.Join(snippetModPfx, "', '")+"')"+
+				" (by default: '"+strings.Join(prog.snippetModPfx, "', '")+"')"+
 				" and if the package's module directory contains a"+
 				" file called '"+snippetFile+"' then the contents of"+
 				" that file will be added to the end of the main"+

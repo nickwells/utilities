@@ -13,12 +13,12 @@ const (
 )
 
 type (
-	actionFunc      func(*findGoDirs, string)
+	actionFunc      func(*Prog, string)
 	dirToContentMap map[string]contentMap
 )
 
-// findGoDirs holds the parameters and current status of the program
-type findGoDirs struct {
+// Prog holds the parameters and current status of the program
+type Prog struct {
 	baseDirs      []string
 	skipDirs      []string
 	pkgNames      []string
@@ -41,8 +41,8 @@ type findGoDirs struct {
 	dbgStack *callstack.Stack
 }
 
-func newFindGoDirs() *findGoDirs {
-	fgd := &findGoDirs{
+func NewProg() *Prog {
+	return &Prog{
 		contentChecks: make(checkMap),
 		dirContent:    make(dirToContentMap),
 		actions:       make(map[string]bool),
@@ -58,6 +58,4 @@ func newFindGoDirs() *findGoDirs {
 
 		dbgStack: &callstack.Stack{},
 	}
-
-	return fgd
 }

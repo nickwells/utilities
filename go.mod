@@ -19,7 +19,7 @@ require (
 	github.com/nickwells/timer.mod v1.2.3
 	github.com/nickwells/twrap.mod v1.5.2
 	github.com/nickwells/units.mod/v2 v2.1.10
-	github.com/nickwells/unitsetter.mod/v4 v4.2.16
+	github.com/nickwells/unitsetter.mod/v4 v4.2.17
 	github.com/nickwells/verbose.mod v1.0.57
 	github.com/nickwells/versionparams.mod v1.1.14
 	github.com/nickwells/xdg.mod v1.0.9

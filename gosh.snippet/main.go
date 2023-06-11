@@ -12,36 +12,86 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/english.mod/english"
 	"github.com/nickwells/errutil.mod/errutil"
 	"github.com/nickwells/filecheck.mod/filecheck"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paction"
-	"github.com/nickwells/param.mod/v5/param/paramset"
-	"github.com/nickwells/param.mod/v5/param/psetter"
 	"github.com/nickwells/twrap.mod/twrap"
 	"github.com/nickwells/verbose.mod/verbose"
-	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Wed May 26 22:30:48 2021
 
 const (
 	installAction = "install"
-	cmpAction     = "cmp"
+	cmpAction     = "compare"
 
 	dfltMaxSubDirs = 10
 )
 
-var (
+type Prog struct {
 	fromDir string
 	toDir   string
-	action  = cmpAction
+	action  string
 
-	maxSubDirs int64 = dfltMaxSubDirs
+	maxSubDirs int64
 	noCopy     bool
-)
+
+	status Status
+
+	timestamp string
+
+	sourceFS fs.FS
+	targetFS fs.FS
+
+	sourceSnippets sSet
+	targetSnippets sSet
+}
+
+// NewProg creates an initialised Prog struct
+func NewProg() *Prog {
+	return &Prog{
+		action:     cmpAction,
+		maxSubDirs: dfltMaxSubDirs,
+
+		status: Status{
+			errs: errutil.NewErrMap(),
+		},
+
+		timestamp: time.Now().Format(".20060102-150405.000"),
+	}
+}
+
+// getFileSystems populates the source and target file systems and gets their
+// content
+func (prog *Prog) getFileSystems() {
+	prog.createTargetFS()
+
+	if prog.fromDir != "" {
+		prog.sourceFS = os.DirFS(prog.fromDir)
+		return
+	}
+
+	var err error
+	prog.sourceFS, err = fs.Sub(snippetsDir, "_snippets")
+	if err != nil {
+		fmt.Fprintf(os.Stderr,
+			"Can't make the sub-filesystem for the embedded directory: %v", err)
+		os.Exit(1)
+	}
+}
+
+// getSnippetSets populates the source and target snippet sets from the
+// corresponding file systems
+func (prog *Prog) getSnippetSets() {
+	prog.sourceSnippets = prog.getFSContent(prog.sourceFS, "Snippet source")
+	if len(prog.sourceSnippets.names) == 0 {
+		fmt.Fprintln(os.Stderr, "There are no snippets to "+prog.action)
+		os.Exit(1)
+	}
+
+	prog.targetSnippets = prog.getFSContent(prog.targetFS, "Snippet target")
+	prog.reportSnippetCounts()
+}
 
 type snippet struct {
 	content []byte
@@ -54,61 +104,24 @@ type sSet struct {
 	names []string
 }
 
-// installer holds the details needed to install snippets
-type installer struct {
-	srcSet  sSet
-	targSet sSet
-
-	toDir string
-
-	l logger
-
-	timestamp string
-}
-
-// newInstaller ...
-func newInstaller(source, target fs.FS, toDir string) *installer {
-	return &installer{
-		srcSet:    getFSContent(source, "Snippet source"),
-		targSet:   getFSContent(target, "Snippet target"),
-		toDir:     toDir,
-		l:         logger{errs: errutil.NewErrMap()},
-		timestamp: time.Now().Format(".20060102-150405.000"),
-	}
-}
-
-// checkSourceSnippets checks that there are some snippets in the source
-// set. If not it reports an error and exits.
-func (inst installer) checkSourceSnippets() {
-	if len(inst.srcSet.names) == 0 {
-		actName := "unknown action"
-		switch action {
-		case installAction:
-			actName = "install"
-		case cmpAction:
-			actName = "compare"
-		}
-		fmt.Fprintln(os.Stderr, "There are no snippets to "+actName)
-		os.Exit(1)
-	}
-}
-
 // reportSnippetCounts reports the number of snippets in the source and
 // target sets if verbose is on.
-func (inst installer) reportSnippetCounts() {
+func (prog *Prog) reportSnippetCounts() {
 	if !verbose.IsOn() {
 		return
 	}
+	sourceCount := len(prog.sourceSnippets.names)
+	targetCount := len(prog.targetSnippets.names)
 
-	fmt.Printf("       snippets to install:%4d\n", len(inst.srcSet.names))
-	if len(inst.targSet.names) == 0 {
+	fmt.Printf("       snippets to install:%4d\n", sourceCount)
+	if targetCount == 0 {
 		return
 	}
-	fmt.Printf("snippets already installed:%4d\n", len(inst.targSet.names))
+	fmt.Printf("snippets already installed:%4d\n", targetCount)
 }
 
-// logger is used to record the progress of the installation
-type logger struct {
+// Status is used to record the progress of the installation
+type Status struct {
 	newCount         int
 	dupCount         int
 	diffCount        int
@@ -125,7 +138,7 @@ type logger struct {
 // handleErr checks the error, if it is nil, it returns false, otherwise it
 // adds the error to the error map, records that the file failed to install
 // and returns true.
-func (l *logger) handleErr(err error, errCat, snippetName string) bool {
+func (l *Status) handleErr(err error, errCat, snippetName string) bool {
 	if err == nil {
 		return false
 	}
@@ -147,7 +160,7 @@ func trimPrefix(vals []string, prefix string) []string {
 }
 
 // report prints information about the state of the installation
-func (l logger) report(dir string) {
+func (l Status) report(dir string) {
 	if verbose.IsOn() {
 		fmt.Println("Snippet installation summary")
 		fmt.Printf("\t        New:%4d\n", l.newCount)
@@ -166,7 +179,7 @@ func (l logger) report(dir string) {
 			fmt.Printf("       Timestamped copies:%4d\n", l.timestampedCount)
 		}
 
-		if noCopy {
+		if len(l.removedFiles) > 0 {
 			twc.Wrap("The following files were removed. Please check that"+
 				" you are happy with this; if not you will need to restore"+
 				" from backups (if available)", 0)
@@ -178,7 +191,9 @@ func (l logger) report(dir string) {
 			twc.List(
 				trimPrefix(l.removedFiles, dir+string(filepath.Separator)),
 				8)
-		} else {
+		}
+
+		if len(l.renamedFiles) > 0 {
 			twc.Wrap("You should check that you don't want to keep the"+
 				" original files"+
 				" and if so, remove the copies of the original snippet"+
@@ -203,7 +218,7 @@ func (l logger) report(dir string) {
 }
 
 // reportErrors prints any errors
-func (l logger) reportErrors() {
+func (l Status) reportErrors() {
 	twc := twrap.NewTWConfOrPanic(twrap.SetWriter(os.Stderr))
 
 	if len(l.badInstalls) > 0 {
@@ -220,82 +235,56 @@ func (l logger) reportErrors() {
 var snippetsDir embed.FS
 
 func main() {
-	ps := paramset.NewOrDie(
-		verbose.AddParams,
-		versionparams.AddParams,
-
-		addParams,
-
-		param.SetProgramDescription(
-			"This can install the standard collection of useful snippets."+
-				" It can also be used to install snippets from a"+
-				" directory or to compare two collections of snippets."+
-				"\n\n"+
-				"The default behaviour is to compare the"+
-				" standard collection of snippets with those"+
-				" in the given target directory."),
-	)
+	prog := NewProg()
+	ps := makeParamSet(prog)
 	ps.Parse()
 
-	toFS := createToFS(toDir)
-	var fromFS fs.FS
-	var err error
-	fromFS, err = fs.Sub(snippetsDir, "_snippets")
-	if err != nil {
-		fmt.Fprintf(os.Stderr,
-			"Can't make the sub-filesystem for the embedded directory: %v", err)
-		os.Exit(1)
-	}
-	if fromDir != "" {
-		fromFS = os.DirFS(fromDir)
-	}
+	prog.getFileSystems()
+	prog.getSnippetSets()
 
-	switch action {
+	switch prog.action {
 	case cmpAction:
-		compareSnippets(fromFS, toFS, toDir)
+		prog.compareSnippets()
 	case installAction:
-		installSnippets(fromFS, toFS, toDir)
+		prog.installSnippets()
 	}
 }
 
-// createToFS will check that the toDir either exists in which case it must
+// createTargetFS will check that the toDir either exists in which case it must
 // be a directory or else it does not exist in which case it will be created.
 // Any failure to create the directory or the existence as a non-directory
 // will be reported and the program will exit.
-func createToFS(toDir string) fs.FS {
+func (prog *Prog) createTargetFS() {
 	exists := filecheck.Provisos{Existence: filecheck.MustExist}
 
-	if exists.StatusCheck(toDir) == nil {
-		if filecheck.DirExists().StatusCheck(toDir) != nil {
+	if exists.StatusCheck(prog.toDir) == nil {
+		if filecheck.DirExists().StatusCheck(prog.toDir) != nil {
 			fmt.Fprintf(os.Stderr,
-				"The target exists but is not a directory: %q\n", toDir)
+				"The target exists but is not a directory: %q\n", prog.toDir)
 			os.Exit(1)
 		}
-		return os.DirFS(toDir)
+		prog.targetFS = os.DirFS(prog.toDir)
+		return
 	}
 
-	verbose.Println("creating the target directory: ", toDir)
-	err := os.MkdirAll(toDir, 0o777)
+	verbose.Println("creating the target directory: ", prog.toDir)
+	err := os.MkdirAll(prog.toDir, 0o755)
 	if err != nil {
 		fmt.Fprintf(os.Stderr,
-			"Failed to create the target directory (%q): %v\n", toDir, err)
+			"Failed to create the target directory (%q): %v\n", prog.toDir, err)
 		os.Exit(1)
 	}
-	return os.DirFS(toDir)
+	prog.targetFS = os.DirFS(prog.toDir)
 }
 
 // compareSnippets compares the snippets in the from directory with those in
 // the to directory reporting any differences.
-func compareSnippets(source, target fs.FS, toDir string) {
+func (prog *Prog) compareSnippets() {
 	verbose.Println("comparing snippets")
 
-	inst := newInstaller(source, target, toDir)
-	inst.checkSourceSnippets()
-	inst.reportSnippetCounts()
-
-	for _, name := range inst.srcSet.names {
-		fromS := inst.srcSet.files[name]
-		if toS, ok := inst.targSet.files[name]; ok {
+	for _, name := range prog.sourceSnippets.names {
+		fromS := prog.sourceSnippets.files[name]
+		if toS, ok := prog.targetSnippets.files[name]; ok {
 			if string(toS.content) == string(fromS.content) {
 				fmt.Println("Duplicate: ", name)
 			} else {
@@ -305,8 +294,8 @@ func compareSnippets(source, target fs.FS, toDir string) {
 			fmt.Println("      New: ", name)
 		}
 	}
-	for _, name := range inst.targSet.names {
-		if _, ok := inst.srcSet.files[name]; !ok {
+	for _, name := range prog.targetSnippets.names {
+		if _, ok := prog.sourceSnippets.files[name]; !ok {
 			fmt.Println("    Extra: ", name)
 		}
 	}
@@ -314,59 +303,55 @@ func compareSnippets(source, target fs.FS, toDir string) {
 
 // installSnippets installs the snippets from the source directory into
 // the target directory, reporting any differences.
-func installSnippets(source, target fs.FS, toDir string) {
-	verbose.Println("Installing snippets into ", toDir)
-
-	inst := newInstaller(source, target, toDir)
-	inst.checkSourceSnippets()
-	inst.reportSnippetCounts()
+func (prog *Prog) installSnippets() {
+	verbose.Println("Installing snippets into ", prog.toDir)
 
 	var err error
-	for _, snippetName := range inst.srcSet.names {
+	for _, snippetName := range prog.sourceSnippets.names {
 		verbose.Println("\tinstalling ", snippetName)
-		fromS := inst.srcSet.files[snippetName]
-		toS, toFileExists := inst.targSet.files[snippetName]
+		fromS := prog.sourceSnippets.files[snippetName]
+		toS, toFileExists := prog.targetSnippets.files[snippetName]
 
-		fileName := filepath.Join(inst.toDir, snippetName)
+		fileName := filepath.Join(prog.toDir, snippetName)
 
 		if toFileExists {
 			if string(toS.content) == string(fromS.content) {
 				// duplicate snippet
-				inst.l.dupCount++
+				prog.status.dupCount++
 				continue
 			}
 			// changed snippet
-			inst.l.diffCount++
-			if clearFile(snippetName, fileName, inst) {
+			prog.status.diffCount++
+			if prog.clearFile(snippetName, fileName) {
 				err = writeSnippet(fromS, fileName)
-				inst.l.handleErr(err, "Write failure", snippetName)
+				prog.status.handleErr(err, "Write failure", snippetName)
 			}
 			continue
 		}
 		// new snippet
-		inst.l.newCount++
-		err = inst.makeSubDir(fromS)
-		if inst.l.handleErr(err, "Mkdir failure", snippetName) {
+		prog.status.newCount++
+		err = prog.makeSubDir(fromS)
+		if prog.status.handleErr(err, "Mkdir failure", snippetName) {
 			continue
 		}
 		err = writeSnippet(fromS, fileName)
-		if inst.l.handleErr(err, "Write failure", snippetName) {
+		if prog.status.handleErr(err, "Write failure", snippetName) {
 			continue
 		}
 	}
 
-	inst.l.report(inst.toDir)
-	inst.l.reportErrors()
+	prog.status.report(prog.toDir)
+	prog.status.reportErrors()
 }
 
 // makeSubDir creates the snippet's corresponding sub-directory in the target
 // directory if necessary.
-func (inst *installer) makeSubDir(s snippet) error {
+func (prog *Prog) makeSubDir(s snippet) error {
 	if s.dirName == "" {
 		return nil
 	}
 
-	subDirName := filepath.Join(inst.toDir, s.dirName)
+	subDirName := filepath.Join(prog.toDir, s.dirName)
 	if filecheck.DirExists().StatusCheck(subDirName) == nil {
 		return nil
 	}
@@ -379,15 +364,15 @@ func (inst *installer) makeSubDir(s snippet) error {
 	name := subDirName
 	exists := filecheck.Provisos{Existence: filecheck.MustExist}
 	for exists.StatusCheck(name) != nil &&
-		name != inst.toDir {
+		name != prog.toDir {
 		name = filepath.Dir(name)
 	}
 
-	if name == inst.toDir {
+	if name == prog.toDir {
 		return err
 	}
 
-	if clearFile(s.name, name, inst) {
+	if prog.clearFile(s.name, name) {
 		return os.MkdirAll(subDirName, 0o777)
 	}
 
@@ -397,26 +382,26 @@ func (inst *installer) makeSubDir(s snippet) error {
 // clearFile either moves the file aside or removes it. It updates the
 // installation log and records any errors. It returns true if there were no
 // errors, false otherwise.
-func clearFile(snippetName, fileName string, inst *installer) bool {
-	inst.l.clearCount++
+func (prog *Prog) clearFile(snippetName, fileName string) bool {
+	prog.status.clearCount++
 
-	if noCopy {
-		inst.l.removedFiles = append(inst.l.removedFiles, fileName)
+	if prog.noCopy {
+		prog.status.removedFiles = append(prog.status.removedFiles, fileName)
 		err := os.Remove(fileName)
-		return !inst.l.handleErr(err, "Remove failure", snippetName)
+		return !prog.status.handleErr(err, "Remove failure", snippetName)
 	}
 
 	exists := filecheck.Provisos{Existence: filecheck.MustExist}
 	copyName := fileName + ".orig"
 
 	if exists.StatusCheck(copyName) == nil {
-		copyName += inst.timestamp
-		inst.l.timestampedCount++
+		copyName += prog.timestamp
+		prog.status.timestampedCount++
 	}
 
-	inst.l.renamedFiles = append(inst.l.renamedFiles, copyName)
+	prog.status.renamedFiles = append(prog.status.renamedFiles, copyName)
 	err := os.Rename(fileName, copyName)
-	return !inst.l.handleErr(err, "Rename failure", snippetName)
+	return !prog.status.handleErr(err, "Rename failure", snippetName)
 }
 
 // writeSnippet creates the named file and writes the snippet into it
@@ -432,8 +417,9 @@ func writeSnippet(s snippet, name string) error {
 	return err
 }
 
-// getFSContent ...
-func getFSContent(f fs.FS, name string) sSet {
+// getFSContent gets the contents of the supplied filesystem, recursively
+// descending into subdirectories. It returns the results as a snippet set.
+func (prog *Prog) getFSContent(f fs.FS, name string) sSet {
 	errs := errutil.NewErrMap()
 	defer func() {
 		if errCount, _ := errs.CountErrors(); errCount != 0 {
@@ -454,7 +440,7 @@ func getFSContent(f fs.FS, name string) sSet {
 
 	for _, de := range dirEnts {
 		if de.IsDir() {
-			readSubDir(f, []string{de.Name()}, &snipSet, errs)
+			prog.readSubDir(f, []string{de.Name()}, &snipSet, errs)
 			continue
 		}
 		err := addSnippet(f, de, []string{}, &snipSet)
@@ -492,12 +478,12 @@ func readSnippet(f fs.FS, de fs.DirEntry) (snippet, error) {
 // any errors, it will recursively descend into any subdirectories. If the
 // total depth of subdirectories is greater than maxSubDirs then it will
 // assume that there is a loop in the directory tree and will abort
-func readSubDir(f fs.FS, names []string, snips *sSet, errs *errutil.ErrMap) {
-	if int64(len(names)) > maxSubDirs {
+func (prog *Prog) readSubDir(f fs.FS, names []string, snips *sSet, errs *errutil.ErrMap) {
+	if int64(len(names)) > prog.maxSubDirs {
 		errs.AddError("Directories too deep - suspected loop",
 			fmt.Errorf(
 				"The directories at %q exceed the maximum directory depth (%d)",
-				filepath.Join(names...), maxSubDirs))
+				filepath.Join(names...), prog.maxSubDirs))
 		return
 	}
 	f, err := fs.Sub(f, names[len(names)-1])
@@ -514,7 +500,7 @@ func readSubDir(f fs.FS, names []string, snips *sSet, errs *errutil.ErrMap) {
 
 	for _, de := range dirEnts {
 		if de.IsDir() {
-			readSubDir(f, append(names, de.Name()), snips, errs)
+			prog.readSubDir(f, append(names, de.Name()), snips, errs)
 			continue
 		}
 		err := addSnippet(f, de, names, snips)
@@ -537,106 +523,5 @@ func addSnippet(f fs.FS, de fs.DirEntry, names []string, snipSet *sSet) error {
 	s.name = filepath.Join(s.dirName, de.Name())
 	snipSet.files[s.name] = s
 	snipSet.names = append(snipSet.names, s.name)
-	return nil
-}
-
-// addParams will add parameters to the passed ParamSet
-func addParams(ps *param.PSet) error {
-	const (
-		actionParamName = "action"
-	)
-	ps.Add(actionParamName,
-		psetter.Enum{
-			Value: &action,
-			AllowedVals: psetter.AllowedVals{
-				installAction: "install the default snippets in" +
-					" the target directory",
-				cmpAction: "compare the default snippets with" +
-					" those in the target directory",
-			},
-		},
-		"what action should be performed",
-		param.AltNames("a"),
-		param.Attrs(param.CommandLineOnly),
-	)
-
-	ps.Add("install", psetter.Nil{},
-		"install the snippets.",
-		param.PostAction(paction.SetString(&action, installAction)),
-		param.Attrs(param.CommandLineOnly),
-		param.SeeAlso(actionParamName),
-	)
-
-	ps.Add("target",
-		psetter.Pathname{
-			Value: &toDir,
-			Checks: []check.String{
-				check.StringLength[string](check.ValGT[int](0)),
-			},
-		},
-		"set the directory where the snippets are to be copied or compared.",
-		param.AltNames("to", "to-dir", "t"),
-		param.Attrs(param.CommandLineOnly|param.MustBeSet),
-	)
-
-	ps.Add("source",
-		psetter.Pathname{
-			Value:       &fromDir,
-			Expectation: filecheck.DirExists(),
-		},
-		"set the directory where the snippets are to be found."+
-			" If this is not set then the standard collection of"+
-			" snippets will be used.",
-		param.AltNames("from", "from-dir", "f"),
-		param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
-	)
-
-	ps.Add("max-sub-dirs",
-		psetter.Int64{
-			Value:  &maxSubDirs,
-			Checks: []check.Int64{check.ValGT[int64](2)},
-		},
-		"how many levels of sub-directory are allowed before we assume"+
-			" there is a loop in the directory path",
-		param.Attrs(param.DontShowInStdUsage),
-	)
-
-	ps.Add("no-copy", psetter.Bool{Value: &noCopy},
-		"suppress the copying of existing files which have"+
-			" changed and are being replaced."+
-			"\n\n"+
-			"NOTE: this deletes files from the target directory"+
-			" which have the same name as files from the source."+
-			" The original files cannot be recovered, no copy is kept.",
-		param.AltNames("no-backup"),
-		param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
-	)
-
-	ps.AddReference("findCmpRm",
-		"A program to find files with a given suffix and compare"+
-			" them with corresponding files without the suffix."+
-			" This can be useful to compare the installed snippets"+
-			" with differing versions of the same snippet moved"+
-			" aside during the installation. It will prompt the"+
-			" user after any differences have been shown to remove"+
-			" the copy of the file. It is thus useful for cleaning"+
-			" up the snippet directory after installation."+
-			"\n\n"+
-			"This can be found in the same repository as gosh and"+
-			" this command. You can install this with 'go install'"+
-			" in the same way as these commands.")
-
-	ps.AddExample(
-		`snipDir=$HOME/.config/github.com/nickwells/utilities/gosh/snippets
-gosh.snippet -target $snipDir`,
-		"This will compare the standard collection of snippets"+
-			" with those in the target directory")
-
-	ps.AddExample(
-		`snipDir=$HOME/.config/github.com/nickwells/utilities/gosh/snippets
-gosh.snippet -target $snipDir -install`,
-		"This will install the standard collection of snippets"+
-			" into the target directory")
-
 	return nil
 }

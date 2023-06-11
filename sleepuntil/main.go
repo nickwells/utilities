@@ -6,28 +6,26 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paramset"
 	"github.com/nickwells/verbose.mod/verbose"
-	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 const dfltShowTimeFmt = "20060102.150405"
 
-var (
+// Prog holds program parameters and status
+type Prog struct {
 	absTime time.Time
 
-	showTimeFmt   = dfltShowTimeFmt
+	showTimeFmt   string
 	afterSleepCmd string
 	msg           string
 
 	showTime bool
 	useUTC   bool
-	doSleep  = true
+	doSleep  bool
 
 	repeat bool
 
-	repeatCount int64 = -1
+	repeatCount int64
 
 	offset     int64
 	offsetMins int64
@@ -37,7 +35,17 @@ var (
 	perDay    int64
 	perHour   int64
 	perMinute int64
-)
+}
+
+// NewProg returns a new Prog instance with the default values set
+
+func NewProg() *Prog {
+	return &Prog{
+		showTimeFmt: dfltShowTimeFmt,
+		doSleep:     true,
+		repeatCount: -1,
+	}
+}
 
 // sleepCalc calculates the time to sleep
 func sleepCalc(durationSecs, offsetSecs int64, now time.Time) time.Duration {
@@ -69,24 +77,24 @@ func sleepCalc(durationSecs, offsetSecs int64, now time.Time) time.Duration {
 
 // sleepToAbsTime parses the value of the absTime into a time in the given
 // timezone (Local if no value is given) and sleeps until that time
-func sleepToAbsTime() {
+func (prog *Prog) sleepToAbsTime() {
 	now := time.Now()
-	if useUTC {
+	if prog.useUTC {
 		now = now.UTC()
 	}
 
-	dur := absTime.Sub(now)
+	dur := prog.absTime.Sub(now)
 	if dur > 0 {
-		sleepToTarget(now, dur)
+		prog.sleepToTarget(now, dur)
 	}
 }
 
 // runShellCmd will run the given command, if any, in a subshell. it will
 // check for errors and report them; it exits on any error
-func runShellCmd() {
-	if len(afterSleepCmd) > 0 {
+func (prog *Prog) runShellCmd() {
+	if len(prog.afterSleepCmd) > 0 {
 		out, err := exec.Command("/bin/bash", "-c",
-			afterSleepCmd).CombinedOutput()
+			prog.afterSleepCmd).CombinedOutput()
 		fmt.Print(string(out))
 		if err != nil {
 			fmt.Println("Command failed:", err)
@@ -95,21 +103,21 @@ func runShellCmd() {
 	}
 }
 
-func calcDurationSecs() int64 {
-	if timeSecs > 0 {
-		return timeSecs
+func (prog *Prog) calcDurationSecs() int64 {
+	if prog.timeSecs > 0 {
+		return prog.timeSecs
 	}
-	if timeMins > 0 {
-		return timeMins * 60
+	if prog.timeMins > 0 {
+		return prog.timeMins * 60
 	}
-	if perDay > 0 {
-		return 24 * 60 * 60 / perDay
+	if prog.perDay > 0 {
+		return 24 * 60 * 60 / prog.perDay
 	}
-	if perHour > 0 {
-		return 60 * 60 / perHour
+	if prog.perHour > 0 {
+		return 60 * 60 / prog.perHour
 	}
-	if perMinute > 0 {
-		return 60 / perMinute
+	if prog.perMinute > 0 {
+		return 60 / prog.perMinute
 	}
 
 	fmt.Println("Program error: the sleep setting is not being handled: " +
@@ -120,50 +128,27 @@ func calcDurationSecs() int64 {
 }
 
 func main() {
-	ps := paramset.NewOrDie(
-		verbose.AddParams,
-		versionparams.AddParams,
-
-		addParams,
-		addTimeParams,
-		addActionParams,
-
-		addExamples,
-
-		param.SetProgramDescription(
-			"This will sleep until a given time and then perform the"+
-				" chosen actions."+
-				"\n\n"+
-				"You can specify either a particular time of day to sleep"+
-				" until or some fragment of the day or some regular"+
-				" period (which must divide the day into a whole number"+
-				" of parts)."+
-				"\n\n"+
-				" So for instance you could choose to sleep until the next"+
-				" hour and it will wake up at minute 00 rather than"+
-				" 60 minutes later."+
-				"\n\n"+
-				"You can give an offset to the regular time and the delay"+
-				" will be adjusted accordingly."))
+	prog := NewProg()
+	ps := makeParamSet(prog)
 	ps.Parse()
 
-	if !absTime.IsZero() {
-		sleepToAbsTime()
-		action()
+	if !prog.absTime.IsZero() {
+		prog.sleepToAbsTime()
+		prog.action()
 	} else {
-		durationSecs := calcDurationSecs()
+		durationSecs := prog.calcDurationSecs()
 
 		for {
 			now := time.Now()
-			if useUTC {
+			if prog.useUTC {
 				now = now.UTC()
 			}
 
-			sleepToTarget(now,
-				sleepCalc(durationSecs, offset+(offsetMins*60), now))
-			action()
+			prog.sleepToTarget(now,
+				sleepCalc(durationSecs, prog.offset+(prog.offsetMins*60), now))
+			prog.action()
 
-			if finished() {
+			if prog.finished() {
 				break
 			}
 		}
@@ -172,24 +157,24 @@ func main() {
 
 // action will perform the actions that should happen after waking up from
 // the sleep
-func action() {
-	if len(msg) > 0 {
-		fmt.Println(msg)
+func (prog *Prog) action() {
+	if len(prog.msg) > 0 {
+		fmt.Println(prog.msg)
 	}
-	runShellCmd()
+	prog.runShellCmd()
 }
 
 // finished returns true if the repeats of the sleep are complete, false
 // otherwise
-func finished() bool {
-	if !repeat {
+func (prog *Prog) finished() bool {
+	if !prog.repeat {
 		return true
 	}
 
-	if repeatCount > 0 {
-		repeatCount--
-		if repeatCount <= 0 {
-			repeat = false
+	if prog.repeatCount > 0 {
+		prog.repeatCount--
+		if prog.repeatCount <= 0 {
+			prog.repeat = false
 			return true
 		}
 	}
@@ -197,7 +182,7 @@ func finished() bool {
 }
 
 // sleepToTarget sleeps for the specified duration
-func sleepToTarget(now time.Time, sleepFor time.Duration) {
+func (prog *Prog) sleepToTarget(now time.Time, sleepFor time.Duration) {
 	if verbose.IsOn() {
 		format := "15:04:05.000000"
 		verbose.Println("sleeping for: ", sleepFor.String())
@@ -205,11 +190,11 @@ func sleepToTarget(now time.Time, sleepFor time.Duration) {
 		verbose.Println("       until: ", now.Add(sleepFor).Format(format))
 	}
 
-	if doSleep {
+	if prog.doSleep {
 		time.Sleep(sleepFor)
 	}
 
-	if showTime {
-		fmt.Println(now.Add(sleepFor).Format(showTimeFmt))
+	if prog.showTime {
+		fmt.Println(now.Add(sleepFor).Format(prog.showTimeFmt))
 	}
 }

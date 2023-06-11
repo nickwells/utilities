@@ -7,9 +7,6 @@ import (
 	"unicode"
 
 	"github.com/nickwells/gogen.mod/gogen"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paramset"
-	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // Created: Fri Jan 17 18:31:18 2020
@@ -18,25 +15,30 @@ const (
 	dfltFileName = "pkg_err_type.go"
 )
 
-var makeFile = true
+// Prog holds program parameters and status
+type Prog struct {
+	// parameters
+	makeFile       bool
+	outputFileName string
+}
 
-var outputFileName = dfltFileName
+// NewProg returns a new Prog instance with the default values set
+func NewProg() *Prog {
+	return &Prog{
+		makeFile:       true,
+		outputFileName: dfltFileName,
+	}
+}
 
 func main() {
-	ps := paramset.NewOrDie(
-		gogen.AddParams(&outputFileName, &makeFile),
-		versionparams.AddParams,
-
-		param.SetProgramDescription(
-			"This creates a Go file defining a package-specific error"+
-				" type. The default name of the file is: "+dfltFileName),
-	)
+	prog := NewProg()
+	ps := makeParamSet(prog)
 
 	ps.Parse()
 
 	f := os.Stdout
-	if makeFile {
-		f = gogen.MakeFileOrDie(outputFileName)
+	if prog.makeFile {
+		f = gogen.MakeFileOrDie(prog.outputFileName)
 		defer f.Close()
 	}
 

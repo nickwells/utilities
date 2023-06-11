@@ -39,8 +39,8 @@ github.com/nickwells/twrap.mod v1.5.2 h1:Kk8Ri+0TI151yC+5hcwdTCMrxxa4OHGf7PILbTH
 github.com/nickwells/twrap.mod v1.5.2/go.mod h1:oobGzdKpMpBghGZ8zkrmNOheX/GPhgT1qmnKkJTfTxE=
 github.com/nickwells/units.mod/v2 v2.1.10 h1:QGD+9de5yRxQDHHmU+NM53rR2AmRhM8QExxM17rwbu4=
 github.com/nickwells/units.mod/v2 v2.1.10/go.mod h1:MuPkXnMb9+huMjsPC/wACTAPd6dEO17sKb340JKJXvo=
-github.com/nickwells/unitsetter.mod/v4 v4.2.16 h1:z2unVadXp8AGuIYiUSThz0G4kSVjM8kPDQBCQIIGOtU=
-github.com/nickwells/unitsetter.mod/v4 v4.2.16/go.mod h1:VVWFL7EsshfA/Ql+lTPO1d2HJ7Q7VpQGm5B8NW+lyfw=
+github.com/nickwells/unitsetter.mod/v4 v4.2.17 h1:8us+2ayngLuscnLjTocYPAIjK2IL3G8k+WO92rRMW/g=
+github.com/nickwells/unitsetter.mod/v4 v4.2.17/go.mod h1:4EMIxuKeuR/MRUyN8lWcDaPDN5TEEqe+OHINZCT0vUU=
 github.com/nickwells/verbose.mod v1.0.57 h1:qUyWWFFMwpyOQ2mcRxMb0WivmBc5grOK2bWHnpAHQ0k=
 github.com/nickwells/verbose.mod v1.0.57/go.mod h1:rhtTYiLb/+hRfW9jTNCRypYxZcmYbieKArvGhWNKHNI=
 github.com/nickwells/versionparams.mod v1.1.14 h1:ONx5P7frU3eLQh2snp6PvbI0xER3+hh8IXUBvYmCw7o=
