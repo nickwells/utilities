@@ -255,7 +255,6 @@ func (prog *Prog) getFieldInfo(f string) fieldInfo {
 }
 
 func main() {
-
 	prog := NewProg()
 	ps := makeParamSet(prog)
 	ps.Parse()
