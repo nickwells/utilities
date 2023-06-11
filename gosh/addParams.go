@@ -412,7 +412,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 					" within an http handler function."+
 					" Note that if you set this to a value less"+
 					" than 1024 you will need to have superuser privilege.",
-				param.PostAction(paction.SetBool(&g.runAsWebserver, true)),
+				param.PostAction(paction.SetVal(&g.runAsWebserver, true)),
 				param.GroupName(paramGroupNameWeb),
 			),
 		)
@@ -428,7 +428,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 				"set the path name (the pattern) that the webserver will"+
 					" listen on. Setting this will also force the script"+
 					" to be run within an http handler function.",
-				param.PostAction(paction.SetBool(&g.runAsWebserver, true)),
+				param.PostAction(paction.SetVal(&g.runAsWebserver, true)),
 				param.GroupName(paramGroupNameWeb),
 			),
 		)
@@ -445,7 +445,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 					" also force the program to be run as a web server."+
 					" Note that no script is expected in this case as the"+
 					" function is supplied here.",
-				param.PostAction(paction.SetBool(&g.runAsWebserver, true)),
+				param.PostAction(paction.SetVal(&g.runAsWebserver, true)),
 				param.AltNames("http-h"),
 				param.GroupName(paramGroupNameWeb),
 			),
@@ -467,7 +467,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 						"HTTP handler's ResponseWriter"),
 				param.AltNames("web-printf", "web-println",
 					"web-p", "web-pf", "web-pln"),
-				param.PostAction(paction.SetBool(&g.runAsWebserver, true)),
+				param.PostAction(paction.SetVal(&g.runAsWebserver, true)),
 				param.GroupName(paramGroupNameWeb),
 				param.PostAction(scriptPAF(g, &codeVal, execSect)),
 				param.PostAction(paction.AppendStrings(&g.imports, "fmt")),
@@ -525,7 +525,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 					" the script to be run in a loop reading from stdin"+
 					" or from a list of files.",
 				param.AltNames("s", "split"),
-				param.PostAction(paction.SetBool(&g.runInReadLoop, true)),
+				param.PostAction(paction.SetVal(&g.runInReadLoop, true)),
 				param.GroupName(paramGroupNameReadloop),
 				param.SeeAlso(readloopParamNames...),
 			),
@@ -541,8 +541,8 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 					" or from a list of files"+
 					" and for each line to be split.",
 				param.AltNames("sp"),
-				param.PostAction(paction.SetBool(&g.runInReadLoop, true)),
-				param.PostAction(paction.SetBool(&g.splitLine, true)),
+				param.PostAction(paction.SetVal(&g.runInReadLoop, true)),
+				param.PostAction(paction.SetVal(&g.splitLine, true)),
 				param.GroupName(paramGroupNameReadloop),
 				param.SeeAlso(readloopParamNames...),
 			),
@@ -558,7 +558,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 					" of the supplied files already has a '"+origExt+"'"+
 					" copy this is an error.",
 				param.AltNames("i"),
-				param.PostAction(paction.SetBool(&g.runInReadLoop, true)),
+				param.PostAction(paction.SetVal(&g.runInReadLoop, true)),
 				param.GroupName(paramGroupNameReadloop),
 				param.SeeAlso(paramNameWPrint),
 			),
@@ -1079,7 +1079,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" preserve it.",
 			param.AltNames(
 				"set-program-name", "program-name", "executable-name"),
-			param.PostAction(paction.SetBool(&g.dontCleanupUserChoice, true)),
+			param.PostAction(paction.SetVal(&g.dontCleanupUserChoice, true)),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
 			param.GroupName(paramGroupNameGosh),
 		)
@@ -1093,7 +1093,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" the generated code for and now want to save the file "+
 				" for future use.",
 			param.AltNames("dont-run", "no-exec", "no-run"),
-			param.PostAction(paction.SetBool(&g.dontCleanupUserChoice, true)),
+			param.PostAction(paction.SetVal(&g.dontCleanupUserChoice, true)),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
 			param.GroupName(paramGroupNameGosh),
 		)
@@ -1122,7 +1122,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" which is installed and executable will be used."+
 				" Note that you should give just the executable"+
 				" name with this parameter and any arguments separately.",
-			param.PostAction(paction.SetBool(&g.importPopulatorSet, true)),
+			param.PostAction(paction.SetVal(&g.importPopulatorSet, true)),
 			param.Attrs(param.DontShowInStdUsage),
 			param.GroupName(paramGroupNameGosh),
 			param.SeeAlso(importerParamNames...),
@@ -1172,7 +1172,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" which is installed and executable will be used."+
 				" Note that you should give just the executable"+
 				" name with this parameter and any arguments separately.",
-			param.PostAction(paction.SetBool(&g.formatterSet, true)),
+			param.PostAction(paction.SetVal(&g.formatterSet, true)),
 			param.Attrs(param.DontShowInStdUsage),
 			param.GroupName(paramGroupNameGosh),
 			param.SeeAlso(formatterParamNames...),
@@ -1214,7 +1214,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 		ps.Add(paramNameEditRepeat, psetter.Bool{Value: &g.editRepeat},
 			"after the program has run, you will be asked if you want"+
 				" to repeat the edit/build/run loop.",
-			param.PostAction(paction.SetBool(&g.edit, true)),
+			param.PostAction(paction.SetVal(&g.edit, true)),
 			param.Attrs(param.DontShowInStdUsage|param.CommandLineOnly),
 			param.SeeAlso(editParamNames...),
 			param.GroupName(paramGroupNameGosh),

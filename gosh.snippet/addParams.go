@@ -31,7 +31,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 
 		ps.Add("install", psetter.Nil{},
 			"install the snippets.",
-			param.PostAction(paction.SetString(&prog.action, installAction)),
+			param.PostAction(paction.SetVal(&prog.action, installAction)),
 			param.Attrs(param.CommandLineOnly),
 			param.SeeAlso(actionParamName),
 		)

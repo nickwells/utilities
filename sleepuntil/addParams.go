@@ -62,7 +62,7 @@ func addActionParams(prog *Prog) param.PSetOptFunc {
 		ps.Add("format", psetter.String{Value: &prog.showTimeFmt},
 			"the format to use when showing the time."+
 				" Setting this value forces the show-time flag on.",
-			param.PostAction(paction.SetBool(&prog.showTime, true)),
+			param.PostAction(paction.SetVal(&prog.showTime, true)),
 			param.PostAction(wakeupActionAF),
 			param.GroupName(paramGroupNameActions),
 		)
@@ -96,7 +96,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 			},
 			"the number of times to repeat the operation.",
 			param.AltNames("times", "rc"),
-			param.PostAction(paction.SetBool(&prog.repeat, true)))
+			param.PostAction(paction.SetVal(&prog.repeat, true)))
 
 		ps.Add("dont-sleep", psetter.Bool{Value: &prog.doSleep, Invert: true},
 			"do everything except sleep - useful for testing the behaviour",
@@ -136,7 +136,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 			"the timezone that the time is in. If this is supplied then an"+
 				" absolute time must also be given.",
 			param.AltNames("tz", "location"),
-			param.PostAction(paction.SetBool(&needAbsTime, true)),
+			param.PostAction(paction.SetVal(&needAbsTime, true)),
 			param.GroupName(paramGroupNameTime),
 		)
 
@@ -151,7 +151,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 				" This cannot be used with the "+paramNameRepeat+" argument",
 			param.AltNames("t"),
 			param.PostAction(timeValAF),
-			param.PostAction(paction.SetBool(&hasAbsTime, true)),
+			param.PostAction(paction.SetVal(&hasAbsTime, true)),
 			param.GroupName(paramGroupNameTime),
 		)
 

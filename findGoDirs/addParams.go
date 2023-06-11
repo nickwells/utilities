@@ -94,7 +94,7 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 			param.AltNames("generate-args", "args-generate",
 				"gen-args", "g-args", "g-arg"),
 			param.PostAction(
-				paction.SetMapIf(fgd.actions, generateAct, true,
+				paction.SetMapValIf(fgd.actions, generateAct, true,
 					paction.IsACommandLineParam)),
 			param.Attrs(param.DontShowInStdUsage),
 		)
@@ -105,7 +105,7 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 			param.AltNames("install-args", "args-install",
 				"inst-args", "i-args", "i-arg"),
 			param.PostAction(
-				paction.SetMapIf(fgd.actions, installAct, true,
+				paction.SetMapValIf(fgd.actions, installAct, true,
 					paction.IsACommandLineParam)),
 			param.Attrs(param.DontShowInStdUsage),
 		)
@@ -116,7 +116,7 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 			param.AltNames("test-args", "args-test",
 				"t-args", "t-arg"),
 			param.PostAction(
-				paction.SetMapIf(fgd.actions, testAct, true,
+				paction.SetMapValIf(fgd.actions, testAct, true,
 					paction.IsACommandLineParam)),
 			param.Attrs(param.DontShowInStdUsage),
 		)
@@ -127,7 +127,7 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 			param.AltNames("build-args", "args-build",
 				"b-args", "b-arg"),
 			param.PostAction(
-				paction.SetMapIf(fgd.actions, buildAct, true,
+				paction.SetMapValIf(fgd.actions, buildAct, true,
 					paction.IsACommandLineParam)),
 			param.Attrs(param.DontShowInStdUsage),
 		)

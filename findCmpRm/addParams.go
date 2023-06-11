@@ -67,7 +67,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 				"\n\n"+duplicateAction,
 			param.SeeAlso(paramNameDupAction),
 			param.PostAction(
-				paction.SetString(
+				paction.SetVal(
 					(*string)(&prog.dupAction),
 					string(DADelete))),
 		)
