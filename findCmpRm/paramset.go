@@ -7,7 +7,7 @@ import (
 	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
-// makeParamSet ...
+// makeParamSet generates the param set ready for parsing
 func makeParamSet(prog *Prog) *param.PSet {
 	return paramset.NewOrPanic(
 		verbose.AddParams,
