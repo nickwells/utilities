@@ -50,7 +50,6 @@ func TestCd(t *testing.T) {
 		if err != nil {
 			t.Log(tc.IDStr())
 			t.Fatal("cannot get the current directory (after testing):", err)
-			return
 		}
 		if preTestWD != postTestWD {
 			t.Log(tc.IDStr())
@@ -59,6 +58,10 @@ func TestCd(t *testing.T) {
 			t.Errorf("\t: cd failed\n")
 		}
 		stdout, stderr, err := fakeIO.Done()
+		if err != nil {
+			t.Log(tc.IDStr())
+			t.Fatal("cannot get the std IO buffers:", err)
+		}
 		testhelper.DiffString[string](t, tc.IDStr(), "stdout",
 			string(stdout), tc.expStdout)
 		testhelper.DiffString[string](t, tc.IDStr(), "stderr",
