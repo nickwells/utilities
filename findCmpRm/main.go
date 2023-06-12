@@ -204,6 +204,7 @@ func (prog *Prog) showBadFiles(badFiles []badFile) {
 			maxNameLen,
 			name, badFiles[i].problem)
 	}
+	fmt.Println()
 }
 
 // showDuplicateFiles displays the list of duplicate files and prompts the user
@@ -235,6 +236,7 @@ func (prog *Prog) processDuplicateFiles(filenames []string) {
 			prog.deleteAllFiles(filenames, &prog.status.dupFile)
 		}
 	}
+	fmt.Println()
 }
 
 // showComparableFiles loops over the files prompting the user to compare
@@ -294,6 +296,7 @@ loop:
 			break loop
 		}
 	}
+	fmt.Println()
 }
 
 // fileContentsDiffer returns true if the file contents differ
