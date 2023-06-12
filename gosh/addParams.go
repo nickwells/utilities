@@ -864,7 +864,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				" into the gosh-generated program.",
 			param.AltNames("global-file-package", "g-f-p", "g-p-f"),
 			param.PostAction(packageFilePAF(g, &fileName, globalSect)),
-			param.SeeAlso(fileParamNames...),
+			param.SeeAlso(append(fileParamNames, paramNameCopyGoFile)...),
 		)
 
 		ps.Add("global-print",
@@ -977,8 +977,15 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				" guaranteeing uniqueness so you don't need to worry"+
 				" about the files being copied having different names."+
 				" If the file is not already in package 'main' the"+
-				" package name will be changed so it is.",
+				" package name will be changed so it is."+
+				"\n\n"+
+				"This differs from "+paramNameGlobalPackageFile+" behaviour"+
+				" in that it will generate a separate file rather than"+
+				" embedding the code in the same file as the rest of the"+
+				" gosh code. It also leaves the import statement unchanged"+
+				" which may be convenient.",
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
+			param.SeeAlso(paramNameGlobalPackageFile),
 		)
 
 		ps.Add(paramNameDontLoopOnArgs,
