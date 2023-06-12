@@ -1,0 +1,5 @@
+Summary
+      1 comparable file
+          1 skipped (not checked)
+
+          1 kept

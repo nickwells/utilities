@@ -1,0 +1,13 @@
+Summary
+     10 problem files
+         10 kept
+     10 duplicate files
+         10 kept
+     10 comparable files
+          3 compared
+          3 comparison errors
+          4 skipped (not checked)
+
+          4 deleted
+          1 reverted
+          5 kept
