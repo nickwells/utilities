@@ -186,7 +186,9 @@ func snippetsBad(g *Gosh, twc *twrap.TWConf) bool {
 		twc.Wrap("There is a problem with your snippet directories: "+
 			snippetErrs.Error(), preChkStdIndent)
 	} else if snippetCount == 0 {
-		twc.Wrap("You have no snippets installed. Use the gosh.snippet"+
+		twc.Wrap("You have no snippets installed. You can use 'gosh'"+
+			" without snippets but you may find them useful. Use the"+
+			" 'gosh.snippet'"+
 			" program to install the standard snippets. You will need to"+
 			" install this program in the same way you installed gosh."+
 			" You can install the snippets in one of these directories:",
