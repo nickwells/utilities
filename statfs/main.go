@@ -217,7 +217,9 @@ func getStat(dirName string) unix.Statfs_t {
 	return s
 }
 
-func (prog *Prog) reportStatAsTable(rpt *col.Report, dirName string, s unix.Statfs_t) {
+func (prog *Prog) reportStatAsTable(
+	rpt *col.Report, dirName string, s unix.Statfs_t,
+) {
 	reportArgs := make([]any, 0, len(fields))
 	for _, f := range fields {
 		fi := prog.getFieldInfo(f)

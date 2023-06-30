@@ -1,4 +1,4 @@
-//go:build linux
+//go:build arm && linux
 
 package main
 
@@ -26,7 +26,7 @@ func (prog *Prog) addFieldInfo() {
 		maxFlagsLen = 30
 	)
 
-	mountFlags := map[int64]string{
+	mountFlags := map[int32]string{
 		unix.MS_MANDLOCK:    "mandatory locking permitted",
 		unix.MS_NOATIME:     "access times not updated",
 		unix.MS_NODEV:       "no device special file access",
