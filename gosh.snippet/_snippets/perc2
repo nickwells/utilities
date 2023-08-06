@@ -1,0 +1,8 @@
+// snippet: -*- go -*-
+// snippet: Doc: this will print a variable called "a" as a percentage of
+// snippet: Doc: another variable called "b". It prints the percentage with
+// snippet: Doc: two decimal places.
+// snippet: Doc:
+// snippet: Doc: These variables must pre-exist.
+// snippet: Imports: fmt
+fmt.Printf("%.2f%%\n", 100.0*float64(a)/float64(b))

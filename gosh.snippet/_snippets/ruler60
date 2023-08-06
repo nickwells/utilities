@@ -1,0 +1,17 @@
+// snippet: -*- go -*-
+// snippet: Doc: this will print a ruler to standard out with markers at
+// snippet: Doc: every 5 and 10 marks. The ruler will be 60 characters
+// snippet: Doc: long and will be on two lines
+// snippet: Imports: fmt
+{
+	rpt := "----|----"
+	rulerLine1 := ""
+	rulerLine2 := ""
+	for i := 1; i <= 6; i++ {
+		rulerLine1 += fmt.Sprintf("%10d", i)
+		rulerLine2 += rpt + "0"
+	}
+
+	fmt.Println(rulerLine1)
+	fmt.Println(rulerLine2)
+}
