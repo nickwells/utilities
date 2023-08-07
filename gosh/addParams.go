@@ -646,7 +646,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			psetter.String{
 				Value: &codeVal,
 				Editor: addPrint{
-					prefixes:    []string{"exec-"},
+					prefixes:    []string{"exec-", "e-"},
 					paramToCall: stdPrintMap,
 					needsVal:    needsValMap,
 				},
