@@ -21,6 +21,7 @@ func paramOptFuncs(g *Gosh, slp *snippetListParams) []param.PSetOptFunc {
 		addWebParams(g),
 		addReadloopParams(g),
 		addGoshParams(g),
+		addStdinParams(g),
 		addParams(g),
 
 		addNotes,

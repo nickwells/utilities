@@ -72,7 +72,23 @@ const (
 
 	paramNameEnv      = "env"
 	paramNameClearEnv = "clear-env"
+
+	paramNameGlobalStdin      = "global-stdin"
+	paramNameBeforeStdin      = "before-stdin"
+	paramNameBeforeInnerStdin = "before-inner-stdin"
+	paramNameExecStdin        = "exec-stdin"
+	paramNameAfterInnerStdin  = "after-inner-stdin"
+	paramNameAfterStdin       = "after-stdin"
 )
+
+var stdinParamNames = []string{
+	paramNameGlobalStdin,
+	paramNameBeforeStdin,
+	paramNameBeforeInnerStdin,
+	paramNameExecStdin,
+	paramNameAfterInnerStdin,
+	paramNameAfterStdin,
+}
 
 var readloopParamNames = []string{
 	paramNameReadloop,
@@ -187,6 +203,15 @@ func snippetPAF(g *Gosh, sName *string, scriptName string) param.ActionFunc {
 func scriptPAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
 	return func(_ location.L, _ *param.ByName, _ []string) error {
 		g.AddScriptEntry(scriptName, *text, verbatim)
+		return nil
+	}
+}
+
+// stdinPAF generates the Post-Action func (PAF) that reads from os.Stdin and
+// adds the resulting text into the named script.
+func stdinPAF(g *Gosh, scriptName string) param.ActionFunc {
+	return func(_ location.L, _ *param.ByName, _ []string) error {
+		g.AddScriptEntry(scriptName, "", readFromStdin)
 		return nil
 	}
 }
@@ -614,6 +639,72 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 	}
 }
 
+// addStdinParams returns a func that will add parameters to the passed
+// ParamSet for specifying reading the code from stdin.
+func addStdinParams(g *Gosh) func(ps *param.PSet) error {
+	return func(ps *param.PSet) error {
+		var setOnce paction.SetOnce
+		commonOpts := []param.OptFunc{
+			param.Attrs(param.CommandLineOnly),
+			param.SeeAlso(stdinParamNames...),
+			param.PostAction(
+				setOnce.MakeActionFunc(paction.ErrorOnMultipleTries)),
+		}
+
+		stdinParams := []struct {
+			name        string
+			altNames    []string
+			sectionName string
+		}{
+			{
+				name:        paramNameGlobalStdin,
+				altNames:    []string{"g-stdin"},
+				sectionName: globalSect,
+			},
+			{
+				name:        paramNameBeforeStdin,
+				altNames:    []string{"b-stdin"},
+				sectionName: beforeSect,
+			},
+			{
+				name:        paramNameBeforeInnerStdin,
+				altNames:    []string{"bi-stdin", "b-i-stdin"},
+				sectionName: beforeInnerSect,
+			},
+			{
+				name:        paramNameExecStdin,
+				altNames:    []string{"e-stdin"},
+				sectionName: execSect,
+			},
+			{
+				name:        paramNameAfterInnerStdin,
+				altNames:    []string{"ai-stdin", "a-i-stdin"},
+				sectionName: afterInnerSect,
+			},
+			{
+				name:        paramNameAfterStdin,
+				altNames:    []string{"a-stdin"},
+				sectionName: afterSect,
+			},
+		}
+		for _, pInfo := range stdinParams {
+			ps.Add(pInfo.name,
+				psetter.Nil{},
+				"read code from standard input and"+
+					" add it to the '"+pInfo.sectionName+"' section."+
+					"\n\n"+
+					"Note that only one such argument may be given"+
+					" regardless of the code section it is indended for.",
+				append(commonOpts,
+					param.AltNames(pInfo.altNames...),
+					param.PostAction(stdinPAF(g, pInfo.sectionName)))...,
+			)
+		}
+
+		return nil
+	}
+}
+
 // addParams returns a func that will add parameters to the passed ParamSet
 func addParams(g *Gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
@@ -995,7 +1086,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			"don't loop over the program arguments."+
 				"\n\n"+
 				"Without this any arguments to the generated program"+
-				" (after"+ps.TerminalParam()+") are processed in a loop.",
+				" (after "+ps.TerminalParam()+") are processed in a loop.",
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 			param.AltNames("skip-arg-loop", "no-arg-loop"),
 			param.SeeAlso(paramNameReadloop),
