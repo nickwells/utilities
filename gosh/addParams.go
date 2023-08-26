@@ -1404,7 +1404,6 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" gosh needs are available and recommend any fixes that"+
 				" should be made",
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
-			param.SeeAlso(paramNameWorkspaceUse),
 			param.GroupName(paramGroupNameGosh),
 		)
 
