@@ -51,7 +51,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 			param.Attrs(param.DontShowInStdUsage),
 		)
 
-		ps.Add("extension",
+		ps.Add(paramNameExtension,
 			psetter.String{
 				Value: &prog.fileExtension,
 				Checks: []check.String{
@@ -59,7 +59,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 				},
 			},
 			"give the extension for the files to search for.",
-			param.AltNames("e"),
+			param.AltNames("e", "suffix"),
 		)
 
 		ps.Add(paramNameTidy, psetter.Nil{},
