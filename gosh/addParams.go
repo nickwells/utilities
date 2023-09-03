@@ -643,12 +643,12 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 // ParamSet for specifying reading the code from stdin.
 func addStdinParams(g *Gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
-		var setOnce paction.SetOnce
+		var stdinCount paction.Counter
 		commonOpts := []param.OptFunc{
 			param.Attrs(param.CommandLineOnly),
 			param.SeeAlso(stdinParamNames...),
 			param.PostAction(
-				setOnce.MakeActionFunc(paction.ErrorOnMultipleTries)),
+				stdinCount.MakeActionFunc()),
 		}
 
 		stdinParams := []struct {
@@ -700,6 +700,15 @@ func addStdinParams(g *Gosh) func(ps *param.PSet) error {
 					param.PostAction(stdinPAF(g, pInfo.sectionName)))...,
 			)
 		}
+
+		ps.AddFinalCheck(func() error {
+			if stdinCount.Total() > 1 {
+				return fmt.Errorf(
+					"multiple ...-stdin parameters have been given: %s",
+					stdinCount.SetBy())
+			}
+			return nil
+		})
 
 		return nil
 	}
