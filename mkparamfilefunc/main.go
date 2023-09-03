@@ -112,10 +112,11 @@ func (prog *Prog) makeGroupSuffix() string {
 
 	groupSuffix := "ForGroup"
 
+	localGroupName := prog.groupName
 	// Now split the group name into words and Titleise each word, adding it
 	// to the group suffix
-	prog.groupName = strings.ReplaceAll(prog.groupName, "-", ".")
-	groupParts := strings.Split(prog.groupName, ".")
+	localGroupName = strings.ReplaceAll(localGroupName, "-", ".")
+	groupParts := strings.Split(localGroupName, ".")
 	for _, part := range groupParts {
 		r := []rune(part)
 		r[0] = unicode.ToUpper(r[0])
