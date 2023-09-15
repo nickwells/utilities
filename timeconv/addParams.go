@@ -34,14 +34,13 @@ func setFormat(prog *Prog, fmt string, zone *time.Location) param.ActionFunc {
 }
 
 // addTimezoneParams will add the parameters for setting timezones
-func addTimezoneParams(prog *Prog, fromZoneParam **param.ByName,
-) param.PSetOptFunc {
+func addTimezoneParams(prog *Prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		const tzGroupname = baseGroupName + "-timezone"
 
 		ps.AddGroup(tzGroupname, "time-zone parameters")
 
-		*fromZoneParam = ps.Add("from-zone",
+		prog.fromZoneParam = ps.Add("from-zone",
 			psetter.TimeLocation{Value: &prog.fromZone},
 			`the timezone in which to interpret the supplied date and time`,
 			param.GroupName(tzGroupname))
@@ -57,8 +56,7 @@ func addTimezoneParams(prog *Prog, fromZoneParam **param.ByName,
 
 // addTimeSettingParams adds the parameters used to set the time to be
 // converted. The default time is the current time
-func addTimeSettingParams(prog *Prog, dtParam, tParam **param.ByName,
-) param.PSetOptFunc {
+func addTimeSettingParams(prog *Prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		const timeGroupname = baseGroupName + "-setting"
 
@@ -66,7 +64,7 @@ func addTimeSettingParams(prog *Prog, dtParam, tParam **param.ByName,
 			"These allow you to set the time to be converted."+
 			" The default is to use the current time")
 
-		*dtParam = ps.Add("date-time",
+		prog.dtParam = ps.Add("date-time",
 			psetter.String[string]{Value: &prog.dtStr},
 			"the date and time. Note that the date is in the form of the year,"+
 				" including the century, the month number and"+
@@ -80,7 +78,7 @@ func addTimeSettingParams(prog *Prog, dtParam, tParam **param.ByName,
 			param.PostAction(paction.SetVal[int](&prog.timeSource, tsDateTimeStr)),
 		)
 
-		*tParam = ps.Add("time",
+		prog.tParam = ps.Add("time",
 			psetter.String[string]{Value: &prog.tStr},
 			"the time to be converted."+
 				" Note that the time is in 24-hour form with"+
@@ -96,10 +94,10 @@ func addTimeSettingParams(prog *Prog, dtParam, tParam **param.ByName,
 		)
 
 		ps.AddFinalCheck(func() error {
-			if (*dtParam).HasBeenSet() &&
-				(*tParam).HasBeenSet() {
+			if (prog.dtParam).HasBeenSet() &&
+				(prog.tParam).HasBeenSet() {
 				return fmt.Errorf("you may set at most one of %q or %q",
-					(*dtParam).Name(), (*tParam).Name())
+					(prog.dtParam).Name(), (prog.tParam).Name())
 			}
 			return nil
 		})
@@ -269,16 +267,17 @@ func addTimeFormattingParams(prog *Prog) param.PSetOptFunc {
 
 // addTimeFormattingParams will add the parameters used to control the output
 // of the program
-func addParamChecks(fromZoneParam, dtParam, tParam *param.ByName,
-) param.PSetOptFunc {
+func addParamChecks(prog *Prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		ps.AddFinalCheck(func() error {
-			if fromZoneParam.HasBeenSet() {
-				if !dtParam.HasBeenSet() &&
-					!tParam.HasBeenSet() {
+			if prog.fromZoneParam.HasBeenSet() {
+				if !prog.dtParam.HasBeenSet() &&
+					!prog.tParam.HasBeenSet() {
 					return fmt.Errorf(
 						"if you have specified %q you must give %q or %q",
-						fromZoneParam.Name(), dtParam.Name(), tParam.Name())
+						prog.fromZoneParam.Name(),
+						prog.dtParam.Name(),
+						prog.tParam.Name())
 				}
 			}
 			return nil

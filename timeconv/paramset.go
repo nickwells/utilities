@@ -8,19 +8,13 @@ import (
 
 // makeParamSet generates the param set ready for parsing
 func makeParamSet(prog *Prog) *param.PSet {
-	var (
-		fromZoneParam *param.ByName
-		dtParam       *param.ByName
-		tParam        *param.ByName
-	)
-
 	return paramset.NewOrPanic(
 		versionparams.AddParams,
 
-		addTimezoneParams(prog, &fromZoneParam),
-		addTimeSettingParams(prog, &dtParam, &tParam),
+		addTimezoneParams(prog),
+		addTimeSettingParams(prog),
 		addTimeFormattingParams(prog),
-		addParamChecks(fromZoneParam, dtParam, tParam),
+		addParamChecks(prog),
 
 		param.SetProgramDescription(
 			"this will convert the passed date into the equivalent time"+

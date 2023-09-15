@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/nickwells/param.mod/v6/param"
 )
 
 // Created: Sun Oct 22 11:17:41 2017
@@ -33,6 +35,10 @@ type Prog struct {
 	dtStr       string
 	tStr        string
 	timeSource  int
+
+	fromZoneParam *param.ByName
+	dtParam       *param.ByName
+	tParam        *param.ByName
 }
 
 // NewProg returns a new Prog instance with the default values set
