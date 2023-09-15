@@ -1,15 +1,17 @@
 package main
 
 import (
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v6/psetter"
 )
 
 // addParams will add parameters to the passed ParamSet
 func addParams(prog *Prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
-		ps.Add("twitter-account", psetter.String{Value: &prog.twitterAC},
-			"The name of an associated twitter account",
+		ps.Add("twitter-account", psetter.String[string]{
+			Value: &prog.twitterAC,
+		},
+			"The name of an associated X (Twitter) account",
 			param.AltNames("twitter-ac", "twitter"),
 		)
 

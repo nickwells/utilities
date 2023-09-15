@@ -3,15 +3,16 @@ package main
 import (
 	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v6/psetter"
 )
 
 // addParams will add parameters to the passed ParamSet
 func addParams(prog *Prog) param.PSetOptFunc {
+	checkStringNotEmpty := check.StringLength[string](check.ValGT(0))
 	return func(ps *param.PSet) error {
 		ps.Add("group",
-			psetter.String{
+			psetter.String[string]{
 				Value:  &prog.groupName,
 				Checks: []check.String{param.GroupNameCheck},
 			},
@@ -58,11 +59,9 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("base-dir-personal",
-			psetter.String{
-				Value: &prog.baseDirPersonal,
-				Checks: []check.String{
-					check.StringLength[string](check.ValGT(0)),
-				},
+			psetter.String[string]{
+				Value:  &prog.baseDirPersonal,
+				Checks: []check.String{checkStringNotEmpty},
 			},
 			"set the base directory in which the parameter file will"+
 				" be found. This value will be used in place of the"+
@@ -73,11 +72,9 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("base-dir-global",
-			psetter.String{
-				Value: &prog.baseDirGlobal,
-				Checks: []check.String{
-					check.StringLength[string](check.ValGT(0)),
-				},
+			psetter.String[string]{
+				Value:  &prog.baseDirGlobal,
+				Checks: []check.String{checkStringNotEmpty},
 			},
 			"set the base directory in which the parameter file will"+
 				" be found. This value will be used in place of the"+
@@ -88,9 +85,9 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("funcs",
-			psetter.Enum{
+			psetter.Enum[string]{
 				Value: &prog.whichFuncs,
-				AllowedVals: psetter.AllowedVals{
+				AllowedVals: psetter.AllowedVals[string]{
 					"all": "create all functions",
 					"personalOnly": "create just the personal config file" +
 						" setter function",

@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/nickwells/gogen.mod/gogen"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v6/psetter"
 )
 
 // Created: Wed Jun 10 11:29:28 2020
@@ -362,26 +362,20 @@ func getDocPart(cmdPath, part string) string {
 func addParams(prog *Prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		ps.Add("build-args",
-			psetter.StrListAppender{
-				Value: &prog.buildArgs,
-			},
+			psetter.StrListAppender[string]{Value: &prog.buildArgs},
 			"arguments to be passed to go build when building the program",
 			param.AltNames("build-arg", "build-param"),
 		)
 
 		ps.Add(paramSnippetModPfx,
-			psetter.StrListAppender{
-				Value: &prog.snippetModPfx,
-			},
+			psetter.StrListAppender[string]{Value: &prog.snippetModPfx},
 			"add the prefix of Go module names to be searched for"+
 				" Markdown snippet files ("+snippetFile+")",
 			param.AltNames("sm-pfx"),
 		)
 
 		ps.Add(paramSnippetModSkip,
-			psetter.StrListAppender{
-				Value: &prog.snippetModSkip,
-			},
+			psetter.StrListAppender[string]{Value: &prog.snippetModSkip},
 			"add the name of Go modules to be skipped when searching for"+
 				" Markdown snippet files ("+snippetFile+")",
 			param.AltNames("sm-skip"),

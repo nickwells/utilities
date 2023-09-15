@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paction"
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v6/paction"
+	"github.com/nickwells/param.mod/v6/psetter"
 )
 
 const (
@@ -67,7 +67,7 @@ func addTimeSettingParams(prog *Prog, dtParam, tParam **param.ByName,
 			" The default is to use the current time")
 
 		*dtParam = ps.Add("date-time",
-			psetter.String{Value: &prog.dtStr},
+			psetter.String[string]{Value: &prog.dtStr},
 			"the date and time. Note that the date is in the form of the year,"+
 				" including the century, the month number and"+
 				" the day of the month with leading zeros and no spaces."+
@@ -81,7 +81,7 @@ func addTimeSettingParams(prog *Prog, dtParam, tParam **param.ByName,
 		)
 
 		*tParam = ps.Add("time",
-			psetter.String{Value: &prog.tStr},
+			psetter.String[string]{Value: &prog.tStr},
 			"the time to be converted."+
 				" Note that the time is in 24-hour form with"+
 				" a leading zero and"+
@@ -128,7 +128,7 @@ func addTimeFormattingParams(prog *Prog) param.PSetOptFunc {
 			" appearance of different parts of the formatted time")
 
 		ps.Add("format",
-			psetter.String{Value: &prog.outFormat},
+			psetter.String[string]{Value: &prog.outFormat},
 			"the format in which to display the resulting date and time."+
 				" Note that this format uses the Go programming language"+
 				" format specification.\n\n"+
@@ -227,7 +227,7 @@ func addTimeFormattingParams(prog *Prog) param.PSetOptFunc {
 			param.PostAction(fmtFlagCounterAF))
 
 		ps.Add("date-part-sep",
-			psetter.String{Value: &prog.datePartSep},
+			psetter.String[string]{Value: &prog.datePartSep},
 			`separate the parts of the date with the given value`,
 			param.GroupName(fmtGroupname),
 			param.PostAction(fmtFlagCounterAF))

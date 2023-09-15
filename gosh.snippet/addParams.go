@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/filecheck.mod/filecheck"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paction"
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/paction"
+	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v6/psetter"
 )
 
 // addParams will add parameters to the passed ParamSet
@@ -15,9 +15,9 @@ func addParams(prog *Prog) param.PSetOptFunc {
 	)
 	return func(ps *param.PSet) error {
 		ps.Add(actionParamName,
-			psetter.Enum{
+			psetter.Enum[string]{
 				Value: &prog.action,
-				AllowedVals: psetter.AllowedVals{
+				AllowedVals: psetter.AllowedVals[string]{
 					installAction: "install the default snippets in" +
 						" the target directory",
 					cmpAction: "compare the default snippets with" +
@@ -61,7 +61,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("max-sub-dirs",
-			psetter.Int64{
+			psetter.Int[int64]{
 				Value:  &prog.maxSubDirs,
 				Checks: []check.Int64{check.ValGT[int64](2)},
 			},

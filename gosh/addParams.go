@@ -12,9 +12,9 @@ import (
 	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paction"
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/paction"
+	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v6/psetter"
 	"github.com/nickwells/utilities/internal/stdparams"
 )
 
@@ -312,6 +312,7 @@ func checkImports(v string) error {
 
 // addSnippetParams will add the parameters in the "snippet" parameter group
 func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
+	checkStringNotEmpty := check.StringLength[string](check.ValGT(0))
 	return func(ps *param.PSet) error {
 		ps.Add(paramNameSnippetDir,
 			psetter.PathnameListAppender{
@@ -335,9 +336,9 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 
 		var snippetName string
 		ps.Add("exec-snippet",
-			psetter.String{
+			psetter.String[string]{
 				Value:  &snippetName,
-				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
+				Checks: []check.String{checkStringNotEmpty},
 			},
 			makeSnippetHelpText(execSect),
 			param.AltNames("snippet", "e-s", "es"),
@@ -346,9 +347,9 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add("before-snippet",
-			psetter.String{
+			psetter.String[string]{
 				Value:  &snippetName,
-				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
+				Checks: []check.String{checkStringNotEmpty},
 			},
 			makeSnippetHelpText(beforeSect),
 			param.AltNames("b-s", "bs"),
@@ -356,9 +357,9 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add("inner-before-snippet",
-			psetter.String{
+			psetter.String[string]{
 				Value:  &snippetName,
-				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
+				Checks: []check.String{checkStringNotEmpty},
 			},
 			makeSnippetHelpText(beforeInnerSect),
 			param.AltNames("before-inner-snippet",
@@ -367,9 +368,9 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add("inner-after-snippet",
-			psetter.String{
+			psetter.String[string]{
 				Value:  &snippetName,
-				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
+				Checks: []check.String{checkStringNotEmpty},
 			},
 			makeSnippetHelpText(afterInnerSect),
 			param.AltNames("after-inner-snippet", "ia-s", "ai-s", "ias", "ais"),
@@ -377,9 +378,9 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add("after-snippet",
-			psetter.String{
+			psetter.String[string]{
 				Value:  &snippetName,
-				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
+				Checks: []check.String{checkStringNotEmpty},
 			},
 			makeSnippetHelpText(afterSect),
 			param.AltNames("a-s", "as"),
@@ -387,9 +388,9 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add("global-snippet",
-			psetter.String{
+			psetter.String[string]{
 				Value:  &snippetName,
-				Checks: []check.String{check.StringLength[string](check.ValGT(0))},
+				Checks: []check.String{checkStringNotEmpty},
 			},
 			makeSnippetHelpText(globalSect),
 			param.AltNames("g-s", "gs"),
@@ -402,6 +403,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 
 // addWebParams will add the parameters in the "web" parameter group
 func addWebParams(g *Gosh) func(ps *param.PSet) error {
+	checkStringNotEmpty := check.StringLength[string](check.ValGT(0))
 	return func(ps *param.PSet) error {
 		ps.AddGroup(paramGroupNameWeb,
 			"parameters relating to building a script as a web-server.")
@@ -425,7 +427,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 
 		g.runAsWebserverSetters = append(g.runAsWebserverSetters,
 			ps.Add("http-port",
-				psetter.Int64{
+				psetter.Int[int64]{
 					Value: &g.httpPort,
 					Checks: []check.Int64{
 						check.ValGT[int64](0),
@@ -444,11 +446,9 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 
 		g.runAsWebserverSetters = append(g.runAsWebserverSetters,
 			ps.Add("http-path",
-				psetter.String{
-					Value: &g.httpPath,
-					Checks: []check.String{
-						check.StringLength[string](check.ValGT(0)),
-					},
+				psetter.String[string]{
+					Value:  &g.httpPath,
+					Checks: []check.String{checkStringNotEmpty},
 				},
 				"set the path name (the pattern) that the webserver will"+
 					" listen on. Setting this will also force the script"+
@@ -460,11 +460,9 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 
 		g.runAsWebserverSetters = append(g.runAsWebserverSetters,
 			ps.Add("http-handler",
-				psetter.String{
-					Value: &g.httpHandler,
-					Checks: []check.String{
-						check.StringLength[string](check.ValGT(0)),
-					},
+				psetter.String[string]{
+					Value:  &g.httpHandler,
+					Checks: []check.String{checkStringNotEmpty},
 				},
 				"set the handler for the web server. Setting this will"+
 					" also force the program to be run as a web server."+
@@ -479,7 +477,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 		var codeVal string
 		g.runAsWebserverSetters = append(g.runAsWebserverSetters,
 			ps.Add("web-print",
-				psetter.String{
+				psetter.String[string]{
 					Value: &codeVal,
 					Editor: addPrint{
 						prefixes:    []string{"web-"},
@@ -558,7 +556,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 
 		g.runInReadloopSetters = append(g.runInReadloopSetters,
 			ps.Add(paramNameSplitPattern,
-				psetter.String{Value: &g.splitPattern},
+				psetter.String[string]{Value: &g.splitPattern},
 				"change the behaviour when splitting the line into"+
 					" fields. The provided string must compile into a"+
 					" regular expression. Setting this will also force"+
@@ -590,7 +588,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		writeToIPEFile := ps.Add(paramNameWPrint,
-			psetter.String{
+			psetter.String[string]{
 				Value: &codeVal,
 				Editor: addPrint{
 					prefixes:    []string{"w-"},
@@ -716,13 +714,14 @@ func addStdinParams(g *Gosh) func(ps *param.PSet) error {
 
 // addParams returns a func that will add parameters to the passed ParamSet
 func addParams(g *Gosh) func(ps *param.PSet) error {
+	checkStringNotEmpty := check.StringLength[string](check.ValGT(0))
 	return func(ps *param.PSet) error {
 		var codeVal string
 		var fileName string
 
 		// Exec section params
 
-		ps.Add("exec", psetter.String{Value: &codeVal},
+		ps.Add("exec", psetter.String[string]{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", execSect),
 			param.AltNames("e", "c", "code"), // python and bash use '-c'
@@ -743,7 +742,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add("exec-print",
-			psetter.String{
+			psetter.String[string]{
 				Value: &codeVal,
 				Editor: addPrint{
 					prefixes:    []string{"exec-", "e-"},
@@ -762,7 +761,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 
 		// Before section params
 
-		ps.Add("before", psetter.String{Value: &codeVal},
+		ps.Add("before", psetter.String[string]{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", beforeSect),
 			param.AltNames("b"),
@@ -783,7 +782,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add("before-print",
-			psetter.String{
+			psetter.String[string]{
 				Value: &codeVal,
 				Editor: addPrint{
 					prefixes:    []string{"before-", "b-"},
@@ -800,7 +799,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 
 		// Inner-Before section params
 
-		ps.Add("inner-before", psetter.String{Value: &codeVal},
+		ps.Add("inner-before", psetter.String[string]{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", beforeInnerSect),
 			param.AltNames("before-inner", "ib", "bi"),
@@ -821,7 +820,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add("inner-before-print",
-			psetter.String{
+			psetter.String[string]{
 				Value: &codeVal,
 				Editor: addPrint{
 					prefixes: []string{
@@ -845,7 +844,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 
 		// Inner-After section params
 
-		ps.Add("inner-after", psetter.String{Value: &codeVal},
+		ps.Add("inner-after", psetter.String[string]{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", afterInnerSect),
 			param.AltNames("after-inner", "ia", "ai"),
@@ -866,7 +865,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add("inner-after-print",
-			psetter.String{
+			psetter.String[string]{
 				Value: &codeVal,
 				Editor: addPrint{
 					prefixes: []string{
@@ -890,7 +889,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 
 		// Inner-After section params
 
-		ps.Add("after", psetter.String{Value: &codeVal},
+		ps.Add("after", psetter.String[string]{Value: &codeVal},
 			"follow this with Go code."+
 				makeCodeSectionHelpText("", afterSect),
 			param.AltNames("a"),
@@ -911,7 +910,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add("after-print",
-			psetter.String{
+			psetter.String[string]{
 				Value: &codeVal,
 				Editor: addPrint{
 					prefixes:    []string{"after-", "a-"},
@@ -928,7 +927,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 
 		// Global section params
 
-		ps.Add("global", psetter.String{Value: &codeVal},
+		ps.Add("global", psetter.String[string]{Value: &codeVal},
 			"follow this with Go code."+
 				" For instance, functions that you might want to call from"+
 				" several places, global variables or data types."+
@@ -968,7 +967,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add("global-print",
-			psetter.String{
+			psetter.String[string]{
 				Value: &codeVal,
 				Editor: addPrint{
 					prefixes:    []string{"global-", "g-"},
@@ -986,10 +985,10 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		// Env params
 
 		ps.Add(paramNameEnv,
-			psetter.StrListAppender{
+			psetter.StrListAppender[string]{
 				Value: &g.env,
 				Checks: []check.String{
-					check.StringLength[string](check.ValGT(0)),
+					checkStringNotEmpty,
 					check.StringContains[string]("="),
 				},
 			},
@@ -1013,10 +1012,10 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 		// Miscellaneous other params
 
 		ps.Add(paramNameImport,
-			psetter.StrListAppender{
+			psetter.StrListAppender[string]{
 				Value: &g.imports,
 				Checks: []check.String{
-					check.StringLength[string](check.ValGT(0)),
+					checkStringNotEmpty,
 					checkImports,
 				},
 			},
@@ -1167,7 +1166,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 
 		execNameRE := regexp.MustCompile(`^[a-zA-Z][-a-zA-Z0-9+._]*$`)
 		ps.Add(paramNameSetExecName,
-			psetter.String{
+			psetter.String[string]{
 				Value: &g.execName,
 				Checks: []check.String{
 					check.StringLength[string](check.ValBetween(1, 50)),
@@ -1206,7 +1205,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		goCmdName := gogen.GetGoCmdName()
-		ps.Add(paramNameSetGoCmd, psetter.String{Value: &goCmdName},
+		ps.Add(paramNameSetGoCmd, psetter.String[string]{Value: &goCmdName},
 			"the name of the Go command to use."+
 				" Note that it must be an executable program either"+
 				" in your PATH or else as a pathname",
@@ -1220,7 +1219,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 
 		// Import-populator params
 
-		ps.Add(paramNameImporter, psetter.String{Value: &g.importPopulator},
+		ps.Add(paramNameImporter, psetter.String[string]{Value: &g.importPopulator},
 			"the name of the command to run in order to populate the"+
 				" import statements. If no"+
 				" value is given then one of "+importerCmds()+
@@ -1236,7 +1235,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		ps.Add(paramNameImporterArgs,
-			psetter.StrList{Value: &g.importPopulatorArgs},
+			psetter.StrList[string]{Value: &g.importPopulatorArgs},
 			"the arguments to pass to the import populating command."+
 				" Note that the final argument will always be the name"+
 				" of the generated program.",
@@ -1270,7 +1269,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 
 		// Formatter params
 
-		ps.Add(paramNameFormatter, psetter.String{Value: &g.formatter},
+		ps.Add(paramNameFormatter, psetter.String[string]{Value: &g.formatter},
 			"the name of the formatter command to run. If no"+
 				" value is given and the "+paramNameFormat+
 				" is set then one of "+formatterCmds()+
@@ -1285,7 +1284,8 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.SeeAlso(formatterParamNames...),
 		)
 
-		ps.Add(paramNameFormatterArgs, psetter.StrList{Value: &g.formatterArgs},
+		ps.Add(paramNameFormatterArgs,
+			psetter.StrList[string]{Value: &g.formatterArgs},
 			"the arguments to pass to the formatter command. Note that"+
 				" the final argument will always be the name of the"+
 				" generated program.",
@@ -1294,7 +1294,8 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.SeeAlso(formatterParamNames...),
 		)
 
-		ps.Add(paramNameFormat, psetter.Bool{Value: &g.formatCode},
+		ps.Add(paramNameFormat,
+			psetter.Bool{Value: &g.formatCode},
 			"format the generated code - unless this is set the"+
 				" generated code will not be formatted."+
 				"\n\n"+
@@ -1327,7 +1328,8 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.GroupName(paramGroupNameGosh),
 		)
 
-		ps.Add(paramNameScriptEditor, psetter.String{Value: &g.editorParam},
+		ps.Add(paramNameScriptEditor,
+			psetter.String[string]{Value: &g.editorParam},
 			"This will give the name of an editor to use for editing"+
 				" your program. Note that this does not force the file to"+
 				" be edited so you can set this in a configuration"+
@@ -1375,7 +1377,8 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 
 		// Miscellaneous params
 
-		ps.Add("build-arg", psetter.StrListAppender{Value: &g.buildArgs},
+		ps.Add("build-arg",
+			psetter.StrListAppender[string]{Value: &g.buildArgs},
 			"add an argument to pass to the go build command.",
 			param.AltNames("build-args", "args-build", "b-args", "b-arg"),
 			param.Attrs(param.DontShowInStdUsage),

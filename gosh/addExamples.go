@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/nickwells/param.mod/v5/param"
+	"github.com/nickwells/param.mod/v6/param"
 )
 
 // addExamples adds some examples of how gosh might be used to the standard

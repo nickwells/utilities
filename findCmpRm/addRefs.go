@@ -1,6 +1,6 @@
 package main
 
-import "github.com/nickwells/param.mod/v5/param"
+import "github.com/nickwells/param.mod/v6/param"
 
 // addRefs will add the references to the standard help message
 func addRefs(ps *param.PSet) error {

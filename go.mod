@@ -15,7 +15,7 @@ require (
 	github.com/nickwells/gogen.mod v1.11.13
 	github.com/nickwells/location.mod v1.2.26
 	github.com/nickwells/mathutil.mod/v2 v2.2.1
-	github.com/nickwells/param.mod/v5 v5.19.3
+	github.com/nickwells/param.mod/v6 v6.0.0
 	github.com/nickwells/snippet.mod v1.2.6
 	github.com/nickwells/testhelper.mod/v2 v2.2.0
 	github.com/nickwells/timer.mod v1.2.3

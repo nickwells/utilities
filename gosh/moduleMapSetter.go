@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/nickwells/filecheck.mod/filecheck"
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/psetter"
 )
 
 const moduleMapSeparator = "=>"

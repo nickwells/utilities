@@ -7,7 +7,7 @@ import (
 
 	"github.com/nickwells/col.mod/v3/col"
 	"github.com/nickwells/col.mod/v3/col/colfmt"
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/psetter"
 	"github.com/nickwells/units.mod/v2/units"
 
 	"golang.org/x/sys/unix"
@@ -42,7 +42,7 @@ type Prog struct {
 	baseUnit      units.Unit
 	displayUnits  units.Unit
 	fiMap         map[string]fieldInfo
-	allowedFields psetter.AllowedVals
+	allowedFields psetter.AllowedVals[string]
 }
 
 // NewProg returns a new Prog instance with the default values set
@@ -154,7 +154,7 @@ func NewProg() *Prog {
 			},
 		},
 	}
-	prog.allowedFields = psetter.AllowedVals{
+	prog.allowedFields = psetter.AllowedVals[string]{
 		nameStr:     "the name of the directory",
 		fSpStr:      "the total free space available",
 		avSpStr:     "the space available to you",

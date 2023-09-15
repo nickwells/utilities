@@ -3,9 +3,9 @@ package main
 import (
 	"sort"
 
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paction"
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/paction"
+	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v6/psetter"
 	"github.com/nickwells/snippet.mod/snippet"
 )
 
@@ -70,7 +70,7 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 		)
 
 		ps.Add(paramNameSnippetListConstraint,
-			psetter.StrList{Value: &slp.constraints},
+			psetter.StrList[string]{Value: &slp.constraints},
 			"this restricts the snippets to show."+
 				" The constraints can be a snippet name,"+
 				" a snippet sub-directory"+
@@ -84,15 +84,15 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
 
-		validParts := psetter.AllowedVals(snippet.ValidParts())
+		validParts := psetter.AllowedVals[string](snippet.ValidParts())
 		allParts, _ := validParts.Keys()
 		sort.Strings(allParts)
 
 		ps.Add(paramNameSnippetListPart,
-			psetter.EnumList{
+			psetter.EnumList[string]{
 				Value:       &slp.parts,
 				AllowedVals: validParts,
-				Aliases: psetter.Aliases{
+				Aliases: psetter.Aliases[string]{
 					"all": allParts,
 				},
 			},
@@ -107,8 +107,8 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 		)
 
 		ps.Add(paramNameSnippetListTag,
-			psetter.StrList{Value: &slp.tags},
-			"this set the tags of the snippet to show."+
+			psetter.StrList[string]{Value: &slp.tags},
+			"this sets the tags of the snippet to show."+
 				"\n\n"+
 				"Setting this will also set the flag indicating that a"+
 				" snippet list is wanted",

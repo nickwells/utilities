@@ -3,8 +3,8 @@ package main
 import (
 	"testing"
 
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paramset"
+	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v6/paramset"
 	"github.com/nickwells/testhelper.mod/v2/testhelper"
 )
 
@@ -24,8 +24,8 @@ func TestAllParams(t *testing.T) {
 		"version-s":          true,
 	}
 	groups := ps.GetGroups()
-	for _, grp := range groups {
-		for _, p := range grp.Params {
+	for _, g := range groups {
+		for _, p := range g.Params() {
 			paramNames := p.AltNames()
 			s := p.Setter()
 			vr := s.ValueReq()

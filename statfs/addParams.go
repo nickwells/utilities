@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/nickwells/check.mod/v2/check"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v6/psetter"
 	"github.com/nickwells/unitsetter.mod/v4/unitsetter"
 )
 
@@ -30,7 +30,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 			"show the results in a table rather than on a line")
 
 		ps.Add("show",
-			psetter.EnumList{
+			psetter.EnumList[string]{
 				Value:       &fields,
 				AllowedVals: prog.allowedFields,
 				Checks: []check.StringSlice{

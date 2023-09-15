@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/nickwells/errutil.mod/errutil"
-	"github.com/nickwells/param.mod/v5/param"
+	"github.com/nickwells/param.mod/v6/param"
 	"github.com/nickwells/snippet.mod/snippet"
 	"github.com/nickwells/utilities/internal/callstack"
 	"github.com/nickwells/xdg.mod/xdg"

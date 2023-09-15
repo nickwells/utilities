@@ -1,6 +1,6 @@
 package main
 
-import "github.com/nickwells/param.mod/v5/param"
+import "github.com/nickwells/param.mod/v6/param"
 
 func addRefs(ps *param.PSet) error {
 	ps.AddReference("findCmpRm",

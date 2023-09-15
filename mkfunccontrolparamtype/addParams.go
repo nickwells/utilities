@@ -6,16 +6,17 @@ import (
 	"regexp"
 
 	"github.com/nickwells/check.mod/v2/check"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v6/psetter"
 )
 
 // addParams will add parameters to the passed ParamSet
 func addParams(prog *Prog) param.PSetOptFunc {
+	checkStringNotEmpty := check.StringLength[string](check.ValGT(0))
 	return func(ps *param.PSet) error {
 		goNameRE := regexp.MustCompile("^[A-Za-z][a-zA-Z0-9_]*$")
 		ps.Add("type-name",
-			psetter.String{
+			psetter.String[string]{
 				Value: &prog.typeName,
 				Checks: []check.String{
 					check.StringMatchesPattern[string](goNameRE,
@@ -31,24 +32,23 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("description",
-			psetter.String{
-				Value: &prog.typeDesc,
-				Checks: []check.String{
-					check.StringLength[string](check.ValGT(0)),
-				},
+			psetter.String[string]{
+				Value:  &prog.typeDesc,
+				Checks: []check.String{checkStringNotEmpty},
 			},
 			"text describing the type",
 			param.AltNames("desc", "d"),
 			param.Attrs(param.MustBeSet),
 		)
 
-		ps.Add("value-name", psetter.StrListAppender{
-			Value: &prog.constNames,
-			Checks: []check.String{
-				check.StringMatchesPattern[string](goNameRE,
-					"a valid Go identifier"),
+		ps.Add("value-name",
+			psetter.StrListAppender[string]{
+				Value: &prog.constNames,
+				Checks: []check.String{
+					check.StringMatchesPattern[string](goNameRE,
+						"a valid Go identifier"),
+				},
 			},
-		},
 			"follow this with the name of one of the constant values you want",
 			param.AltNames("value", "val", "v"),
 			param.Attrs(param.MustBeSet),

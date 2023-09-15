@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/nickwells/check.mod/v2/check"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paction"
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v6/paction"
+	"github.com/nickwells/param.mod/v6/psetter"
 )
 
 const (
@@ -28,7 +28,7 @@ func addActionParams(prog *Prog) param.PSetOptFunc {
 		wakeupActionAF := wakeupAction.MakeActionFunc()
 
 		ps.Add("message",
-			psetter.String{
+			psetter.String[string]{
 				Value: &prog.msg,
 				Checks: []check.String{
 					check.StringLength[string](check.ValGT[int](0)),
@@ -41,7 +41,7 @@ func addActionParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("run",
-			psetter.String{
+			psetter.String[string]{
 				Value: &prog.afterSleepCmd,
 				Checks: []check.String{
 					check.StringLength[string](check.ValGT[int](0)),
@@ -59,7 +59,7 @@ func addActionParams(prog *Prog) param.PSetOptFunc {
 			param.GroupName(paramGroupNameActions),
 		)
 
-		ps.Add("format", psetter.String{Value: &prog.showTimeFmt},
+		ps.Add("format", psetter.String[string]{Value: &prog.showTimeFmt},
 			"the format to use when showing the time."+
 				" Setting this value forces the show-time flag on.",
 			param.PostAction(paction.SetVal(&prog.showTime, true)),
@@ -89,7 +89,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("repeat-count",
-			psetter.Int64{
+			psetter.Int[int64]{
 				Value: &prog.repeatCount, Checks: []check.Int64{
 					check.ValGT[int64](0),
 				},
@@ -141,7 +141,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("time",
-			psetter.String{
+			psetter.String[string]{
 				Value: &absTimeStr,
 				Checks: []check.String{
 					check.StringLength[string](check.ValEQ[int](absTimeLen)),
@@ -156,7 +156,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("minute",
-			psetter.Int64{
+			psetter.Int[int64]{
 				Value: &prog.timeMins,
 				Checks: []check.Int64{
 					check.ValGT[int64](0),
@@ -170,7 +170,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("second",
-			psetter.Int64{
+			psetter.Int[int64]{
 				Value: &prog.timeSecs,
 				Checks: []check.Int64{
 					check.ValGT[int64](0),
@@ -184,7 +184,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("per-day",
-			psetter.Int64{
+			psetter.Int[int64]{
 				Value: &prog.perDay,
 				Checks: []check.Int64{
 					check.ValGT[int64](0),
@@ -198,7 +198,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("per-hour",
-			psetter.Int64{
+			psetter.Int[int64]{
 				Value: &prog.perHour,
 				Checks: []check.Int64{
 					check.ValGT[int64](0),
@@ -213,7 +213,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("per-min",
-			psetter.Int64{
+			psetter.Int[int64]{
 				Value: &prog.perMinute,
 				Checks: []check.Int64{
 					check.ValGT[int64](0),
@@ -227,7 +227,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("offset",
-			psetter.Int64{
+			psetter.Int[int64]{
 				Value: &prog.offset,
 				Checks: []check.Int64{
 					check.Not(
@@ -243,7 +243,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("offset-mins",
-			psetter.Int64{
+			psetter.Int[int64]{
 				Value: &prog.offsetMins,
 				Checks: []check.Int64{
 					check.Not(

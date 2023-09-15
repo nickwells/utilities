@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/filecheck.mod/filecheck"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paction"
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/paction"
+	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v6/psetter"
 )
 
 const (
@@ -52,7 +52,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add(paramNameExtension,
-			psetter.String{
+			psetter.String[string]{
 				Value: &prog.fileExtension,
 				Checks: []check.String{
 					check.StringLength[string](check.ValGT(0)),
@@ -72,9 +72,9 @@ func addParams(prog *Prog) param.PSetOptFunc {
 					string(DADelete))),
 		)
 
-		ps.Add(paramNameDupAction, psetter.Enum{
+		ps.Add(paramNameDupAction, psetter.Enum[string]{
 			Value: (*string)(&prog.dupAction),
-			AllowedVals: psetter.AllowedVals{
+			AllowedVals: psetter.AllowedVals[string]{
 				string(DADelete): "delete all duplicate files" +
 					" without prompting" +
 					" (" + duplicateAction + ")",
@@ -89,9 +89,9 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add(paramNameCmpAction,
-			psetter.Enum{
+			psetter.Enum[string]{
 				Value: (*string)(&prog.cmpAction),
-				AllowedVals: psetter.AllowedVals{
+				AllowedVals: psetter.AllowedVals[string]{
 					string(CAShowDiff): "show file differences" +
 						" without prompting",
 					string(CAQuery): "prompt to show differences" +
@@ -114,7 +114,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("diff-cmd",
-			psetter.String{
+			psetter.String[string]{
 				Value: &prog.diff.name,
 				Checks: []check.String{
 					check.StringLength[string](check.ValGT(0)),
@@ -127,7 +127,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("diff-cmd-params",
-			psetter.StrList{
+			psetter.StrList[string]{
 				Value: &prog.diff.params,
 				Checks: []check.StringSlice{
 					check.SliceLength[[]string](check.ValGT(0)),
@@ -139,7 +139,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("less-cmd",
-			psetter.String{
+			psetter.String[string]{
 				Value: &prog.less.name,
 				Checks: []check.String{
 					check.StringLength[string](check.ValGT(0)),
@@ -152,7 +152,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		ps.Add("less-cmd-params",
-			psetter.StrList{
+			psetter.StrList[string]{
 				Value: &prog.less.params,
 				Checks: []check.StringSlice{
 					check.SliceLength[[]string](check.ValGT(0)),

@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/nickwells/gogen.mod/gogen"
-	"github.com/nickwells/param.mod/v5/param"
+	"github.com/nickwells/param.mod/v6/param"
 )
 
 // Created: Sat Mar 21 11:18:36 2020

@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/psetter"
 )
 
 // ContChkSetter is used as a parameter setter for adding new content checks

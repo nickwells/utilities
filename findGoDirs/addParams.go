@@ -5,9 +5,9 @@ import (
 
 	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v5/param"
-	"github.com/nickwells/param.mod/v5/param/paction"
-	"github.com/nickwells/param.mod/v5/param/psetter"
+	"github.com/nickwells/param.mod/v6/paction"
+	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v6/psetter"
 	"github.com/nickwells/utilities/internal/stdparams"
 )
 
@@ -70,9 +70,9 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 		)
 
 		ps.Add("actions",
-			psetter.EnumMap{
+			psetter.EnumMap[string]{
 				Value: &fgd.actions,
-				AllowedVals: psetter.AllowedVals{
+				AllowedVals: psetter.AllowedVals[string]{
 					buildAct:    "run 'go build' in the directory",
 					installAct:  "run 'go install' in the directory",
 					testAct:     "run 'go test' in the directory",
@@ -89,7 +89,7 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 		)
 
 		ps.Add("generate-arg",
-			psetter.StrListAppender{Value: &fgd.generateArgs},
+			psetter.StrListAppender[string]{Value: &fgd.generateArgs},
 			"set the arguments to be given to the go generate command",
 			param.AltNames("generate-args", "args-generate",
 				"gen-args", "g-args", "g-arg"),
@@ -100,7 +100,7 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 		)
 
 		ps.Add("install-arg",
-			psetter.StrListAppender{Value: &fgd.installArgs},
+			psetter.StrListAppender[string]{Value: &fgd.installArgs},
 			"set the arguments to be given to the go install command",
 			param.AltNames("install-args", "args-install",
 				"inst-args", "i-args", "i-arg"),
@@ -111,7 +111,7 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 		)
 
 		ps.Add("test-arg",
-			psetter.StrListAppender{Value: &fgd.testArgs},
+			psetter.StrListAppender[string]{Value: &fgd.testArgs},
 			"set the arguments to be given to the go test command",
 			param.AltNames("test-args", "args-test",
 				"t-args", "t-arg"),
@@ -122,7 +122,7 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 		)
 
 		ps.Add("build-arg",
-			psetter.StrListAppender{Value: &fgd.buildArgs},
+			psetter.StrListAppender[string]{Value: &fgd.buildArgs},
 			"set the arguments to be given to the go build command",
 			param.AltNames("build-args", "args-build",
 				"b-args", "b-arg"),
@@ -133,13 +133,14 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 		)
 
 		ps.Add("package-names",
-			psetter.StrList{Value: &fgd.pkgNames},
+			psetter.StrList[string]{Value: &fgd.pkgNames},
 			"set the names of packages to be matched. If this is not set then"+
 				" any package name will be matched",
 			param.AltNames("package", "pkg"),
 		)
 
-		ps.Add("having-files", psetter.StrList{Value: &fgd.filesWanted},
+		ps.Add("having-files",
+			psetter.StrList[string]{Value: &fgd.filesWanted},
 			"give a list of files that the directory must contain. All the"+
 				" listed files must be present for the directory to be"+
 				" matched.",
@@ -147,7 +148,8 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 			param.Attrs(param.CommandLineOnly),
 		)
 
-		ps.Add("missing-files", psetter.StrList{Value: &fgd.filesMissing},
+		ps.Add("missing-files",
+			psetter.StrList[string]{Value: &fgd.filesMissing},
 			"give a list of files that the directory may not contain. Any of"+
 				" the listed files may be absent for the directory to be"+
 				" matched.",
@@ -211,7 +213,7 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 		stdparams.AddTiming(ps, fgd.dbgStack)
 
 		var skipDir string
-		ps.Add("skip-dir", psetter.String{Value: &skipDir},
+		ps.Add("skip-dir", psetter.String[string]{Value: &skipDir},
 			"exclude a directory with this name and skip any sub-directories."+
 				" This parameter may be given more than once, each"+
 				" time it is used the name will be added to the"+
