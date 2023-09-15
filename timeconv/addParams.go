@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v6/param"
 	"github.com/nickwells/param.mod/v6/paction"
+	"github.com/nickwells/param.mod/v6/param"
 	"github.com/nickwells/param.mod/v6/psetter"
 )
 
