@@ -33,9 +33,11 @@ them or just lists them.
 ## mkparamfilefunc
 This is intended to be used with go generate to construct functions that can
 be used to set the parameter files for packages and commands. It will write a
-Go file with functions that can be passed to a call to paramset.NewOrDie to
+Go file with functions that can be passed to a call to paramset.NewOrPanic to
 set the per-command config files. This will allow the user of a program to
 set parameters that they want to use every time the program is run.
+
+[See here](mkparamfilefunc/_mkparamfilefunc.DOC.md)
 
 ## mkpkgerr
 This will generate the code to provide a package-specific error type
@@ -47,6 +49,18 @@ package-specific Error interface (and also the standard error interface). It
 also provides a local pkgErrorf function that can be used to generate a
 pkgError. The pkgError is a renaming of string and so a string can simply be
 cast to a pkgError.
+
+[See here](mkpkgerr/_mkpkgerr.DOC.md)
+
+## mkfunccontrolparamtype
+This can be used to generate a type which can be used to control the
+behaviour of a function. You can give a type name, a list of valid values and
+a description and it will generate a file containing the necessary code that
+you can then use.
+
+The type can be thought of as an enumerated type.
+
+[See here](mkparamfilefunc/_mkparamfilefunc.DOC.md)
 
 ## mkdoc
 This is a tool for generating markdown files documenting Go programs.
@@ -64,6 +78,8 @@ to use in a shell script. The default output is easy for a human to
 understand but with the right flags set it can deliver just the value
 required.
 
+[See here](statfs/_statfs.DOC.md)
+
 ## sleepuntil
 This provides a way of repeatedly sleeping until a particular time is
 reached.
@@ -74,3 +90,5 @@ reached.
 This provides a way of simply converting the time from one locale to
 another. This can be useful when you are working with colleagues in other
 timezones with different daylight-saving rules.
+
+[See here](timeconv/_timeconv.DOC.md)
