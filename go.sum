@@ -42,8 +42,8 @@ github.com/nickwells/unitsetter.mod/v4 v4.2.20 h1:o0f4DS9F19gQtKGimiJdYyig9BjZ/O
 github.com/nickwells/unitsetter.mod/v4 v4.2.20/go.mod h1:Uj8U86jZ7Qpw7DOsHwzu6Gjk+fhT9fGGXgQMfeFgAHo=
 github.com/nickwells/verbose.mod v1.0.61 h1:ZfoI0qwN3uEmCFba2s/LEeLJ/vr3uxrF+I6rn6udylw=
 github.com/nickwells/verbose.mod v1.0.61/go.mod h1:leSC35PNim3+ULToUMwAvuwCMlfsmByAxrXLqn7zyJQ=
-github.com/nickwells/versionparams.mod v1.1.18 h1:7AXXMTFp5/sJf6h8XfsZQrtXuh8XQX+KaXVEnkjza48=
-github.com/nickwells/versionparams.mod v1.1.18/go.mod h1:gdh/Db123AKLGA+0jzTAp76ArhTYlxUAW4l2uGGoGBw=
+github.com/nickwells/versionparams.mod v1.2.0 h1:kzld+VuhYSSkAo0gFc/n104Zb0njDQdYR/SuFT0zouE=
+github.com/nickwells/versionparams.mod v1.2.0/go.mod h1:k9wGv0p8iyq0PxzRsIV/Z9zEfYXvZUDcbI8f617UZYE=
 github.com/nickwells/xdg.mod v1.0.9 h1:IQhytP6QBCC2xrSVXTE0GDbYJSD8E25H6sSqd7jtCHA=
 github.com/nickwells/xdg.mod v1.0.9/go.mod h1:WbQC4EaiIUSCgzmgYCqGq1zhYnWDe+pBODhx8HzlStM=
 golang.org/x/exp v0.0.0-20230905200255-921286631fa9 h1:GoHiUyI/Tp2nVkLI2mCxVkOjsbSXD66ic0XW0js0R9g=

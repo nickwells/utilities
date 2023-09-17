@@ -23,7 +23,7 @@ require (
 	github.com/nickwells/units.mod/v2 v2.1.11
 	github.com/nickwells/unitsetter.mod/v4 v4.2.20
 	github.com/nickwells/verbose.mod v1.0.61
-	github.com/nickwells/versionparams.mod v1.1.18
+	github.com/nickwells/versionparams.mod v1.2.0
 	github.com/nickwells/xdg.mod v1.0.9
 	golang.org/x/sys v0.12.0
 )
