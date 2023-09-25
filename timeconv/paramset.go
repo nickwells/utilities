@@ -11,10 +11,7 @@ func makeParamSet(prog *Prog) *param.PSet {
 	return paramset.NewOrPanic(
 		versionparams.AddParams,
 
-		addTimezoneParams(prog),
-		addTimeSettingParams(prog),
-		addTimeFormattingParams(prog),
-		addParamChecks(prog),
+		addParams(prog),
 
 		param.SetProgramDescription(
 			"this will convert the passed date into the equivalent time"+
