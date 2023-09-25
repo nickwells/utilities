@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/tempus.mod/tempus"
 )
 
 // Created: Sun Oct 22 11:17:41 2017
@@ -39,6 +40,9 @@ type Prog struct {
 	fromZoneParam *param.ByName
 	dtParam       *param.ByName
 	tParam        *param.ByName
+
+	tzNames     []string
+	listTZNames bool
 }
 
 // NewProg returns a new Prog instance with the default values set
@@ -49,6 +53,7 @@ func NewProg() *Prog {
 		inFormat:   dateFmt + " " + timeFmt,
 		outFormat:  dateFmt + " " + timeFmt,
 		timeSource: tsNow,
+		tzNames:    tempus.TimezoneNames(),
 	}
 }
 
@@ -80,10 +85,22 @@ func (prog *Prog) getTime() time.Time {
 	return time.Time{}
 }
 
+// listTimezoneNames displays the Timezone names
+func listTimezoneNames(prog *Prog) {
+	for _, n := range prog.tzNames {
+		fmt.Println(n)
+	}
+}
+
 func main() {
 	prog := NewProg()
 	ps := makeParamSet(prog)
 	ps.Parse()
+
+	if prog.listTZNames {
+		listTimezoneNames(prog)
+		os.Exit(0)
+	}
 
 	tIn := prog.getTime()
 

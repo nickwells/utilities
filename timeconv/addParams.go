@@ -72,6 +72,13 @@ func addTimezoneParams(prog *Prog, ps *param.PSet) error {
 		param.AltNames("to-timezone", "to-tz"),
 		param.SeeAlso(paramNameListTimezoneNames),
 		param.GroupName(tzGroupname))
+
+	if len(prog.tzNames) > 0 {
+		ps.Add(paramNameListTimezoneNames,
+			psetter.Bool{Value: &prog.listTZNames},
+			`list all the available timezones`,
+			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
+			param.AltNames("list-tz-names", "list-timezones"),
 			param.GroupName(tzGroupname))
 	}
 
