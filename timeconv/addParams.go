@@ -90,18 +90,29 @@ func addTimezoneParams(prog *Prog, ps *param.PSet) error {
 func addTimeSettingParams(prog *Prog, ps *param.PSet) error {
 	const timeGroupname = param.DfltGroupName + "-setting"
 
+	const timeDesc = "The time must be given in 24-hour form with" +
+		" a leading zero and a colon (':') between" +
+		" the hours, minutes and seconds," +
+		" for instance: '15:10:30'" +
+		"\n\n" +
+		"If no seconds are given they are taken to be zero"
+
 	ps.AddGroup(timeGroupname, "time-setting parameters\n\n"+
 		"These allow you to set the time to be converted."+
 		" The default is to use the current time")
 
 	prog.dtParam = ps.Add("date-time",
 		psetter.String[string]{Value: &prog.dtStr},
-		"the date and time. Note that the date is in the form of the year,"+
-			" including the century, the month number and"+
+		"the date and time to be converted."+
+			"\n\n"+
+			"The date must be given in the form of the year"+
+			" (including the century) the month number and"+
 			" the day of the month with leading zeros and no spaces."+
-			" Then the time is separated from the year by a single space"+
-			" and is in 24-hour form with a leading zero and"+
-			" a colon (':') between the hours, minutes and seconds.\n\n"+
+			"\n\n"+
+			"Then the time is separated from the date by a single space."+
+			"\n\n"+
+			timeDesc+
+			"\n\n"+
 			"For instance: '20190321 15:10:30'",
 		param.AltNames("dt"),
 		param.GroupName(timeGroupname),
@@ -112,13 +123,12 @@ func addTimeSettingParams(prog *Prog, ps *param.PSet) error {
 	prog.tParam = ps.Add("time",
 		psetter.String[string]{Value: &prog.tStr},
 		"the time to be converted."+
-			" Note that the time is in 24-hour form with"+
-			" a leading zero and"+
-			" a colon (':') between the hours, minutes and seconds.\n\n"+
-			"For instance: '15:10:30'\n\n"+
-			"When only the time is given the date is taken as the"+
+			"\n\n"+
+			timeDesc+
+			"\n\n"+
+			"The date used is the"+
 			" current date in the source timezone which could be"+
-			" a day before or after the current time",
+			" a day before or after the current time in your timezone.",
 		param.AltNames("from", "t"),
 		param.GroupName(timeGroupname),
 		param.PostAction(paction.SetVal[int](&prog.timeSource, tsTimeStr)),
@@ -158,7 +168,7 @@ func addTimeFormattingParams(prog *Prog, ps *param.PSet) error {
 		psetter.String[string]{Value: &prog.outFormat},
 		"the format in which to display the resulting date and time."+
 			" Note that this format uses the Go programming language"+
-			" format specification.\n\n"+
+			" time formatting specification.\n\n"+
 			"You can specify precisely how the time should appear"+
 			" as follows:\n\n"+
 			"for the year use '06' (or '2006' for the century as well)\n"+
@@ -167,7 +177,7 @@ func addTimeFormattingParams(prog *Prog, ps *param.PSet) error {
 			"to show the day of the week use 'Mon' or 'Monday'\n"+
 			"for the hour use '03' (or '15' for a 24-hour clock)\n"+
 			"for the minute and second use '04' and '05'\n"+
-			"for fractions of a second add '.000'\n"+
+			"for fractions of a second add '.' followed by 1-9 zeroes\n"+
 			"to show AM or PM use 'PM'\n"+
 			"to show the timezone use 'MST'\n\n"+
 			"unrecognised strings will appear as given",
