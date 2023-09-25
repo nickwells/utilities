@@ -30,10 +30,12 @@ type Prog struct {
 	useUSDateOrder bool
 	noSecs         bool
 	noCentury      bool
+	showDate       bool
 	showTimezone   bool
 	showAMPM       bool
 	showMonthName  bool
 
+	dateTimeSep string
 	datePartSep string
 	dtStr       string
 	tStr        string
@@ -46,11 +48,13 @@ type Prog struct {
 // NewProg returns a new Prog instance with the default values set
 func NewProg() *Prog {
 	return &Prog{
-		fromZone:   time.Local,
-		toZone:     time.Local,
-		outFormat:  inFormat,
-		timeSource: tsNow,
-		tzNames:    tempus.TimezoneNames(),
+		showDate:    true,
+		dateTimeSep: " ",
+		fromZone:    time.Local,
+		toZone:      time.Local,
+		outFormat:   inFormat,
+		timeSource:  tsNow,
+		tzNames:     tempus.TimezoneNames(),
 	}
 }
 
@@ -143,4 +147,14 @@ func (prog Prog) makeDatePart() string {
 	}
 
 	return yearPart + prog.datePartSep + monthPart + prog.datePartSep + "02"
+}
+
+// setOutputFormat sets the output format in accordance with the format
+// specifications
+func (prog *Prog) setOutputFormat() {
+	prog.outFormat = ""
+	if prog.showDate {
+		prog.outFormat = prog.makeDatePart() + prog.dateTimeSep
+	}
+	prog.outFormat += prog.makeTimePart()
 }

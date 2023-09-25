@@ -171,9 +171,16 @@ func addTimeFormattingParams(prog *Prog, ps *param.PSet) error {
 	var (
 		fmtFlagCounter paction.Counter
 		fmtCounter     paction.Counter
+
+		fmtFlagCounterAF = (&fmtFlagCounter).MakeActionFunc()
+		fmtCounterAF     = (&fmtCounter).MakeActionFunc()
+
+		dateFmtFlagCounter paction.Counter
+		noDateCounter      paction.Counter
+
+		dateFmtFlagCounterAF = (&dateFmtFlagCounter).MakeActionFunc()
+		noDateCounterAF      = (&noDateCounter).MakeActionFunc()
 	)
-	fmtCounterAF := (&fmtCounter).MakeActionFunc()
-	fmtFlagCounterAF := (&fmtFlagCounter).MakeActionFunc()
 
 	const fmtGroupname = param.DfltGroupName + "-formatting"
 
@@ -202,7 +209,8 @@ func addTimeFormattingParams(prog *Prog, ps *param.PSet) error {
 			"unrecognised strings will appear as given",
 		param.AltNames("fmt"),
 		param.GroupName(fmtGroupname),
-		param.PostAction(fmtCounterAF))
+		param.PostAction(fmtCounterAF),
+	)
 
 	ps.Add("format-timestamp",
 		psetter.Nil{},
@@ -249,47 +257,76 @@ func addTimeFormattingParams(prog *Prog, ps *param.PSet) error {
 		`display the date in US format: month day year`,
 		param.AltNames("us-date-fmt", "us-format", "us-fmt"),
 		param.GroupName(fmtGroupname),
-		param.PostAction(fmtFlagCounterAF))
+		param.PostAction(fmtFlagCounterAF),
+		param.PostAction(dateFmtFlagCounterAF),
+	)
 
 	ps.Add("no-seconds",
 		psetter.Bool{Value: &prog.noSecs},
 		`display the  time without showing the seconds`,
 		param.AltNames("no-secs", "dont-show-seconds", "dont-show-secs"),
 		param.GroupName(fmtGroupname),
-		param.PostAction(fmtFlagCounterAF))
+		param.PostAction(fmtFlagCounterAF),
+	)
 
 	ps.Add("no-century",
 		psetter.Bool{Value: &prog.noCentury},
 		`display the date without showing the century`,
 		param.AltNames("dont-show-century"),
 		param.GroupName(fmtGroupname),
-		param.PostAction(fmtFlagCounterAF))
+		param.PostAction(fmtFlagCounterAF),
+		param.PostAction(dateFmtFlagCounterAF),
+	)
+
+	ps.Add("no-date",
+		psetter.Bool{Value: &prog.showDate, Invert: true},
+		`don't display the date; just show the time`,
+		param.AltNames("dont-show-date"),
+		param.GroupName(fmtGroupname),
+		param.PostAction(fmtFlagCounterAF),
+		param.PostAction(noDateCounterAF),
+	)
 
 	ps.Add("show-timezone",
 		psetter.Bool{Value: &prog.showTimezone},
 		`display the time with the timezone`,
 		param.AltNames("show-tz", "show-zone"),
 		param.GroupName(fmtGroupname),
-		param.PostAction(fmtFlagCounterAF))
+		param.PostAction(fmtFlagCounterAF),
+	)
 
 	ps.Add("show-ampm",
 		psetter.Bool{Value: &prog.showAMPM},
 		`display the  time in AM/PM format not 24 hour`,
 		param.GroupName(fmtGroupname),
-		param.PostAction(fmtFlagCounterAF))
+		param.PostAction(fmtFlagCounterAF),
+	)
 
 	ps.Add("show-month-name",
 		psetter.Bool{Value: &prog.showMonthName},
 		`display the month name rather than the number`,
 		param.GroupName(fmtGroupname),
-		param.PostAction(fmtFlagCounterAF))
+		param.PostAction(fmtFlagCounterAF),
+		param.PostAction(dateFmtFlagCounterAF),
+	)
 
 	ps.Add("date-part-sep",
 		psetter.String[string]{Value: &prog.datePartSep},
 		`separate the parts of the date with the given value`,
 		param.AltNames("date-part-separator"),
 		param.GroupName(fmtGroupname),
-		param.PostAction(fmtFlagCounterAF))
+		param.PostAction(fmtFlagCounterAF),
+		param.PostAction(dateFmtFlagCounterAF),
+	)
+
+	ps.Add("date-time-sep",
+		psetter.String[string]{Value: &prog.dateTimeSep},
+		`separate the date from the time with the given value`,
+		param.AltNames("date-time-separator"),
+		param.GroupName(fmtGroupname),
+		param.PostAction(fmtFlagCounterAF),
+		param.PostAction(dateFmtFlagCounterAF),
+	)
 
 	// Final checks
 	ps.AddFinalCheck(func() error {
@@ -304,11 +341,20 @@ func addTimeFormattingParams(prog *Prog, ps *param.PSet) error {
 	})
 
 	ps.AddFinalCheck(func() error {
-		if fmtFlagCounter.Count() >= 1 {
-			timeFmt := prog.makeTimePart()
-			dateFmt := prog.makeDatePart()
+		if noDateCounter.Count() >= 1 && dateFmtFlagCounter.Count() >= 1 {
+			return fmt.Errorf("you've set the date format and"+
+				" chosen not to display the date:\n\n%s\n\n%s",
+				dateFmtFlagCounter.SetBy(),
+				noDateCounter.SetBy(),
+			)
+		}
 
-			prog.outFormat = dateFmt + " " + timeFmt
+		return nil
+	})
+
+	ps.AddFinalCheck(func() error {
+		if fmtFlagCounter.Count() >= 1 {
+			prog.setOutputFormat()
 		}
 		return nil
 	})
