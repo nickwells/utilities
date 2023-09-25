@@ -30,7 +30,6 @@ func addParams(prog *Prog) param.PSetOptFunc {
 			addTimezoneParams,
 			addTimeSettingParams,
 			addTimeFormattingParams,
-			addParamChecks,
 		} {
 			err := f(prog, ps)
 			if err != nil {
@@ -59,13 +58,6 @@ func addTimezoneParams(prog *Prog, ps *param.PSet) error {
 
 	ps.AddGroup(tzGroupname, "time-zone parameters")
 
-	prog.fromZoneParam = ps.Add(paramNameFromZone,
-		psetter.TimeLocation{Value: &prog.fromZone, Locations: prog.tzNames},
-		`the timezone in which to interpret the supplied date and time`,
-		param.AltNames("from-timezone", "from-tz"),
-		param.SeeAlso(paramNameListTimezoneNames),
-		param.GroupName(tzGroupname))
-
 	ps.Add(paramNameToZone,
 		psetter.TimeLocation{Value: &prog.toZone, Locations: prog.tzNames},
 		`the timezone in which to present the supplied date and time`,
@@ -88,6 +80,12 @@ func addTimezoneParams(prog *Prog, ps *param.PSet) error {
 // addTimeSettingParams adds the parameters used to set the time to be
 // converted. The default time is the current time
 func addTimeSettingParams(prog *Prog, ps *param.PSet) error {
+	var (
+		fromZoneParam *param.ByName
+		dtParam       *param.ByName
+		tParam        *param.ByName
+	)
+
 	const timeGroupname = param.DfltGroupName + "-setting"
 
 	const timeDesc = "The time must be given in 24-hour form with" +
@@ -101,7 +99,14 @@ func addTimeSettingParams(prog *Prog, ps *param.PSet) error {
 		"These allow you to set the time to be converted."+
 		" The default is to use the current time")
 
-	prog.dtParam = ps.Add("date-time",
+	fromZoneParam = ps.Add(paramNameFromZone,
+		psetter.TimeLocation{Value: &prog.fromZone, Locations: prog.tzNames},
+		`the timezone in which to interpret the supplied date and time`,
+		param.AltNames("from-timezone", "from-tz"),
+		param.SeeAlso(paramNameListTimezoneNames),
+		param.GroupName(timeGroupname))
+
+	dtParam = ps.Add("date-time",
 		psetter.String[string]{Value: &prog.dtStr},
 		"the date and time to be converted."+
 			"\n\n"+
@@ -120,7 +125,7 @@ func addTimeSettingParams(prog *Prog, ps *param.PSet) error {
 			&prog.timeSource, tsDateTimeStr)),
 	)
 
-	prog.tParam = ps.Add("time",
+	tParam = ps.Add("time",
 		psetter.String[string]{Value: &prog.tStr},
 		"the time to be converted."+
 			"\n\n"+
@@ -135,10 +140,24 @@ func addTimeSettingParams(prog *Prog, ps *param.PSet) error {
 	)
 
 	ps.AddFinalCheck(func() error {
-		if (prog.dtParam).HasBeenSet() &&
-			(prog.tParam).HasBeenSet() {
+		if dtParam.HasBeenSet() &&
+			tParam.HasBeenSet() {
 			return fmt.Errorf("you may set at most one of %q or %q",
-				(prog.dtParam).Name(), (prog.tParam).Name())
+				dtParam.Name(), tParam.Name())
+		}
+		return nil
+	})
+
+	ps.AddFinalCheck(func() error {
+		if fromZoneParam.HasBeenSet() {
+			if !dtParam.HasBeenSet() &&
+				!tParam.HasBeenSet() {
+				return fmt.Errorf(
+					"if you have specified %q you must give %q or %q",
+					fromZoneParam.Name(),
+					dtParam.Name(),
+					tParam.Name())
+			}
 		}
 		return nil
 	})
@@ -304,60 +323,4 @@ func addTimeFormattingParams(prog *Prog, ps *param.PSet) error {
 	})
 
 	return nil
-}
-
-// addTimeFormattingParams will add the parameters used to control the output
-// of the program
-func addParamChecks(prog *Prog, ps *param.PSet) error {
-	ps.AddFinalCheck(func() error {
-		if prog.fromZoneParam.HasBeenSet() {
-			if !prog.dtParam.HasBeenSet() &&
-				!prog.tParam.HasBeenSet() {
-				return fmt.Errorf(
-					"if you have specified %q you must give %q or %q",
-					prog.fromZoneParam.Name(),
-					prog.dtParam.Name(),
-					prog.tParam.Name())
-			}
-		}
-		return nil
-	})
-	return nil
-}
-
-// makeTimePart constructs the time part of the output format
-func (prog *Prog) makeTimePart() string {
-	hourPart := "15"
-	AMPMsuffix := ""
-	if prog.showAMPM {
-		hourPart = "03"
-		AMPMsuffix = " PM"
-	}
-	secsPart := ":05"
-	if prog.noSecs {
-		secsPart = ""
-	}
-	TZPart := ""
-	if prog.showTimezone {
-		TZPart = " MST"
-	}
-	return hourPart + ":" + "04" + secsPart + AMPMsuffix + TZPart
-}
-
-// makeDatePart makes the datepart of the format string
-func (prog *Prog) makeDatePart() string {
-	monthPart := "01"
-	if prog.showMonthName {
-		monthPart = "Jan"
-	}
-	yearPart := "2006"
-	if prog.noCentury {
-		yearPart = "06"
-	}
-
-	if prog.useUSDateOrder {
-		return monthPart + prog.datePartSep + "02" + prog.datePartSep + yearPart
-	}
-
-	return yearPart + prog.datePartSep + monthPart + prog.datePartSep + "02"
 }
