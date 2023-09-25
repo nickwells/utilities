@@ -17,12 +17,17 @@ const (
 	tsTimeStr
 )
 
+const (
+	dfltDateFmt = "20060102"
+	dfltTimeFmt = "15:04:05"
+	inFormat    = dfltDateFmt + " " + dfltTimeFmt
+)
+
 // Prog holds program parameters and status
 type Prog struct {
 	fromZone *time.Location
 	toZone   *time.Location
 
-	inFormat  string
 	outFormat string
 
 	useUSDateOrder bool
@@ -50,11 +55,30 @@ func NewProg() *Prog {
 	return &Prog{
 		fromZone:   time.Local,
 		toZone:     time.Local,
-		inFormat:   dateFmt + " " + timeFmt,
-		outFormat:  dateFmt + " " + timeFmt,
+		outFormat:  inFormat,
 		timeSource: tsNow,
 		tzNames:    tempus.TimezoneNames(),
 	}
+}
+
+// parseTime parses the supplied time string according to the input format in
+// the from-timezone. If the first attempt fails it will check that the
+// seconds are present and if not it will try again with the seconds set to
+// 00.
+func (prog *Prog) parseTime(ts string) (time.Time, error) {
+	t, err := time.ParseInLocation(inFormat, ts, prog.fromZone)
+	if err == nil {
+		return t, nil
+	}
+	if len(ts) == len(inFormat)-3 {
+		ts += ":00"
+		var err2 error
+		t, err2 = time.ParseInLocation(inFormat, ts, prog.fromZone)
+		if err2 == nil {
+			return t, nil
+		}
+	}
+	return t, err
 }
 
 // getTime returns the time according to the parameters given
@@ -63,16 +87,16 @@ func (prog *Prog) getTime() time.Time {
 	case tsNow:
 		return time.Now()
 	case tsDateTimeStr:
-		tIn, err := time.ParseInLocation(
-			prog.inFormat, prog.dtStr, prog.fromZone)
+		tIn, err := prog.parseTime(prog.dtStr)
 		if err != nil {
 			fmt.Println("Cannot parse the date and time:", err)
 			os.Exit(1)
 		}
 		return tIn
 	case tsTimeStr:
-		dtStr := time.Now().In(prog.fromZone).Format(dateFmt) + " " + prog.tStr
-		tIn, err := time.ParseInLocation(prog.inFormat, dtStr, prog.fromZone)
+		dtStr := time.Now().In(prog.fromZone).Format(dfltDateFmt) +
+			" " + prog.tStr
+		tIn, err := prog.parseTime(dtStr)
 		if err != nil {
 			fmt.Println("Cannot parse the time:", err)
 			os.Exit(1)
@@ -90,6 +114,7 @@ func listTimezoneNames(prog *Prog) {
 	for _, n := range prog.tzNames {
 		fmt.Println(n)
 	}
+	os.Exit(0)
 }
 
 func main() {

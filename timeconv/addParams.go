@@ -15,9 +15,9 @@ const (
 	paramNameFromZone          = "from-zone"
 	paramNameToZone            = "to-zone"
 	paramNameListTimezoneNames = "list-timezone-names"
+)
 
-	dateFmt         = "20060102"
-	timeFmt         = "15:04:05"
+const (
 	timestampFormat = "20060102.150405"
 	iso8601Format   = "2006-01-02T15:04:05"
 	httpFormat      = "Mon, 02 Jan 2006 15:04:05 GMT"
