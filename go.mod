@@ -22,7 +22,7 @@ require (
 	github.com/nickwells/twrap.mod v1.5.4
 	github.com/nickwells/units.mod/v2 v2.1.12
 	github.com/nickwells/unitsetter.mod/v4 v4.2.25
-	github.com/nickwells/verbose.mod v1.1.0
+	github.com/nickwells/verbose.mod v1.1.1
 	github.com/nickwells/versionparams.mod v1.2.6
 	github.com/nickwells/xdg.mod v1.0.9
 	golang.org/x/sys v0.13.0

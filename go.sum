@@ -40,8 +40,8 @@ github.com/nickwells/units.mod/v2 v2.1.12 h1:1IHu5kH6ZG19tXorcaMPJsVPMOV9c0dgob9
 github.com/nickwells/units.mod/v2 v2.1.12/go.mod h1:J0qj6I0vrcPmgI4q9XvJTLI1kTyEkwy1+ssoHVNCiKw=
 github.com/nickwells/unitsetter.mod/v4 v4.2.25 h1:xwINOulCBc2u6CuLie12uiceM6vwLRJaRVodLBr8SxE=
 github.com/nickwells/unitsetter.mod/v4 v4.2.25/go.mod h1:cuai7oDIk7vxUDSLkk7BBNwxsxxZDCmHU60kgxKkSAA=
-github.com/nickwells/verbose.mod v1.1.0 h1:KCf2tP5LKNy9VlEPXhGsubQ8o5nCI4PtqdebVSGTrKQ=
-github.com/nickwells/verbose.mod v1.1.0/go.mod h1:Q4phAaHBmEQPkmoJXzVAH1zR24CWa5hLOByyraSn7yQ=
+github.com/nickwells/verbose.mod v1.1.1 h1:LeTXheF0JUrZAfCZlYIfo4VRBs5+HszBcWgyH6o1GzI=
+github.com/nickwells/verbose.mod v1.1.1/go.mod h1:mlVagAMihGCnq2c1XWiKg1ZcWhrPXeGCmaU3/vfpKeg=
 github.com/nickwells/versionparams.mod v1.2.6 h1:e2F0vCv8dL8GLpNnaICuvrZBTSRCyQXp5ED0eLPudj0=
 github.com/nickwells/versionparams.mod v1.2.6/go.mod h1:4YuB65pPVJ3ITOw0Tyo6tOezP0pzl8BnHtL+2lX162g=
 github.com/nickwells/xdg.mod v1.0.9 h1:IQhytP6QBCC2xrSVXTE0GDbYJSD8E25H6sSqd7jtCHA=
