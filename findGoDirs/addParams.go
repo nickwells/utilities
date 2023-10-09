@@ -8,7 +8,6 @@ import (
 	"github.com/nickwells/param.mod/v6/paction"
 	"github.com/nickwells/param.mod/v6/param"
 	"github.com/nickwells/param.mod/v6/psetter"
-	"github.com/nickwells/utilities/internal/stdparams"
 )
 
 const (
@@ -209,8 +208,6 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 			param.AltNames("do-nothing"),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
-
-		stdparams.AddTiming(ps, fgd.dbgStack)
 
 		var skipDir string
 		ps.Add("skip-dir", psetter.String[string]{Value: &skipDir},

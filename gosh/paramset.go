@@ -14,6 +14,8 @@ import (
 func paramOptFuncs(g *Gosh, slp *snippetListParams) []param.PSetOptFunc {
 	return []param.PSetOptFunc{
 		verbose.AddParams,
+		verbose.AddTimingParams(g.dbgStack),
+
 		versionparams.AddParams,
 
 		addSnippetListParams(slp),

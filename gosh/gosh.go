@@ -11,7 +11,7 @@ import (
 	"github.com/nickwells/errutil.mod/errutil"
 	"github.com/nickwells/param.mod/v6/param"
 	"github.com/nickwells/snippet.mod/snippet"
-	"github.com/nickwells/utilities/internal/callstack"
+	"github.com/nickwells/verbose.mod/verbose"
 	"github.com/nickwells/xdg.mod/xdg"
 )
 
@@ -80,7 +80,7 @@ type Gosh struct {
 	runInReadloopSetters  []*param.ByName
 	runAsWebserverSetters []*param.ByName
 
-	dbgStack *callstack.Stack
+	dbgStack *verbose.Stack
 
 	dontCleanupUserChoice bool
 	dontCleanup           bool
@@ -208,7 +208,7 @@ func newGosh() *Gosh {
 		snippetUsed: map[string]bool{},
 		snippets:    &snippet.Cache{},
 
-		dbgStack: &callstack.Stack{},
+		dbgStack: &verbose.Stack{},
 	}
 
 	g.setDfltSnippetPath()

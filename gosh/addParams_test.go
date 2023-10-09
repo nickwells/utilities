@@ -44,6 +44,7 @@ func cmpGoshStruct(iVal, iExpVal any) error {
 
 	return testhelper.DiffVals(val, expVal,
 		[]string{"snippets"},             // ignore diffs in the snippet caches
+		[]string{"snippetDirs"},          // ... and the snippet dir list
 		[]string{"runInReadloopSetters"}, // ... and the lists of ByName param
 		[]string{"runAsWebserverSetters"},
 	)
@@ -52,15 +53,7 @@ func cmpGoshStruct(iVal, iExpVal any) error {
 // makePSet returns a param set with the gosh params set up
 func makePSet(g *Gosh) *param.PSet {
 	slp := &snippetListParams{}
-	return paramset.NewNoHelpNoExitNoErrRptOrPanic(
-		addSnippetListParams(slp),
-		addSnippetParams(g),
-		addWebParams(g),
-		addReadloopParams(g),
-		addGoshParams(g),
-		addParams(g),
-		addNotes,
-	)
+	return paramset.NewNoHelpNoExitNoErrRptOrPanic(paramOptFuncs(g, slp)...)
 }
 
 // mkTestGosh makes a new Gosh and calls the goshSetters on it which are
@@ -199,17 +192,20 @@ func TestParseParamsCmdGosh(t *testing.T) {
 
 	// no params; no change
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {}))
+		mkTestParser(nil,
+			testhelper.MkID("no params no change"),
+			func(g *Gosh) {}))
 
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+		mkTestParser(nil, testhelper.MkID("add-comments"), func(g *Gosh) {
 			g.addComments = true
 		}, "-add-comments"))
 
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
-			g.baseTempDir = "testdata/baseTempDir"
-		}, "-base-temp-dir", "testdata/baseTempDir"))
+		mkTestParser(nil, testhelper.MkID("base-temp-dir with good dir"),
+			func(g *Gosh) {
+				g.baseTempDir = "testdata/baseTempDir"
+			}, "-base-temp-dir", "testdata/baseTempDir"))
 
 	{
 		parseErrs := errutil.ErrMap{}
@@ -220,7 +216,9 @@ func TestParseParamsCmdGosh(t *testing.T) {
 At: [command line]: Supplied Parameter:2: "-base-temp-dir" "testdata/nosuchdir"`))
 
 		testCases = append(testCases,
-			mkTestParser(parseErrs, testhelper.MkID(""), func(g *Gosh) {},
+			mkTestParser(parseErrs,
+				testhelper.MkID("base-temp-dir with bad dir"),
+				func(g *Gosh) {},
 				"-base-temp-dir", "testdata/nosuchdir"))
 	}
 
@@ -241,7 +239,7 @@ At: [command line]: Supplied Parameter:2: "-base-temp-dir" "testdata/nosuchdir"`
 		"-no-run",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(""),
+			mkTestParser(nil, testhelper.MkID(p),
 				func(g *Gosh) {
 					g.dontRun = true
 					g.dontCleanupUserChoice = true
@@ -254,7 +252,7 @@ At: [command line]: Supplied Parameter:2: "-base-temp-dir" "testdata/nosuchdir"`
 		"-dont-auto-import",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			mkTestParser(nil, testhelper.MkID(p), func(g *Gosh) {
 				g.dontPopulateImports = true
 			}, p))
 	}
@@ -265,11 +263,11 @@ At: [command line]: Supplied Parameter:2: "-base-temp-dir" "testdata/nosuchdir"`
 	} {
 		testCases = append(testCases,
 			mkTestParser(nil,
-				testhelper.MkID(""), func(g *Gosh) { g.edit = true }, p))
+				testhelper.MkID(p), func(g *Gosh) { g.edit = true }, p))
 	}
 
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID(""),
+		mkTestParser(nil, testhelper.MkID("edit-repeat"),
 			func(g *Gosh) {
 				g.edit = true
 				g.editRepeat = true
@@ -278,7 +276,10 @@ At: [command line]: Supplied Parameter:2: "-base-temp-dir" "testdata/nosuchdir"`
 
 	testCases = append(testCases,
 		mkTestParser(nil,
-			testhelper.MkID(""), func(g *Gosh) { g.editorParam = "xxx" },
+			testhelper.MkID(paramNameScriptEditor),
+			func(g *Gosh) {
+				g.editorParam = "xxx"
+			},
 			"-"+paramNameScriptEditor, "xxx"))
 
 	testCases = append(testCases,
@@ -295,7 +296,7 @@ At: [command line]: Supplied Parameter:2: "-base-temp-dir" "testdata/nosuchdir"`
 			"-formatter-args", "-a,-b,-c"))
 
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID(""),
+		mkTestParser(nil, testhelper.MkID("importer"),
 			func(g *Gosh) {
 				g.importPopulator = "xxx"
 				g.importPopulatorSet = true
@@ -316,7 +317,7 @@ At: [command line]: Supplied Parameter:2: "-base-temp-dir" "testdata/nosuchdir"`
 		"-program-name",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
+			mkTestParser(nil, testhelper.MkID(p), func(g *Gosh) {
 				g.execName = "TestGosh"
 				g.dontCleanupUserChoice = true
 			},
@@ -329,7 +330,7 @@ At: [command line]: Supplied Parameter:2: "-base-temp-dir" "testdata/nosuchdir"`
 		"-keep",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(""),
+			mkTestParser(nil, testhelper.MkID(p),
 				func(g *Gosh) {
 					g.dontCleanupUserChoice = true
 				},
@@ -343,7 +344,7 @@ At: [command line]: Supplied Parameter:2: "-base-temp-dir" "testdata/nosuchdir"`
 		"-show-time",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(""),
+			mkTestParser(nil, testhelper.MkID(p),
 				func(g *Gosh) { g.dbgStack.ShowTimings = true }, p))
 	}
 

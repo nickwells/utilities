@@ -11,6 +11,7 @@ import (
 func makeParamSet(prog *Prog) *param.PSet {
 	return paramset.NewOrPanic(
 		verbose.AddParams,
+		verbose.AddTimingParams(prog.dbgStack),
 		versionparams.AddParams,
 
 		addParams(prog),

@@ -15,7 +15,6 @@ import (
 	"github.com/nickwells/param.mod/v6/paction"
 	"github.com/nickwells/param.mod/v6/param"
 	"github.com/nickwells/param.mod/v6/psetter"
-	"github.com/nickwells/utilities/internal/stdparams"
 )
 
 const (
@@ -1405,8 +1404,6 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			param.Attrs(param.DontShowInStdUsage),
 			param.GroupName(paramGroupNameGosh),
 		)
-
-		stdparams.AddTiming(ps, g.dbgStack, param.GroupName(paramGroupNameGosh))
 
 		ps.Add(paramNamePreCheck,
 			psetter.Bool{

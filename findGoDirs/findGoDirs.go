@@ -1,6 +1,6 @@
 package main
 
-import "github.com/nickwells/utilities/internal/callstack"
+import "github.com/nickwells/verbose.mod/verbose"
 
 const (
 	printAct    = "print"
@@ -38,7 +38,7 @@ type Prog struct {
 	buildArgs    []string
 	testArgs     []string
 
-	dbgStack *callstack.Stack
+	dbgStack *verbose.Stack
 }
 
 func NewProg() *Prog {
@@ -56,6 +56,6 @@ func NewProg() *Prog {
 			filenameAct: doFilenames,
 		},
 
-		dbgStack: &callstack.Stack{},
+		dbgStack: &verbose.Stack{},
 	}
 }
