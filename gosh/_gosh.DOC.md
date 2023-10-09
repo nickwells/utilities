@@ -60,6 +60,17 @@ go install github.com/nickwells/utilities/gosh@latest
 This will build `gosh` and install it into your `GOPATH bin` directory
 (by default `$HOME/go/bin`).
 
+You should then check the installation. Run the following command:
+
+``` sh
+gosh -pre-check
+```
+
+This will check that various tools that gosh uses are installed and will give
+advice on how to install them if they are missing. It will also check that
+the standard snippets have been installed and, again, it will give advice on
+how to install them if not.
+
 ## Setup
 
 The first thing you'll want to do is to glance at the manual. The `gosh`
@@ -84,8 +95,8 @@ found in the repository `github.com/nickwells/utilities` under the
 `gosh.snippet` subdirectory.
 
 The recommended way to install these standard snippets is to use the
-`gosh.snippet` command. Alternatively, you can copy them into a snippets
-directory with the following command (on Linux):
+`gosh.snippet` command. Alternatively, you can copy them from the source code
+into a snippets directory with the following command (on Linux):
 
 ``` sh
 cp -r --suffix=.orig --backup ./_snippets/* <your-snippets-dir>
