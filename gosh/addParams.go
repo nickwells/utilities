@@ -415,7 +415,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 					"\n\n"+
 					g.defaultHandlerFuncDecl()+
 					"\n\n"+
-					" The webserver will listen on port "+
+					"The webserver will listen on port "+
 					fmt.Sprintf("%d", dfltHTTPPort)+
 					" unless the port number has been set explicitly"+
 					" through the http-port parameter.",
@@ -1046,12 +1046,12 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 			},
 			"the name of a module to be added to the 'go.work' file."+
 				"\n\n"+
-				" Note that if a workspace use directive is given"+
+				"Note that if a workspace use directive is given"+
 				" the version of Go that you are using must have"+
 				" the 'go work ...' command available;"+
 				" this command was added in Go 1.18."+
 				"\n\n"+
-				" Note that the local changes to the other module"+
+				"Note that the local changes to the other module"+
 				" may result in errors from the 'go mod tidy' command."+
 				" These would normally cause gosh to abort but you"+
 				" can suppress this behaviour with"+
@@ -1353,7 +1353,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			"don't abort when the 'go mod tidy' command reports errors;"+
 				" the error message, if any, will still be written to stderr."+
 				"\n\n"+
-				" This should only be set when a workspace is in use",
+				"This should only be set when a workspace is in use",
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 			param.AltNames("ignore-go-mod-tidy-errors"),
 			param.SeeAlso(paramNameWorkspaceUse),
@@ -1366,7 +1366,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			},
 			"don't run the 'go mod tidy' command"+
 				"\n\n"+
-				" This should only be set if you know that no"+
+				"This should only be set if you know that no"+
 				" non-standard packages are being used",
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 			param.AltNames("dont-run-go-mod-tidy", "no-go-mod-tidy"),
