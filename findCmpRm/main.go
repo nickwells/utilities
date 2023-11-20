@@ -480,38 +480,45 @@ func (prog Prog) verboseMsg(msg string) {
 // output to less
 func (prog Prog) diffs(nameOrig, nameNew string) error {
 	r, w := io.Pipe()
+	defer r.Close()
+	defer w.Close()
 
+	// create the commands
 	dcp := prog.diff.params
 	dcp = append(dcp, nameOrig, nameNew)
 	diffCmd := exec.Command(prog.diff.name, dcp...)
-	diffCmd.Stdout = w
-
 	lessCmd := exec.Command(prog.less.name, prog.less.params...)
+
+	// connect the output of diff to the input of less
+	diffCmd.Stdout = w
 	lessCmd.Stdin = r
 	lessCmd.Stdout = os.Stdout
 
+	// start the commands
 	err := diffCmd.Start()
 	if err != nil {
 		return fmt.Errorf("Couldn't start the diff command: %w", err)
 	}
 	err = lessCmd.Start()
 	if err != nil {
-		w.Close()
-		r.Close()
+		w.Close() // close diff's stdout
 		_ = diffCmd.Wait()
 		return fmt.Errorf("Couldn't start the less command: %w", err)
 	}
+
+	// wait for less to finish
+	err = lessCmd.Wait()
+	if err != nil {
+		return fmt.Errorf("The less command finished with an error: %w", err)
+	}
+	w.Close() // close diff's stdout
+	// wait for diff to finish
 	err = diffCmd.Wait()
 	// the diff command returns an exit status of 1 if the files differ. This
 	// does not indicate an error
 	if err != nil &&
 		diffCmd.ProcessState.ExitCode() != 1 {
 		return fmt.Errorf("The diff command finished with an error: %w", err)
-	}
-	w.Close()
-	err = lessCmd.Wait()
-	if err != nil {
-		return fmt.Errorf("The less command finished with an error: %w", err)
 	}
 	return nil
 }
