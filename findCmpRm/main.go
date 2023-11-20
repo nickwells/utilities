@@ -55,6 +55,10 @@ type CmdInfo struct {
 
 // Prog holds program parameters and status
 type Prog struct {
+	exitStatus int
+
+	stack *verbose.Stack
+
 	// parameters
 	searchDir     string
 	searchSubDirs bool
@@ -81,6 +85,8 @@ type Prog struct {
 // NewProg returns a new Prog instance with the default values set
 func NewProg() *Prog {
 	return &Prog{
+		stack: &verbose.Stack{},
+
 		searchDir:     dfltDir,
 		searchSubDirs: true,
 		fileExtension: dfltExtension,
@@ -188,6 +194,9 @@ func (prog *Prog) showBadFiles(badFiles []badFile) {
 	if len(badFiles) == 0 {
 		return
 	}
+
+	defer prog.stack.Start("showBadFiles", "Start")()
+
 	prog.status.badFile.total = len(badFiles)
 
 	filenames := make([]string, 0, len(badFiles))
@@ -209,31 +218,36 @@ func (prog *Prog) showBadFiles(badFiles []badFile) {
 
 // showDuplicateFiles displays the list of duplicate files and prompts the user
 // to delete them
-func (prog *Prog) showDuplicateFiles(filenames []string) {
-	if len(filenames) == 0 {
+func (prog *Prog) showDuplicateFiles(dupFiles []string) {
+	if len(dupFiles) == 0 {
 		return
 	}
-	prog.status.dupFile.total = len(filenames)
 
-	shortNames, _ := prog.shortNames(filenames)
-	reportFiles(len(filenames), "duplicate", "found")
+	defer prog.stack.Start("showDuplicateFiles", "Start")()
+
+	prog.status.dupFile.total = len(dupFiles)
+
+	shortNames, _ := prog.shortNames(dupFiles)
+	reportFiles(len(dupFiles), "duplicate", "found")
 	fmt.Println("in", prog.searchDir)
 	prog.twc.NoRptPathList(shortNames, filenameIndent)
 }
 
 // processDuplicateFiles checks the duplicate action and then either deletes
 // all the duplicates, keeps them all or queries the user.
-func (prog *Prog) processDuplicateFiles(filenames []string) {
-	if len(filenames) == 0 {
+func (prog *Prog) processDuplicateFiles(dupFiles []string) {
+	if len(dupFiles) == 0 {
 		return
 	}
 
+	defer prog.stack.Start("processDuplicateFiles", "Start")()
+
 	switch prog.dupAction {
 	case DADelete:
-		prog.deleteAllFiles(filenames, &prog.status.dupFile)
+		prog.deleteAllFiles(dupFiles, &prog.status.dupFile)
 	case DAQuery:
 		if prog.queryDeleteDuplicates() == 'y' {
-			prog.deleteAllFiles(filenames, &prog.status.dupFile)
+			prog.deleteAllFiles(dupFiles, &prog.status.dupFile)
 		}
 	}
 	fmt.Println()
@@ -242,15 +256,18 @@ func (prog *Prog) processDuplicateFiles(filenames []string) {
 // showComparableFiles loops over the files prompting the user to compare
 // each one with the new instance and then asking if the file should be
 // deleted or the new file reverted.
-func (prog *Prog) showComparableFiles(filenames []string) {
-	if len(filenames) == 0 {
+func (prog *Prog) showComparableFiles(cmpFiles []string) {
+	if len(cmpFiles) == 0 {
 		return
 	}
-	prog.status.cmpFile.total = len(filenames)
 
-	shortNames, _ := prog.shortNames(filenames)
+	defer prog.stack.Start("showComparableFiles", "Start")()
 
-	reportFiles(len(filenames), "comparable", "found")
+	prog.status.cmpFile.total = len(cmpFiles)
+
+	shortNames, _ := prog.shortNames(cmpFiles)
+
+	reportFiles(len(cmpFiles), "comparable", "found")
 	fmt.Println("in", prog.searchDir)
 	prog.twc.IdxNoRptPathList(shortNames, filenameIndent)
 }
@@ -261,26 +278,32 @@ func (prog *Prog) showComparableFiles(filenames []string) {
 // corresponding other. One of the choices of action is to delete all the
 // files, to revert them to their original state or to keep both members of
 // the pair.
-func (prog *Prog) processComparableFiles(filenames []string) {
-	shortNames, maxNameLen := prog.shortNames(filenames)
+func (prog *Prog) processComparableFiles(cmpFiles []string) {
+	if len(cmpFiles) == 0 {
+		return
+	}
 
-	digits := mathutil.Digits(int64(len(filenames)) + 1)
+	defer prog.stack.Start("processComparableFiles", "Start")()
+
+	shortNames, maxNameLen := prog.shortNames(cmpFiles)
+
+	digits := mathutil.Digits(int64(len(cmpFiles)) + 1)
 	nameFormat := fmt.Sprintf("    (%%%dd / %%%dd) %%%d.%ds: ",
 		digits, digits, maxNameLen, maxNameLen)
 	prog.indent = len(fmt.Sprintf(nameFormat, 0, 0, ""))
 
 loop:
-	for i, nameOrig := range filenames {
+	for i, nameOrig := range cmpFiles {
 		nameNew := strings.TrimSuffix(nameOrig, prog.fileExtension)
 
 		switch prog.cmpAction {
 		case CAQuery:
-			fmt.Printf(nameFormat, i+1, len(filenames), shortNames[i])
+			fmt.Printf(nameFormat, i+1, len(cmpFiles), shortNames[i])
 			if prog.queryShowDiff() {
 				prog.showDiff(nameOrig, nameNew, &prog.status.cmpFile)
 			}
 		case CAShowDiff:
-			fmt.Printf(nameFormat, i+1, len(filenames), shortNames[i])
+			fmt.Printf(nameFormat, i+1, len(cmpFiles), shortNames[i])
 			prog.showDiff(nameOrig, nameNew, &prog.status.cmpFile)
 		}
 
@@ -291,7 +314,7 @@ loop:
 		case CADeleteAll:
 			prog.deleteFile(nameOrig, &prog.status.cmpFile)
 		case CAKeepAll:
-			filesRemaining := len(filenames) - i
+			filesRemaining := len(cmpFiles) - i
 			reportFiles(filesRemaining, "comparable", "kept")
 			break loop
 		}
