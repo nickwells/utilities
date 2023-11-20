@@ -55,8 +55,6 @@ type CmdInfo struct {
 
 // Prog holds program parameters and status
 type Prog struct {
-	exitStatus int
-
 	stack *verbose.Stack
 
 	// parameters
