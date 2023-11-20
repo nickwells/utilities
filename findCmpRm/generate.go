@@ -2,5 +2,5 @@
 
 package main
 
-//go:generate mkparamfilefunc
 //go:generate mkdoc
+//go:generate mkparamfilefunc
