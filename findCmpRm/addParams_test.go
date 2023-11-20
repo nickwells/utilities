@@ -119,7 +119,9 @@ func TestParseParamsCmdProg(t *testing.T) {
 		parseErrs := errutil.ErrMap{}
 		parseErrs.AddError(
 			paramNameDir,
-			errors.New(`path: "nonesuch" should exist but doesn't`+"\n"+
+			errors.New(`path: "nonesuch": should exist but does not;`+
+				` "." exists but "nonesuch" does not`+
+				"\n"+
 				"At: [command line]:"+
 				` Supplied Parameter:2: "-dir" "nonesuch"`))
 

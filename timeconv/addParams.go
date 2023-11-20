@@ -9,18 +9,13 @@ import (
 	"github.com/nickwells/param.mod/v6/paction"
 	"github.com/nickwells/param.mod/v6/param"
 	"github.com/nickwells/param.mod/v6/psetter"
+	"github.com/nickwells/tempus.mod/tempus"
 )
 
 const (
 	paramNameFromZone          = "from-zone"
 	paramNameToZone            = "to-zone"
 	paramNameListTimezoneNames = "list-timezone-names"
-)
-
-const (
-	timestampFormat = "20060102.150405"
-	iso8601Format   = "2006-01-02T15:04:05"
-	httpFormat      = "Mon, 02 Jan 2006 15:04:05 GMT"
 )
 
 // addParams adds the parameters for this program
@@ -216,29 +211,29 @@ func addTimeFormattingParams(prog *Prog, ps *param.PSet) error {
 		psetter.Nil{},
 		"set the output format to one suitable for use as a timestamp:"+
 			"\n\n"+
-			timestampFormat,
+			tempus.FormatTimestamp,
 		param.AltNames("fmt-ts"),
 		param.GroupName(fmtGroupname),
 		param.PostAction(fmtCounterAF),
-		param.PostAction(setFormat(prog, timestampFormat, nil)),
+		param.PostAction(setFormat(prog, tempus.FormatTimestamp, nil)),
 	)
 
 	ps.Add("format-iso8601",
 		psetter.Nil{},
 		"set the output format to that given by ISO 8601:"+
 			"\n\n"+
-			iso8601Format,
+			tempus.FormatISO8601,
 		param.AltNames("fmt-iso"),
 		param.GroupName(fmtGroupname),
 		param.PostAction(fmtCounterAF),
-		param.PostAction(setFormat(prog, iso8601Format, nil)),
+		param.PostAction(setFormat(prog, tempus.FormatISO8601, nil)),
 	)
 
 	ps.Add("format-http",
 		psetter.Nil{},
 		"set the output format to the preferred HTTP format:"+
 			"\n\n"+
-			httpFormat+
+			tempus.FormatHTTP+
 			"\n\n"+
 			"This will also set the output timezone to UTC (GMT)"+
 			" but this can be overridden by following parameters"+
@@ -249,7 +244,7 @@ func addTimeFormattingParams(prog *Prog, ps *param.PSet) error {
 		param.AltNames("fmt-http"),
 		param.GroupName(fmtGroupname),
 		param.PostAction(fmtCounterAF),
-		param.PostAction(setFormat(prog, httpFormat, time.UTC)),
+		param.PostAction(setFormat(prog, tempus.FormatHTTP, time.UTC)),
 	)
 
 	ps.Add("us-date-order",

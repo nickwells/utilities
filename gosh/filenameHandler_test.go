@@ -2,8 +2,10 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
+	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/testhelper.mod/v2/testhelper"
 )
 
@@ -95,8 +97,9 @@ func TestPopulateFilesToRead(t *testing.T) {
 			g.runInReadLoop = true
 			g.inPlaceEdit = true
 			g.addError("original file check",
-				errors.New("path: \"testdata/hasOrigFile.orig\""+
-					" shouldn't exist but does"))
+				fmt.Errorf("path: %q: %w",
+					testHasOrigFile+".orig",
+					filecheck.ErrShouldNotExistButDoes))
 		})
 
 		testCases = append(testCases, tcs{

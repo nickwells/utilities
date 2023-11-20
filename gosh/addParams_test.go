@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/nickwells/errutil.mod/errutil"
+	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/param.mod/v6/param"
 	"github.com/nickwells/param.mod/v6/paramset"
 	"github.com/nickwells/param.mod/v6/paramtest"
@@ -212,8 +213,11 @@ func TestParseParamsCmdGosh(t *testing.T) {
 		parseErrs.AddError(
 			"base-temp-dir",
 			errors.New(
-				`path: "testdata/nosuchdir" should exist but doesn't
-At: [command line]: Supplied Parameter:2: "-base-temp-dir" "testdata/nosuchdir"`))
+				`path: "testdata/nosuchdir": should exist but does not;`+
+					` "testdata" exists but "nosuchdir" does not`+
+					"\n"+
+					`At: [command line]: Supplied Parameter:2:`+
+					` "-base-temp-dir" "testdata/nosuchdir"`))
 
 		testCases = append(testCases,
 			mkTestParser(parseErrs,
@@ -357,8 +361,10 @@ At: [command line]: Supplied Parameter:2: "-base-temp-dir" "testdata/nosuchdir"`
 // behaviour of the parameter setting is as expected. This tests just the
 // parameters in the 'cmd-readloop' group.
 func TestParseParamsCmdReadloop(t *testing.T) {
-	const noSuchFileErrStr = `path: "` + testNoSuchFile +
-		`" should exist but doesn't`
+	shouldExistErr := fmt.Errorf("path: %q: %w",
+		testNoSuchFile, filecheck.ErrShouldExistButDoesNot)
+	shouldNotExistErr := fmt.Errorf("path: %q: %w",
+		testHasOrigFile+".orig", filecheck.ErrShouldNotExistButDoes)
 
 	printVal, printValSE := populatePrintScriptEntries()
 
@@ -389,8 +395,7 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 				func(g *Gosh) {
 					g.runInReadLoop = true
 					g.inPlaceEdit = true
-					g.errMap.AddError("file check",
-						errors.New(noSuchFileErrStr))
+					g.errMap.AddError("file check", shouldExistErr)
 				}, p, "--", testNoSuchFile))
 
 		testCases = append(testCases,
@@ -399,10 +404,7 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 				func(g *Gosh) {
 					g.runInReadLoop = true
 					g.inPlaceEdit = true
-					g.errMap.AddError("original file check",
-						errors.New("path: \""+
-							testHasOrigFile+
-							".orig\" shouldn't exist but does"))
+					g.errMap.AddError("original file check", shouldNotExistErr)
 				}, p, "--", testHasOrigFile))
 
 		testCases = append(testCases,
@@ -425,8 +427,7 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 				testhelper.MkID("run-in-readloop - bad file"),
 				func(g *Gosh) {
 					g.runInReadLoop = true
-					g.errMap.AddError("file check",
-						errors.New(noSuchFileErrStr))
+					g.errMap.AddError("file check", shouldExistErr)
 				}, p, "--", testNoSuchFile))
 
 		testCases = append(testCases,
