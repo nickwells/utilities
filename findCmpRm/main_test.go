@@ -659,19 +659,28 @@ func TestProcessComparableFiles(t *testing.T) {
 			expFileCount: len(cmpFiles),
 			expStdout: "    (1 / 3) f1.orig: \n" +
 				"                     Error:" +
-				" Couldn't start the diff command: fork/exec\n" +
-				"                     " + nosuchDiff + ":" +
-				" no such file or directory\n" +
+				" the diff command (\"testdata/nosuchDiff\n" +
+				"                     testdata/tempTestDir/f1.orig" +
+				" testdata/tempTestDir/f1\")\n" +
+				"                     could not be started:" +
+				" fork/exec testdata/nosuchDiff: no\n" +
+				"                     such file or directory\n" +
 				"    (2 / 3) f2.orig: \n" +
 				"                     Error:" +
-				" Couldn't start the diff command: fork/exec\n" +
-				"                     " + nosuchDiff + ":" +
-				" no such file or directory\n" +
+				" the diff command (\"testdata/nosuchDiff\n" +
+				"                     testdata/tempTestDir/f2.orig" +
+				" testdata/tempTestDir/f2\")\n" +
+				"                     could not be started:" +
+				" fork/exec testdata/nosuchDiff: no\n" +
+				"                     such file or directory\n" +
 				"    (3 / 3) f3.orig: \n" +
 				"                     Error:" +
-				" Couldn't start the diff command: fork/exec\n" +
-				"                     " + nosuchDiff + ":" +
-				" no such file or directory\n\n",
+				" the diff command (\"testdata/nosuchDiff\n" +
+				"                     testdata/tempTestDir/f3.orig" +
+				" testdata/tempTestDir/f3\")\n" +
+				"                     could not be started:" +
+				" fork/exec testdata/nosuchDiff: no\n" +
+				"                     such file or directory\n\n",
 		},
 	}
 
