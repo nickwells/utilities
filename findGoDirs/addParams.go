@@ -196,7 +196,7 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 			"the directory must contain at least one file with the following"+
 				" content. Extra criteria can be set by adding"+
 				" a period to the tag name and a part name.",
-			param.AltNames("containing", "with-content"),
+			param.AltNames("containing", "contains", "with-content"),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 			param.SeeAlso(paramNameHavingBuildTag, paramNameHavingGoGenerate),
 			param.SeeNote(noteNameContentChecks),
