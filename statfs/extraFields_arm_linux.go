@@ -3,8 +3,8 @@
 package main
 
 import (
-	"github.com/nickwells/col.mod/v3/col"
-	"github.com/nickwells/col.mod/v3/col/colfmt"
+	"github.com/nickwells/col.mod/v4/col"
+	"github.com/nickwells/col.mod/v4/colfmt"
 
 	"golang.org/x/sys/unix"
 )
@@ -44,7 +44,7 @@ func (prog *Prog) addFieldInfo() {
 		},
 		format:   func() string { return "%d" },
 		shortFmt: func() string { return "%d" },
-		col: func(_ int) *col.Col {
+		col: func(_ uint) *col.Col {
 			return col.New(&colfmt.Int{W: 4}, "max file", "name length")
 		},
 	}
@@ -62,7 +62,7 @@ func (prog *Prog) addFieldInfo() {
 		},
 		format:   func() string { return "%s" },
 		shortFmt: func() string { return "%s" },
-		col: func(_ int) *col.Col {
+		col: func(_ uint) *col.Col {
 			return col.New(colfmt.String{W: maxFlagsLen}, "FS", "flags")
 		},
 	}
