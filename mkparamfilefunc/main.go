@@ -226,7 +226,7 @@ func (prog *Prog) printFuncGlobal(f io.Writer) {
 }
 
 // printAddCF prints the lines of code that will call filepath.Join(...)
-// with the base directory name and the the strings from paramFileParts
+// with the base directory name and the strings from paramFileParts
 func (prog *Prog) printAddCF(f io.Writer, dirs []string, funcName, cfgFName string, mustExist bool) {
 	fmt.Fprint(f, `
 	`+funcName+`
