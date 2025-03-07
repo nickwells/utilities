@@ -33,6 +33,10 @@ type snippetListParams struct {
 // with listing snippets to the passed param.PSet. Parameter values are set
 // in the supplied snippetListParams
 func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
+	const snippetListNote = "\n\n" +
+		"Setting this will also set the flag indicating that a" +
+		" snippet list is wanted"
+
 	return func(ps *param.PSet) error {
 		const snippetListParamGroup = "cmd-snippet-list"
 		ps.AddGroup(snippetListParamGroup,
@@ -44,7 +48,8 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 				" It will also show any per-snippet documentation and"+
 				" report on any problems detected with the snippets.",
 			param.GroupName(snippetListParamGroup),
-			param.AltNames("snippets-list", "s-l", "sl"),
+			param.AltNames("snippets-list", "s-l", "sl",
+				"snippets-show", "snippet-show"),
 			param.SeeAlso(
 				paramNameSnippetListShort,
 				paramNameSnippetListConstraint,
@@ -59,10 +64,7 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 				" the text of the snippet part. This can be useful if"+
 				" you want to use the result in a script in which case"+
 				" you will probably want to limit the parts shown as"+
-				" well."+
-				"\n\n"+
-				"Setting this will also set the flag indicating that a"+
-				" snippet list is wanted",
+				" well."+snippetListNote,
 			param.GroupName(snippetListParamGroup),
 			param.AltNames("sl-short", "sl-s"),
 			param.PostAction(paction.SetVal(&slp.listSnippets, true)),
@@ -71,15 +73,14 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 
 		ps.Add(paramNameSnippetListConstraint,
 			psetter.StrList[string]{Value: &slp.constraints},
-			"this restricts the snippets to show."+
-				" The constraints can be a snippet name,"+
+			"this restricts the snippets to show. The constraints can be"+
+				" a snippet name,"+
 				" a snippet sub-directory"+
-				" or a full pathname of either a file or directory."+
-				"\n\n"+
-				"Setting this will also set the flag indicating that a"+
-				" snippet list is wanted",
+				" or a full pathname of either"+
+				" a file or directory."+snippetListNote,
 			param.GroupName(snippetListParamGroup),
-			param.AltNames("sl-c"),
+			param.AltNames("sl-c", "snippet-list-only",
+				"snippet-show-constraint", "snippet-show-only"),
 			param.PostAction(paction.SetVal(&slp.listSnippets, true)),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
@@ -96,12 +97,10 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 					"all": allParts,
 				},
 			},
-			"this sets the parts of the snippet to show."+
-				"\n\n"+
-				"Setting this will also set the flag indicating that a"+
-				" snippet list is wanted",
+			"this sets the parts of the snippet to show."+snippetListNote,
 			param.GroupName(snippetListParamGroup),
-			param.AltNames("sl-p"),
+			param.AltNames("sl-p", "snippet-list-parts",
+				"snippet-show-part", "snippet-show-parts"),
 			param.PostAction(paction.SetVal(&slp.listSnippets, true)),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
@@ -109,19 +108,24 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 		ps.Add(paramNameSnippetListTag,
 			psetter.StrList[string]{Value: &slp.tags},
 			"this sets the tags of the snippet to show."+
-				"\n\n"+
-				"Setting this will also set the flag indicating that a"+
-				" snippet list is wanted",
+				" The value of a tag given here will be"+
+				" shown when listing the snippets."+
+				" The available tag names for a given"+
+				" snippet may be found by showing the"+
+				" Tags when selecting the parts of the"+
+				" snippet to show."+snippetListNote,
 			param.GroupName(snippetListParamGroup),
 			param.AltNames("sl-t"),
 			param.PostAction(paction.SetVal(&slp.listSnippets, true)),
+			param.SeeAlso(paramNameSnippetListPart),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
 
 		ps.Add(paramNameSnippetListDir, psetter.Bool{Value: &slp.listDirs},
 			"show the snippet directories",
 			param.GroupName(snippetListParamGroup),
-			param.AltNames("sl-d"),
+			param.AltNames("sl-d", "snippet-list-dirs",
+				"snippet-show-dir", "snippet-show-dirs"),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 		)
 
