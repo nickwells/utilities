@@ -204,15 +204,22 @@ var checkerParts = map[string]checkerPart{
 		setter: setMatchPattern,
 	},
 	"stop": {
-		desc:   "stop further checking",
+		desc: "stop further checking." +
+			" Once a line is found matching this pattern" +
+			" no more lines in the file will be checked" +
+			" by this checker.",
 		setter: setStopPattern,
 	},
 	"skip": {
-		desc:   "skip otherwise matching lines",
+		desc: "skip otherwise matching lines." +
+			" If a line matches the match pattern" +
+			" but also matches this skip pattern then" +
+			" it is taken as not being a matching line.",
 		setter: setSkipPattern,
 	},
 	"filename": {
-		desc:   "limit the files to check",
+		desc: "limit the files to check. This check will" +
+			" only be applied to files with names matching this pattern.",
 		setter: setFilenamePattern,
 	},
 }

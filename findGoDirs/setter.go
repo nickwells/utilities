@@ -26,55 +26,70 @@ type ContChkSetter struct {
 // sub tags and are used to determine which part of the ContentCheck entry is
 // to be set.
 func (chk ContChkSetter) SetWithVal(_, paramVal string) error {
-	parts := strings.SplitN(paramVal, "=", 2)
-	if len(parts) != 2 {
+	tag, re, hasRE := strings.Cut(paramVal, "=")
+	if !hasRE {
 		return fmt.Errorf(
 			"Missing '=': the parameter %q should be of the form: tag=RE",
 			paramVal)
 	}
-	tagParts := strings.SplitN(parts[0], ".", 2)
-	tagName := tagParts[0]
-	partName := dfltCheckerPart
-	if len(tagParts) > 1 {
-		partName = tagParts[1]
+
+	tagName, partName, hasPartName := strings.Cut(tag, ".")
+	if !hasPartName {
+		partName = dfltCheckerPart
 	}
+
 	cc, ok := (*chk.Value)[tagName]
 	if !ok {
 		if partName != dfltCheckerPart {
 			var checkers []string
+
 			for k := range *chk.Value {
 				checkers = append(checkers, k)
 			}
+
 			if len(checkers) == 0 {
 				return errors.New("No checkers have been created yet")
 			}
+
 			sort.Strings(checkers)
+
 			return fmt.Errorf("No such checker: %q. Available checkers: %s",
 				tagName, strings.Join(checkers, ", "))
 		}
+
 		cc = &ContentCheck{name: tagName}
 		(*chk.Value)[tagName] = cc
 	} else if partName == dfltCheckerPart {
 		return fmt.Errorf("The checker %q already exists", tagName)
 	}
+
 	cp, ok := checkerParts[partName]
 	if !ok {
 		return fmt.Errorf(
 			"Unknown checker part name: %q. Must be one of %s",
 			partName, strings.Join(checkerPartNames(), ", "))
 	}
-	err := cp.setter(cc, parts[1])
+
+	err := cp.setter(cc, re)
 	if err != nil {
 		return fmt.Errorf("%s: %w", tagName, err)
 	}
+
 	return nil
 }
 
 // AllowedValues simply returns a description of a well-formed value
 func (chk ContChkSetter) AllowedValues() string {
 	return "a string of the form tag=RE or tag.part=RE." +
-		" Note that 'RE' must compile to a regular expression" +
-		"\n" +
+		"\n\n" +
+		"The tag can be any value and is simply used to" +
+		" add parts to an existing content checker." +
+		" Note that the first use of a tag must be without" +
+		" any part name attached." +
+		"\n\n" +
+		"The 'RE' part must compile to a valid" +
+		" regular expression." +
+		"\n\n" +
 		"The 'part' must be one of:" +
 		"\n" +
 		checkerPartsHelpText()

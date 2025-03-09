@@ -23,6 +23,10 @@ func makeParamSet(prog *Prog) *param.PSet {
 			"This will search for directories containing Go packages. You"+
 				" can add extra criteria for selecting the directory."+
 				" Once in each selected directory you can perform certain"+
-				" actions"),
+				" actions. If no directory is given then"+
+				" the current directory is searched."+
+				" Directories called testdata or"+
+				" with names starting with either '.' or '_' are ignored."+
+				" Duplicate directory names are silently removed."),
 	)
 }

@@ -255,6 +255,16 @@ func addExamples(ps *param.PSet) error {
 	ps.AddExample(`findGoDirs -having-go-generate -do content`,
 		"This will find all the Go directories with go:generate comments"+
 			" and prints the matching lines.")
+	ps.AddExample(`findGoDirs -having-content 'nolint=//nolint:' -do content`,
+		"This will find all the Go directories with"+
+			" some file having a nolint comment"+
+			" and prints the matching lines.")
+	ps.AddExample(`findGoDirs -having-content 'nolint=//nolint:'`+
+		` -having-content 'nolint.skip=errcheck' -do content`,
+		"This will find all the Go directories with"+
+			" some file having a nolint comment but where"+
+			" the line matching //nolint doesn't also match errcheck"+
+			" and prints the matching lines.")
 
 	return nil
 }
@@ -286,9 +296,9 @@ func addNotes(ps *param.PSet) error {
 			"You can add these additional features using the"+
 			" '"+paramNameHavingContent+"' parameter. You repeat the"+
 			" checker name and add\n"+
-			"    a period ('.'),"+
-			"    a part name,"+
-			"    an equals ('=')"+
+			"    a period ('.'),\n"+
+			"    a part name,\n"+
+			"    an equals ('=')\n"+
 			"    and the pattern for that part.\n"+
 			"Valid part names are:\n"+strings.Join(checkerPartNames(), ", ")+
 			"\n\n"+

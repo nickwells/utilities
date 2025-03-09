@@ -4,7 +4,10 @@
 
 This will search for directories containing Go packages\. You can add extra
 criteria for selecting the directory\. Once in each selected directory you can
-perform certain actions
+perform certain actions\. If no directory is given then the current directory is
+serached\. Directories called testdata or with names starting with either
+&apos;\.&apos; or &apos;\_&apos; are ignored\. Duplicate directory names are
+silently removed\.
 
 
 
