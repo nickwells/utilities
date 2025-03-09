@@ -44,39 +44,48 @@ func reportVal(n int, name string, indent int) {
 	if n <= 0 {
 		return
 	}
+
 	fmt.Printf("%s%3d %s\n", strings.Repeat(" ", indent), n, name)
 }
 
 // reportFile reports the status of the named file
 func (c Counts) reportFile() {
+	const (
+		initialIndent = 4
+		secondIndent  = 8
+	)
+
 	if c.total == 0 {
 		return
 	}
 
-	reportVal(c.total, c.name+" "+english.Plural("file", c.total), 4)
+	reportVal(c.total,
+		c.name+" "+english.Plural("file", c.total), initialIndent)
 
 	if c.isComparable {
-		reportVal(c.compared, "compared", 8)
+		reportVal(c.compared, "compared", secondIndent)
 		reportVal(c.cmpErrs,
-			"comparison "+english.Plural("error", c.cmpErrs), 8)
-		reportVal(c.total-c.cmpErrs-c.compared, "skipped (not checked)", 8)
+			"comparison "+english.Plural("error", c.cmpErrs), secondIndent)
+		reportVal(c.total-c.cmpErrs-c.compared,
+			"skipped (not checked)", secondIndent)
 		fmt.Println()
 	}
 
-	reportVal(c.deleted, "deleted", 8)
+	reportVal(c.deleted, "deleted", secondIndent)
 	reportVal(c.delErrs,
-		"deletion "+english.Plural("error", c.delErrs), 8)
+		"deletion "+english.Plural("error", c.delErrs), secondIndent)
 
-	reportVal(c.reverted, "reverted", 8)
+	reportVal(c.reverted, "reverted", secondIndent)
 	reportVal(c.revErrs,
-		"revert "+english.Plural("error", c.revErrs), 8)
+		"revert "+english.Plural("error", c.revErrs), secondIndent)
 
-	reportVal(c.total-c.deleted-c.reverted, "kept", 8)
+	reportVal(c.total-c.deleted-c.reverted, "kept", secondIndent)
 }
 
 // Report will print out the Status structure
 func (s Status) Report() {
 	fmt.Println("Summary")
+
 	allFileCount := s.cmpFile.total +
 		s.dupFile.total +
 		s.badFile.total
@@ -85,6 +94,7 @@ func (s Status) Report() {
 		fmt.Println("No files found")
 		return
 	}
+
 	s.badFile.reportFile()
 	s.dupFile.reportFile()
 	s.cmpFile.reportFile()

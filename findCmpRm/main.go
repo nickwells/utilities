@@ -145,6 +145,7 @@ type badFile struct {
 func main() {
 	prog := NewProg()
 	ps := makeParamSet(prog)
+
 	ps.Parse()
 	prog.setResponders()
 
@@ -152,9 +153,11 @@ func main() {
 
 	if len(errs) != 0 {
 		fmt.Fprintln(os.Stderr, "Couldn't find the entries:")
+
 		for _, err := range errs {
 			fmt.Fprintln(os.Stderr, "\t", err)
 		}
+
 		os.Exit(1)
 	}
 
@@ -174,12 +177,14 @@ func main() {
 func (prog Prog) shortNames(filenames []string) ([]string, int) {
 	shortNames := make([]string, 0, len(filenames))
 	maxLen := 0
+
 	for _, fn := range filenames {
 		shortName := strings.TrimPrefix(fn,
 			prog.searchDir+string(os.PathSeparator))
 		if len(shortName) > maxLen {
 			maxLen = len(shortName)
 		}
+
 		shortNames = append(shortNames, shortName)
 	}
 
@@ -197,19 +202,23 @@ func (prog *Prog) showBadFiles(badFiles []badFile) {
 	prog.status.badFile.total = len(badFiles)
 
 	filenames := make([]string, 0, len(badFiles))
+
 	for _, fe := range badFiles {
 		filenames = append(filenames, fe.name)
 	}
+
 	shortNames, maxNameLen := prog.shortNames(filenames)
 	reportFiles(len(filenames), "problem", "found")
 
 	fmt.Println("in", prog.searchDir)
+
 	for i, name := range shortNames {
 		fmt.Printf("%s%*s - %s\n",
 			strings.Repeat(" ", filenameIndent),
 			maxNameLen,
 			name, badFiles[i].problem)
 	}
+
 	fmt.Println()
 }
 
@@ -247,6 +256,7 @@ func (prog *Prog) processDuplicateFiles(dupFiles []string) {
 			prog.deleteAllFiles(dupFiles, &prog.status.dupFile)
 		}
 	}
+
 	fmt.Println()
 }
 
@@ -324,11 +334,13 @@ func fileContentsDiffer(f1, f2 []byte) bool {
 	if len(f1) != len(f2) {
 		return true
 	}
+
 	for i, b1 := range f1 {
 		if b1 != f2[i] {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -336,7 +348,9 @@ func fileContentsDiffer(f1, f2 []byte) bool {
 // duplicates should be deleted
 func (prog *Prog) queryDeleteDuplicates() rune {
 	response := prog.deleteDupR.GetResponseIndentOrDie(0, prog.indent)
+
 	fmt.Println()
+
 	return response
 }
 
@@ -346,9 +360,12 @@ func (prog *Prog) showDiff(nameOrig, nameNew string, counts *Counts) {
 	err := prog.diffs(nameOrig, nameNew)
 	if err != nil {
 		prog.twc.Wrap(fmt.Sprintf("Error: %v", err), prog.indent)
+
 		counts.cmpErrs++
+
 		return
 	}
+
 	counts.compared++
 
 	prog.queryDeleteFile(nameOrig, nameNew)
@@ -359,6 +376,7 @@ func (prog *Prog) showDiff(nameOrig, nameNew string, counts *Counts) {
 // found.
 func (prog *Prog) queryShowDiff() bool {
 	response := prog.showDiffR.GetResponseIndentOrDie(0, prog.indent)
+
 	fmt.Println()
 
 	switch response {
@@ -399,6 +417,7 @@ func (prog *Prog) setKeepAll() {
 // accordingly, reporting any errors found.
 func (prog *Prog) queryDeleteFile(nameOrig, nameNew string) {
 	response := prog.postDiffR.GetResponseIndentOrDie(prog.indent, prog.indent)
+
 	fmt.Println()
 
 	switch response {
@@ -416,6 +435,7 @@ func (prog *Prog) deleteAllFiles(filenames []string, count *Counts) {
 	for _, fName := range filenames {
 		prog.deleteFile(fName, count)
 	}
+
 	reportFiles(count.deleted, count.name, "deleted")
 	reportFiles(count.delErrs, count.name, "could not be deleted")
 }
@@ -429,11 +449,14 @@ func (prog *Prog) deleteFile(name string, counts *Counts) {
 		prog.twc.Wrap(
 			fmt.Sprintf("Couldn't delete the file: %v", err),
 			prog.indent)
+
 		counts.delErrs++
+
 		return
 	}
 
 	prog.verboseMsg(name + " deleted")
+
 	counts.deleted++
 }
 
@@ -447,11 +470,14 @@ func (prog *Prog) revertFile(nameOrig, nameNew string, counts *Counts) {
 		prog.twc.Wrap(
 			fmt.Sprintf("Couldn't revert the file: %v", err),
 			prog.indent)
+
 		counts.revErrs++
+
 		return
 	}
 
 	prog.verboseMsg(nameNew + " reverted to " + nameOrig)
+
 	counts.reverted++
 }
 
@@ -479,10 +505,10 @@ func (prog Prog) diffs(nameOrig, nameNew string) error {
 	// create the commands
 	dcp := prog.diff.params
 	dcp = append(dcp, nameOrig, nameNew)
-	diffCmd := exec.Command(prog.diff.name, dcp...)
+	diffCmd := exec.Command(prog.diff.name, dcp...) //nolint:gosec
 	diffCmdStr := fmt.Sprintf("the diff command (%q)",
 		prog.diff.name+" "+strings.Join(dcp, " "))
-	lessCmd := exec.Command(prog.less.name, prog.less.params...)
+	lessCmd := exec.Command(prog.less.name, prog.less.params...) //nolint:gosec
 	lessCmdStr := fmt.Sprintf("the less command (%q)",
 		prog.less.name+" "+strings.Join(prog.less.params, " "))
 
@@ -492,6 +518,7 @@ func (prog Prog) diffs(nameOrig, nameNew string) error {
 		return fmt.Errorf("%s could not get the StdoutPipe: %w",
 			diffCmdStr, err)
 	}
+
 	lessCmd.Stdin = wStdout
 	lessCmd.Stdout = os.Stdout
 
@@ -500,6 +527,7 @@ func (prog Prog) diffs(nameOrig, nameNew string) error {
 	if err != nil {
 		return fmt.Errorf("%s could not be started: %w", diffCmdStr, err)
 	}
+
 	err = lessCmd.Start()
 	if err != nil {
 		_ = diffCmd.Wait()
@@ -520,6 +548,7 @@ func (prog Prog) diffs(nameOrig, nameNew string) error {
 		diffCmd.ProcessState.ExitCode() != 1 {
 		return fmt.Errorf("%s finished with an error: %w", diffCmdStr, err)
 	}
+
 	return nil
 }
 
@@ -536,6 +565,7 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 
 	for nameOrig := range entries {
 		nameNew := strings.TrimSuffix(nameOrig, prog.fileExtension)
+
 		info, err := os.Stat(nameNew)
 		if errors.Is(err, os.ErrNotExist) {
 			badFiles = append(badFiles,
@@ -543,14 +573,17 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 					name:    nameOrig,
 					problem: fmt.Sprintf("there is no file named %q", nameNew),
 				})
+
 			continue
 		}
+
 		if err != nil {
 			badFiles = append(badFiles,
 				badFile{
 					name:    nameOrig,
 					problem: err.Error(),
 				})
+
 			continue
 		}
 
@@ -560,6 +593,7 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 					name:    nameOrig,
 					problem: fmt.Sprintf("%q is a directory", nameNew),
 				})
+
 			continue
 		}
 
@@ -570,6 +604,7 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 					name:    nameOrig,
 					problem: fmt.Sprintf("cannot read %q: %s", nameNew, err),
 				})
+
 			continue
 		}
 
@@ -580,6 +615,7 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 					name:    nameOrig,
 					problem: fmt.Sprintf("cannot read %q: %s", nameOrig, err),
 				})
+
 			continue
 		}
 
@@ -587,6 +623,7 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 			duplicates = append(duplicates, nameOrig)
 			continue
 		}
+
 		filenames = append(filenames, nameOrig)
 	}
 
@@ -596,6 +633,7 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 		func(i, j int) bool {
 			return badFiles[i].name < badFiles[j].name
 		})
+
 	return filenames, duplicates, badFiles
 }
 
@@ -605,9 +643,11 @@ func (prog Prog) getFiles() (
 	filenames, duplicates []string, badFiles []badFile, errs []error,
 ) {
 	findFunc := dirsearch.Find
+
 	if prog.searchSubDirs {
 		findFunc = dirsearch.FindRecurse
 	}
+
 	entries, errs := findFunc(prog.searchDir,
 		check.FileInfoName(check.StringHasSuffix[string](prog.fileExtension)),
 		check.FileInfoIsRegular)
@@ -617,5 +657,6 @@ func (prog Prog) getFiles() (
 	}
 
 	filenames, duplicates, badFiles = prog.makeFileLists(entries)
+
 	return filenames, duplicates, badFiles, errs
 }

@@ -33,6 +33,7 @@ type filePairInfo struct {
 // a fatal error
 func setProg(t *testing.T, name string, prog *Prog, setP func(*Prog) error) {
 	t.Helper()
+
 	if setP != nil {
 		err := setP(prog)
 		if err != nil {
@@ -62,16 +63,19 @@ func (fi *fileInfo) makeFile(name string) error {
 	if err != nil {
 		return err
 	}
+
 	defer func() { f.Close() }()
 
 	err = f.Chmod(perm)
 	if err != nil {
 		return err
 	}
+
 	_, err = f.WriteString(fi.contents)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -97,6 +101,7 @@ func makeTestDir(dir, extension string, fpInfo ...filePairInfo) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -106,6 +111,7 @@ func getFilesTestCleanup(t *testing.T, name string,
 	prog *Prog, post func(*Prog) error,
 ) {
 	t.Helper()
+
 	if post != nil {
 		if err := post(prog); err != nil {
 			t.Log(name)
@@ -144,17 +150,22 @@ func setupFakeIO(t *testing.T, prog *Prog, testname, testpart, input string,
 	if err != nil {
 		t.Log(testname)
 		t.Log("\t:", "creating FakeIO")
+
 		if testpart != "" {
 			t.Log("\t:", "for the "+testpart+" files")
 		}
+
 		t.Fatal(err)
 	}
+
 	if err := twrap.SetWriter(os.Stdout)(prog.twc); err != nil {
 		t.Log(testname)
 		t.Log("\t:", "setting twrap writer")
+
 		if testpart != "" {
 			t.Log("\t:", "for the "+testpart+" files")
 		}
+
 		t.Fatal(err)
 	}
 
@@ -172,11 +183,14 @@ func getFakeIO(t *testing.T, testname, testpart string,
 	if err != nil {
 		t.Log(testname)
 		t.Log("\t:", "getting FakeIO results")
+
 		if testpart != "" {
 			t.Log("\t: for the " + testpart + " files")
 		}
+
 		t.Fatal(err)
 	}
+
 	return stdout, stderr
 }
 
@@ -373,6 +387,7 @@ func TestGetFiles(t *testing.T) {
 
 		testhelper.DiffInt(t, tc.IDStr(), "number of errors",
 			len(errs), tc.expErrCount)
+
 		if !testhelper.DiffStringSlice(t, tc.IDStr(), "comparable files",
 			comparables, tc.expFilenames) {
 			fakeIO := setupFakeIO(t, prog, tc.IDStr(), "comparable", "")
@@ -380,13 +395,14 @@ func TestGetFiles(t *testing.T) {
 			prog.showComparableFiles(comparables)
 
 			stdout, stderr := getFakeIO(t, tc.IDStr(), "comparable", fakeIO)
-			testhelper.DiffString[string](t,
+			testhelper.DiffString(t,
 				tc.IDStr(), "comparable files stdout",
 				string(stdout), tc.expComparableStdout)
-			testhelper.DiffString[string](t,
+			testhelper.DiffString(t,
 				tc.IDStr(), "comparable files stderr",
 				string(stderr), tc.expComparableStderr)
 		}
+
 		if !testhelper.DiffStringSlice(t, tc.IDStr(), "duplicate files",
 			duplicates, tc.expDuplicates) {
 			fakeIO := setupFakeIO(t, prog, tc.IDStr(), "duplicate", "")
@@ -394,19 +410,21 @@ func TestGetFiles(t *testing.T) {
 			prog.showDuplicateFiles(duplicates)
 
 			stdout, stderr := getFakeIO(t, tc.IDStr(), "duplicate", fakeIO)
-			testhelper.DiffString[string](t,
+			testhelper.DiffString(t,
 				tc.IDStr(), "duplicate files stdout",
 				string(stdout), tc.expDuplicateStdout)
-			testhelper.DiffString[string](t,
+			testhelper.DiffString(t,
 				tc.IDStr(), "duplicate files stderr",
 				string(stderr), tc.expDuplicateStderr)
 		}
+
 		if testhelper.DiffSlice(t, tc.IDStr(), "bad Files",
 			badFiles, tc.expBadFiles) {
 			t.Log(tc.IDStr())
 			t.Log("\t:", badFiles)
 			t.Error("\t: unexpected bad files")
 		}
+
 		getFilesTestCleanup(t, tc.IDStr(), prog, tc.post)
 	}
 }
@@ -440,8 +458,8 @@ func TestShortNames(t *testing.T) {
 		prog := NewProg()
 		prog.searchDir = tc.searchDir
 		shortnames, maxLen := prog.shortNames(tc.names)
-		testhelper.DiffInt[int](t, tc.IDStr(), "maxLen", maxLen, tc.expMaxLen)
-		testhelper.DiffStringSlice[string](t, tc.IDStr(), "short-names",
+		testhelper.DiffInt(t, tc.IDStr(), "maxLen", maxLen, tc.expMaxLen)
+		testhelper.DiffStringSlice(t, tc.IDStr(), "short-names",
 			shortnames, tc.expShortNames)
 	}
 }
@@ -494,10 +512,10 @@ func TestProcessDuplicateFiles(t *testing.T) {
 				"Couldn't delete the file:" +
 				" remove " + f3 + ": permission denied\n" +
 				"3 duplicate files could not be deleted\n\n",
-			pre: func(prog *Prog) error {
+			pre: func(_ *Prog) error {
 				return os.Chmod(tempTestDir, 0o500)
 			},
-			post: func(prog *Prog) error {
+			post: func(_ *Prog) error {
 				return os.Chmod(tempTestDir, 0o700)
 			},
 		},
@@ -539,12 +557,14 @@ func TestProcessDuplicateFiles(t *testing.T) {
 		getFilesTestSetup(t, tc.IDStr(), prog, tc.pre)
 
 		fakeIO := setupFakeIO(t, prog, tc.IDStr(), "duplicate", "")
+
 		prog.processDuplicateFiles(dupFiles)
+
 		stdout, stderr := getFakeIO(t, tc.IDStr(), "duplicate", fakeIO)
 
-		testhelper.DiffString[string](t, tc.IDStr(), "stdout",
+		testhelper.DiffString(t, tc.IDStr(), "stdout",
 			string(stdout), tc.expStdout)
-		testhelper.DiffString[string](t, tc.IDStr(), "stderr",
+		testhelper.DiffString(t, tc.IDStr(), "stderr",
 			string(stderr), tc.expStderr)
 
 		err = testhelper.DiffVals(*prog, *expProg,
@@ -564,8 +584,10 @@ func TestProcessDuplicateFiles(t *testing.T) {
 			t.Log(tc.IDStr())
 			t.Log("\t: errors: ", errs)
 			t.Error("\t: Unexpected errors counting the files in the dir")
+
 			continue
 		}
+
 		testhelper.DiffInt(t, tc.IDStr(), "file count", count, tc.expFileCount)
 
 		getFilesTestCleanup(t, tc.IDStr(), prog, tc.post)
@@ -716,12 +738,14 @@ func TestProcessComparableFiles(t *testing.T) {
 		getFilesTestSetup(t, tc.IDStr(), prog, tc.pre)
 
 		fakeIO := setupFakeIO(t, prog, tc.IDStr(), "comparable", "")
+
 		prog.processComparableFiles(cmpFiles)
+
 		stdout, stderr := getFakeIO(t, tc.IDStr(), "comparable", fakeIO)
 
-		testhelper.DiffString[string](t, tc.IDStr(), "stdout",
+		testhelper.DiffString(t, tc.IDStr(), "stdout",
 			string(stdout), tc.expStdout)
-		testhelper.DiffString[string](t, tc.IDStr(), "stderr",
+		testhelper.DiffString(t, tc.IDStr(), "stderr",
 			string(stderr), tc.expStderr)
 
 		err = testhelper.DiffVals(*prog, *tc.expProg,
@@ -743,8 +767,10 @@ func TestProcessComparableFiles(t *testing.T) {
 			t.Log(tc.IDStr())
 			t.Log("\t: errors: ", errs)
 			t.Error("\t: Unexpected errors counting the files in the dir")
+
 			continue
 		}
+
 		testhelper.DiffInt(t, tc.IDStr(), "file count", count, tc.expFileCount)
 
 		getFilesTestCleanup(t, tc.IDStr(), prog, tc.post)

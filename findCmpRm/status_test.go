@@ -59,22 +59,27 @@ func TestStatusReport(t *testing.T) {
 
 	for _, tc := range testCases {
 		s := InitStatus()
+
 		if tc.setStatus != nil {
 			tc.setStatus(&s)
 		}
+
 		fakeIO, err := testhelper.NewStdioFromString("")
 		if err != nil {
 			t.Log(tc.IDStr())
 			t.Log("\t: creating Fake std I/O")
 			t.Fatal(err)
 		}
+
 		s.Report()
+
 		stdout, stderr, err := fakeIO.Done()
 		if err != nil {
 			t.Log(tc.IDStr())
 			t.Log("\t: collecting output")
 			t.Fatal(err)
 		}
+
 		gfc.Check(t, tc.IDStr()+" [stdout]", tc.ID.Name+"-stdout", stdout)
 		gfc.Check(t, tc.IDStr()+" [stderr]", tc.ID.Name+"-stderr", stderr)
 	}

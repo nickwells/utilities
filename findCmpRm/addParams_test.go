@@ -18,6 +18,7 @@ func cmpProgStruct(iVal, iExpVal any) error {
 	if !ok {
 		return errors.New("Bad value: not a pointer to a Prog struct")
 	}
+
 	expVal, ok := iExpVal.(*Prog)
 	if !ok {
 		return errors.New("Bad expected value: not a pointer to a Prog struct")
