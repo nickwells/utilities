@@ -51,6 +51,7 @@ var webPrintMap = map[string]string{
 // paramVal will generate an error.
 func (ap addPrint) Edit(paramName, paramVal string) (string, error) {
 	fullParamName := paramName
+
 	for _, pfx := range ap.prefixes {
 		s := strings.TrimPrefix(paramName, pfx)
 		if s != paramName {
@@ -63,6 +64,7 @@ func (ap addPrint) Edit(paramName, paramVal string) (string, error) {
 	if !ok {
 		panic(fmt.Errorf("unexpected parameter name: %q", fullParamName))
 	}
+
 	if ap.needsVal[paramName] && paramVal == "" {
 		return "", errors.New("The parameter value must not be empty")
 	}

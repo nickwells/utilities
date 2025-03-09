@@ -24,6 +24,7 @@ func TestAllParams(t *testing.T) {
 		versionparams.GroupName: true,
 	}
 	groups := ps.GetGroups()
+
 	for _, g := range groups {
 		if skipGroups[g.Name()] {
 			continue
@@ -43,6 +44,7 @@ func TestAllParams(t *testing.T) {
 				if vr == param.Mandatory {
 					args = append(args, "")
 				}
+
 				panicked, panicVal := testhelper.PanicSafe(func() {
 					localG := newGosh()
 					localSLP := &snippetListParams{}
@@ -50,7 +52,6 @@ func TestAllParams(t *testing.T) {
 						paramOptFuncs(localG, localSLP)...)
 					localPS.Parse(args)
 				})
-
 				if panicked {
 					t.Log("Panic: ", panicVal)
 					t.Errorf("failed to parse param: %q", pName)

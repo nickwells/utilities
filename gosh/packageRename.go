@@ -18,6 +18,7 @@ func packageRename(fileName string) ([]byte, error) {
 	}
 
 	fset := token.NewFileSet()
+
 	f, err := parser.ParseFile(
 		fset, fileName, string(content), parser.PackageClauseOnly)
 	if err != nil {
@@ -27,6 +28,7 @@ func packageRename(fileName string) ([]byte, error) {
 	if f.Name.Name == "main" {
 		return content, nil
 	}
+
 	start := fset.Position(f.Package).Offset
 	end := f.Name.End()
 
@@ -34,5 +36,6 @@ func packageRename(fileName string) ([]byte, error) {
 	rval := content[:start]
 	rval = append(rval, pkgMain...)
 	rval = append(rval, content[end:]...)
+
 	return rval, nil
 }

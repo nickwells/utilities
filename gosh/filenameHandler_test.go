@@ -16,11 +16,14 @@ func TestPopulateFilesToRead(t *testing.T) {
 		g       *Gosh
 		expGosh *Gosh
 	}
+
 	var testCases []tcs
 
 	{
 		var g *Gosh
+
 		var eg *Gosh
+
 		noRemainder := []string{}
 
 		g = mkTestGosh(func(g *Gosh) { g.runInReadLoop = true })
@@ -36,7 +39,9 @@ func TestPopulateFilesToRead(t *testing.T) {
 
 	{
 		var g *Gosh
+
 		var eg *Gosh
+
 		remainder := []string{testDataFile1}
 
 		g = mkTestGosh(func(g *Gosh) {
@@ -60,7 +65,9 @@ func TestPopulateFilesToRead(t *testing.T) {
 
 	{
 		var g *Gosh
+
 		var eg *Gosh
+
 		remainder := []string{testDataFile1, testDataFile1}
 
 		g = mkTestGosh(func(g *Gosh) {
@@ -86,7 +93,9 @@ func TestPopulateFilesToRead(t *testing.T) {
 
 	{
 		var g *Gosh
+
 		var eg *Gosh
+
 		remainder := []string{testHasOrigFile}
 
 		g = mkTestGosh(func(g *Gosh) {
@@ -112,6 +121,7 @@ func TestPopulateFilesToRead(t *testing.T) {
 
 	for _, tc := range testCases {
 		tc.g.populateFilesToRead(tc.files)
+
 		if err := testhelper.DiffVals(*tc.g, *tc.expGosh); err != nil {
 			t.Log(tc.IDStr())
 			t.Errorf("\t: Failed: %s\n", err)

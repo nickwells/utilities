@@ -24,6 +24,7 @@ func preCheck(g *Gosh) {
 	}
 
 	var problemsFound bool
+
 	exitStatus := 0
 	twc := twrap.NewTWConfOrPanic()
 
@@ -66,6 +67,7 @@ func preCheck(g *Gosh) {
 // potential remedies and returns true.
 func goCmdBad(twc *twrap.TWConf) bool {
 	goCmd := gogen.GetGoCmdName()
+
 	_, err := exec.LookPath(goCmd)
 	if err == nil {
 		return false
@@ -115,7 +117,9 @@ func importersBad(g *Gosh, twc *twrap.TWConf) bool {
 		" you will then need to give all the packages to be imported on"+
 		" the command line with the '"+paramNameImport+"' parameter.",
 		preChkStdIndent)
+
 	fmt.Println()
+
 	if g.importPopulatorSet {
 		twc.Wrap("You have set the import-populator command"+
 			" as '"+g.importPopulator+"' but this"+
@@ -141,6 +145,7 @@ func importersBad(g *Gosh, twc *twrap.TWConf) bool {
 			preChkStdIndent)
 		fmt.Println()
 	}
+
 	twc.Wrap("By default gosh will search for one of the following"+
 		" commands: "+importerPrograms()+". If these are already"+
 		" installed and you want to use them you should either",
@@ -155,13 +160,17 @@ func importersBad(g *Gosh, twc *twrap.TWConf) bool {
 		" they can be installed with the following commands (only one"+
 		" is needed):",
 		preChkStdIndent)
+
 	iInstallCmds := make([]string, 0, len(importers))
+
 	for _, i := range importers {
 		iInstallCmds = append(iInstallCmds, i.installCmd)
 	}
+
 	twc.List(iInstallCmds, preChkListIndent)
 
 	fmt.Println()
+
 	return true
 }
 
@@ -171,7 +180,9 @@ func importersBad(g *Gosh, twc *twrap.TWConf) bool {
 // returns true.
 func snippetsBad(g *Gosh, twc *twrap.TWConf) bool {
 	snippetCount := 0
+
 	var snippetErrs error
+
 	for _, dir := range g.snippetDirs {
 		count, err := countSnippets(0, dir)
 		snippetCount += count
@@ -181,7 +192,9 @@ func snippetsBad(g *Gosh, twc *twrap.TWConf) bool {
 	if snippetErrs == nil && snippetCount > 0 {
 		return false
 	}
+
 	fmt.Print("Snippets\n\n")
+
 	if snippetErrs != nil {
 		twc.Wrap("There is a problem with your snippet directories: "+
 			snippetErrs.Error(), preChkStdIndent)
@@ -205,6 +218,7 @@ func snippetsBad(g *Gosh, twc *twrap.TWConf) bool {
 			" search by using the '"+paramNameSnippetDir+"' parameter.",
 			preChkStdIndent)
 	}
+
 	fmt.Println()
 
 	return true
@@ -222,7 +236,9 @@ func countSnippets(depth int, dir string) (int, error) {
 			fmt.Errorf("The snippet directory %q is too deep (> %d levels)",
 				dir, maxSnippetDepth)
 	}
+
 	count := 0
+
 	var err error
 
 	dirEntries, err := os.ReadDir(dir)
@@ -232,6 +248,7 @@ func countSnippets(depth int, dir string) (int, error) {
 		} else {
 			err = fmt.Errorf("bad snippets directory: %q: %w", dir, err)
 		}
+
 		return count, err
 	}
 
@@ -242,10 +259,12 @@ func countSnippets(depth int, dir string) (int, error) {
 				filepath.Join(dir, de.Name()))
 			count += dirCount
 			err = errors.Join(err, dirErr)
+
 			continue
 		}
 
 		count++
 	}
+
 	return count, err
 }

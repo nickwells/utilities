@@ -39,6 +39,7 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 
 	return func(ps *param.PSet) error {
 		const snippetListParamGroup = "cmd-snippet-list"
+
 		ps.AddGroup(snippetListParamGroup,
 			"parameters relating to listing snippets.")
 

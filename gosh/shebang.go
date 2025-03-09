@@ -48,9 +48,11 @@ func shebangStrip(content []byte) ([]byte, []byte) {
 		if i := bytes.IndexByte(content, '\n'); i > 0 {
 			end = i + 1
 		}
+
 		if bytes.HasPrefix(content, []byte(shebangGoshParam)) {
 			config = append(config, content[len(shebangGoshParam):end]...)
 		}
+
 		content = content[end:]
 	}
 

@@ -137,6 +137,7 @@ func (g *Gosh) CacheSnippet(sName string) error {
 	}
 
 	g.imports = append(g.imports, s.Imports()...)
+
 	return nil
 }
 
@@ -147,7 +148,9 @@ func snippetExpand(g *Gosh, sName string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	g.snippetUsed[sName] = true
+
 	for _, shouldBeUsed := range s.Follows() {
 		if !g.snippetUsed[shouldBeUsed] {
 			g.addError("Snippet out of order",
@@ -161,6 +164,7 @@ func snippetExpand(g *Gosh, sName string) ([]string, error) {
 	}
 
 	var content []string
+
 	addSnippetComment(&content, "BEGIN "+sName)
 	content = append(content, "// "+s.Path())
 	content = append(content, s.Text()...)
@@ -229,6 +233,7 @@ func (g *Gosh) setDfltSnippetPath() {
 	g.snippetDirs = []string{
 		filepath.Join(append([]string{xdg.ConfigHome()}, snippetPath...)...),
 	}
+
 	dirs := xdg.ConfigDirs()
 	if len(dirs) > 0 {
 		g.snippetDirs = append(g.snippetDirs,
@@ -249,9 +254,11 @@ func (g *Gosh) AddScriptEntry(sName, v string, ef expandFunc) {
 	if !ok {
 		panic(fmt.Errorf("the script name is invalid: %q", sName))
 	}
+
 	if ef == nil {
 		panic(errors.New("the expansion function is nil"))
 	}
+
 	g.scripts[sName] = append(s, ScriptEntry{expand: ef, value: v})
 }
 
@@ -267,9 +274,11 @@ func (g *Gosh) checkScripts() {
 			return
 		}
 	}
+
 	if g.httpHandler != dfltHTTPHandlerName {
 		return
 	}
+
 	g.addError("no code", errors.New("There is no code to run"))
 }
 
@@ -303,6 +312,7 @@ func (g *Gosh) comment(text string) string {
 	if !g.addComments {
 		return ""
 	}
+
 	return "\t//" + goshCommentIntro + text
 }
 
@@ -370,6 +380,7 @@ func (g *Gosh) nameType(name string) string {
 	if !ok {
 		panic(fmt.Errorf("%q is not in the map of known variables", name))
 	}
+
 	return name + " " + vi.typeName
 }
 
@@ -388,18 +399,23 @@ func makeKnownVarList() string {
 	keys := make([]string, 0, len(knownVarMap))
 	maxVarNameLen := 0
 	maxTypeNameLen := 0
+
 	for k, vi := range knownVarMap {
 		keys = append(keys, k)
+
 		if len(k) > maxVarNameLen {
 			maxVarNameLen = len(k)
 		}
+
 		if len(vi.typeName) > maxTypeNameLen {
 			maxTypeNameLen = len(vi.typeName)
 		}
 	}
+
 	sort.Strings(keys)
 
 	sep := ""
+
 	for _, k := range keys {
 		vi := knownVarMap[k]
 		kvl += fmt.Sprintf("%s%-*.*s %-*.*s  %s",
@@ -409,6 +425,7 @@ func makeKnownVarList() string {
 			vi.desc)
 		sep = "\n"
 	}
+
 	return kvl
 }
 

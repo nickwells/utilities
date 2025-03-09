@@ -11,5 +11,6 @@ func readFromStdin(_ *Gosh, _ string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return []string{string(b)}, nil
 }

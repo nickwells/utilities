@@ -25,6 +25,7 @@ const (
 // for the given snippet part
 func alternativeSnippetPartNames(name string) string {
 	alts := snippet.AltPartNames(name)
+
 	switch {
 	case len(alts) == 0:
 		return ""
@@ -32,6 +33,7 @@ func alternativeSnippetPartNames(name string) string {
 		return "\n" +
 			"An alternative value is '" + alts[0] + "'"
 	}
+
 	return "\n" +
 		"Alternative values are '" + english.Join(alts, "', '", "' or '") + "'"
 }

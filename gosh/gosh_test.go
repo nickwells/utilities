@@ -68,7 +68,9 @@ func TestIndent(t *testing.T) {
 		for _, f := range tc.funcList {
 			f(g)
 		}
+
 		indent := g.indentStr()
+
 		testhelper.DiffString(t, tc.IDStr(), "indent", indent, tc.expIndent)
 	}
 }

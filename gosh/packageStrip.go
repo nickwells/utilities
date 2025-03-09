@@ -20,17 +20,21 @@ func packageFileContents(fileName string) (string, error) {
 	}
 
 	fset := token.NewFileSet()
+
 	f, err := parser.ParseFile(
 		fset, fileName, string(content), parser.ImportsOnly)
 	if err != nil {
 		return "", err
 	}
+
 	end := f.Name.End()
+
 	if impLen := len(f.Imports); impLen > 0 {
 		end = f.Imports[impLen-1].End()
 		if int(end) < len(content) && content[end] == ')' {
 			end++
 		}
 	}
+
 	return string(content[end:]), nil
 }

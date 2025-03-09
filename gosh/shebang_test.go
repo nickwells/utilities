@@ -12,6 +12,7 @@ func TestShebangBytes(t *testing.T) {
 			t.Errorf("%q: bad script: got %q, wanted %q",
 				in, script, want.script)
 		}
+
 		if string(config) != want.config {
 			t.Errorf("%q: bad config: got %q, wanted %q",
 				in, config, want.config)

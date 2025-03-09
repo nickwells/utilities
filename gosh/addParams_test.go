@@ -38,6 +38,7 @@ func cmpGoshStruct(iVal, iExpVal any) error {
 	if !ok {
 		return errors.New("Bad value: not a pointer to a Gosh struct")
 	}
+
 	expVal, ok := iExpVal.(*Gosh)
 	if !ok {
 		return errors.New("Bad expected value: not a pointer to a Gosh struct")
@@ -64,6 +65,7 @@ func mkTestGosh(goshSetter ...func(g *Gosh)) *Gosh {
 	for _, gs := range goshSetter {
 		gs(g)
 	}
+
 	return g
 }
 
@@ -98,15 +100,19 @@ func populateFileScriptEntries(t *testing.T) ([]string, []ScriptEntry) {
 		testCodeFile1,
 		testCodeFile2,
 	}
+
 	fileSE := []ScriptEntry{}
+
 	for _, fName := range files {
 		contents, err := os.ReadFile(fName)
 		if err != nil {
 			t.Fatalf("Could not read the test code file: %q: %v", fName, err)
 		}
+
 		fileSE = append(fileSE,
 			ScriptEntry{expand: verbatim, value: string(contents)})
 	}
+
 	return files, fileSE
 }
 
@@ -118,10 +124,12 @@ func populateSnippetScriptEntries() ([]string, []ScriptEntry) {
 		snippet1,
 	}
 	snippetSE := []ScriptEntry{}
+
 	for _, sName := range snippets {
 		snippetSE = append(snippetSE,
 			ScriptEntry{expand: snippetExpand, value: sName})
 	}
+
 	return snippets, snippetSE
 }
 
@@ -130,10 +138,12 @@ func populateSnippetScriptEntries() ([]string, []ScriptEntry) {
 func populateCodeScriptEntries() ([]string, []ScriptEntry) {
 	stmt := make([]string, 10)
 	stmtSE := []ScriptEntry{}
-	for i := 0; i < len(stmt); i++ {
+
+	for i := range len(stmt) {
 		stmt[i] = fmt.Sprintf("// %d", i)
 		stmtSE = append(stmtSE, ScriptEntry{expand: verbatim, value: stmt[i]})
 	}
+
 	return stmt, stmtSE
 }
 
@@ -175,6 +185,7 @@ func populatePrintScriptEntries() (map[int]string, map[int]ScriptEntry) {
 		printTypeWebPf:  `"Hello, World %d\n", 42`,
 	}
 	printValSE := map[int]ScriptEntry{}
+
 	for k := range intro {
 		printValSE[k] = ScriptEntry{
 			expand: verbatim,
@@ -195,7 +206,7 @@ func TestParseParamsCmdGosh(t *testing.T) {
 	testCases = append(testCases,
 		mkTestParser(nil,
 			testhelper.MkID("no params no change"),
-			func(g *Gosh) {}))
+			func(_ *Gosh) {}))
 
 	testCases = append(testCases,
 		mkTestParser(nil, testhelper.MkID("add-comments"), func(g *Gosh) {
@@ -222,7 +233,7 @@ func TestParseParamsCmdGosh(t *testing.T) {
 		testCases = append(testCases,
 			mkTestParser(parseErrs,
 				testhelper.MkID("base-temp-dir with bad dir"),
-				func(g *Gosh) {},
+				func(_ *Gosh) {},
 				"-base-temp-dir", "testdata/nosuchdir"))
 	}
 
@@ -381,6 +392,7 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 				`You have given the "-in-place-edit"`+
 					` parameter but no filenames have been given`+
 					` (they should be supplied following "--")`))
+
 		testCases = append(testCases,
 			mkTestParser(parseErrs,
 				testhelper.MkID("in-place edit, no files"),
@@ -578,14 +590,15 @@ func TestParseParamsCmdWeb(t *testing.T) {
 
 	{
 		const httpPortNum = 8001
-		const httpPortStr = "8001"
+
 		testCases = append(testCases,
 			mkTestParser(nil, testhelper.MkID(""),
 				func(g *Gosh) {
 					g.runAsWebserver = true
 					g.httpPort = httpPortNum
-				}, "-http-port", httpPortStr))
+				}, "-http-port", fmt.Sprintf("%d", httpPortNum)))
 	}
+
 	testCases = append(testCases,
 		mkTestParser(nil,
 			testhelper.MkID(""), func(g *Gosh) { g.runAsWebserver = true },
@@ -625,7 +638,9 @@ func TestParseParamsBad(t *testing.T) {
 
 	{
 		const httpHandler = "HTTPHandler"
+
 		parseErrs := errutil.ErrMap{}
+
 		parseErrs.AddError(
 			"Final Checks",
 			errors.New(`You have provided an HTTP handler but also given`+
@@ -831,6 +846,7 @@ func TestParseParamsCmd(t *testing.T) {
 	if err != nil {
 		t.Fatal("Cannot find the current working directory:", err)
 	}
+
 	testCases = append(testCases,
 		mkTestParser(nil, testhelper.MkID(""), func(g *Gosh) {
 			g.localModules = map[string]string{

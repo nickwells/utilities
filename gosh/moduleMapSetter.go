@@ -25,20 +25,19 @@ type ModuleMapSetter struct {
 // using the Separator. It then checks that the second part of the value is a
 // valid directory and returns an error if not.
 func (s ModuleMapSetter) SetWithVal(_ string, paramVal string) error {
-	parts := strings.SplitN(paramVal, moduleMapSeparator, 2)
-
-	if len(parts) != 2 {
+	mod, dir, ok := strings.Cut(paramVal, moduleMapSeparator)
+	if !ok {
 		return fmt.Errorf(
 			"bad value: %q, should be in two parts with %q in between",
 			paramVal, moduleMapSeparator)
 	}
-	mod, dir := parts[0], parts[1]
 
 	if dir == "" {
 		return errors.New("the replacement directory is empty")
 	}
 
 	var err error
+
 	dir, err = filepath.Abs(dir)
 	if err != nil {
 		return fmt.Errorf("bad module replacement directory %q: %w", dir, err)
@@ -49,6 +48,7 @@ func (s ModuleMapSetter) SetWithVal(_ string, paramVal string) error {
 	}
 
 	(*s.Value)[mod] = dir
+
 	return nil
 }
 
@@ -71,9 +71,11 @@ func (s ModuleMapSetter) CurrentValue() string {
 	for k := range *s.Value {
 		keys = append(keys, k)
 	}
+
 	sort.Strings(keys)
 
 	sep := ""
+
 	for _, k := range keys {
 		cv += sep + fmt.Sprintf("%s%s%v", k, moduleMapSeparator, (*s.Value)[k])
 		sep = "\n"
@@ -88,6 +90,7 @@ func (s ModuleMapSetter) CheckSetter(name string) {
 	if s.Value == nil {
 		panic(psetter.NilValueMessage(name, "gosh.ModuleMapSetter"))
 	}
+
 	if *s.Value == nil {
 		*s.Value = make(map[string]string)
 	}

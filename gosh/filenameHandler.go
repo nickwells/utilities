@@ -49,8 +49,10 @@ func (g *Gosh) populateFilesToRead(names []string) {
 					"filename %q has been given more than once,"+
 						" first at %d and again at %d",
 					name, firstIdx, i))
+
 			continue
 		}
+
 		dupMap[name] = i
 
 		if err := fileProvisos.StatusCheck(name); err != nil {
@@ -67,8 +69,10 @@ func (g *Gosh) populateFilesToRead(names []string) {
 
 		goodNames = append(goodNames, name)
 	}
+
 	if len(goodNames) > 0 {
 		g.filesToRead = true
 	}
+
 	g.args = goodNames
 }

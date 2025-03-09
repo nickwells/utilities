@@ -40,11 +40,13 @@ func (g *Gosh) setEditor() {
 			g.editor = editor
 			return
 		}
+
 		parts := strings.Fields(editor)
 		if parts[0] == editor {
 			g.addError("bad editor",
 				fmt.Errorf("Cannot find %s (source: %s): %w",
 					editor, trialEditor.source, err))
+
 			continue
 		}
 
@@ -52,18 +54,23 @@ func (g *Gosh) setEditor() {
 		if _, err = exec.LookPath(editor); err == nil {
 			g.editor = editor
 			g.editorArgs = parts[1:]
+
 			return
 		}
+
 		g.addError("bad editor",
 			fmt.Errorf("Cannot find %s (source: %s): %w",
 				editor, trialEditor.source, err))
+
 		continue
 	}
 
 	sources := make([]string, 0, len(editors))
+
 	for _, e := range editors {
 		sources = append(sources, e.source)
 	}
+
 	intro := "    "
 
 	g.addError("no editor",
@@ -85,7 +92,7 @@ func (g *Gosh) editGoFile() {
 	args := g.editorArgs
 	args = append(args, filepath.Join(g.goshDir, goshFilename))
 	verbose.Println(intro, " Command: "+g.editor+" "+strings.Join(args, " "))
-	cmd := exec.Command(g.editor, args...)
+	cmd := exec.Command(g.editor, args...) //nolint:gosec
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

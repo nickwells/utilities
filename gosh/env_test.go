@@ -13,6 +13,7 @@ func TestPopulateEnv(t *testing.T) {
 		goshDir  = "somewhere"
 		execName = "G"
 	)
+
 	underscore := "_=" + filepath.Join(goshDir, execName)
 	aPre := "a=1"
 	aPost := "a=A"
@@ -139,13 +140,16 @@ func TestPopulateEnv(t *testing.T) {
 
 	for _, tc := range testCases {
 		var env []string
+
 		if tc.g.clearEnv {
 			env = tc.g.populateEnv([]string{})
 		} else {
 			env = tc.g.populateEnv(tc.env)
 		}
+
 		sort.Strings(env)
 		sort.Strings(tc.expEnv)
+
 		if testhelper.DiffSlice(t, tc.IDStr(), "", env, tc.expEnv) {
 			t.Log(tc.IDStr())
 			t.Errorf("\t: failed\n")

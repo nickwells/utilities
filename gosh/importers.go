@@ -68,5 +68,6 @@ func findImporter(g *Gosh) (Importer, string, bool) {
 			return f, path, true
 		}
 	}
+
 	return Importer{}, "", false
 }

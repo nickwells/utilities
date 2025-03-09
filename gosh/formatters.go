@@ -51,8 +51,10 @@ func findFormatter(g *Gosh) (Formatter, string, bool) {
 			verbose.Println(intro, "                    pathname: ", path)
 			verbose.Println(intro, "                   arguments: ",
 				strings.Join(f.args, " "))
+
 			return f, path, true
 		}
 	}
+
 	return Formatter{}, "", false
 }

@@ -53,6 +53,7 @@ func main() {
 		if !g.queryEditAgain() {
 			break
 		}
+
 		g.chdirInto(g.goshDir)
 	}
 
@@ -112,6 +113,7 @@ func (g *Gosh) cleanup() {
 		verbose.Println(intro, " Skipping cleanup")
 
 		g.reportGoshfiles()
+
 		return
 	}
 
@@ -136,15 +138,19 @@ func (g *Gosh) formatFile() {
 				" No formatter is available, skipping formatting")
 			return
 		}
+
 		g.formatter = path
 		g.formatterArgs = f.args
 		g.formatterSet = true
 	}
 
 	args := append(g.formatterArgs, goshFilename) // nolint:gocritic
+
 	verbose.Println(intro,
 		" Command: ", g.formatter, " ", strings.Join(args, " "))
-	out, err := exec.Command(g.formatter, args...).CombinedOutput()
+
+	out, err := exec.Command( //nolint:gosec
+		g.formatter, args...).CombinedOutput()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "gosh couldn't format the Go file:", err)
 		fmt.Fprintln(os.Stderr, string(out))
@@ -155,6 +161,7 @@ func (g *Gosh) formatFile() {
 func (g *Gosh) populateImports() {
 	defer g.dbgStack.Start("populateImports",
 		"Setting imports for the Go file")()
+
 	intro := g.dbgStack.Tag()
 
 	if g.dontPopulateImports {
@@ -169,6 +176,7 @@ func (g *Gosh) populateImports() {
 				" No importer is available, skipping import population")
 			return
 		}
+
 		verbose.Println(intro, " Using the default importer: ", f.name)
 		verbose.Println(intro, "                   pathname: ", path)
 		verbose.Println(intro, "                  arguments: ",
@@ -180,9 +188,12 @@ func (g *Gosh) populateImports() {
 	}
 
 	args := append(g.importPopulatorArgs, goshFilename) // nolint:gocritic
+
 	verbose.Println(intro,
 		" Command: ", g.importPopulator, " ", strings.Join(args, " "))
-	out, err := exec.Command(g.importPopulator, args...).CombinedOutput()
+
+	out, err := exec.Command( //nolint:gosec
+		g.importPopulator, args...).CombinedOutput()
 	if err != nil {
 		fmt.Fprintln(os.Stderr,
 			"gosh couldn't populate the Go file imports: ", err)
@@ -207,7 +218,9 @@ func (g *Gosh) createGoshTmpDir() {
 	intro := g.dbgStack.Tag()
 
 	verbose.Println(intro, " Creating the temporary directory")
+
 	var err error
+
 	g.goshDir, err = os.MkdirTemp(g.baseTempDir, "gosh-*.d")
 	g.reportFatalError("create the temporary directory", g.goshDir, err)
 
@@ -224,14 +237,18 @@ func (g *Gosh) makeExecutable() bool {
 
 	buildCmd := []string{"build"}
 	buildCmd = append(buildCmd, g.buildArgs...)
+
 	verbose.Println(intro, " Command: go "+strings.Join(buildCmd, " "))
+
 	if !gogen.ExecGoCmdNoExit(gogen.ShowCmdIO, buildCmd...) {
 		verbose.Println(intro, " Build failed")
+
 		g.exitStatus = goshExitStatusBuildFail
 		g.dontCleanup = true
 
 		return false
 	}
+
 	return true
 }
 
@@ -259,22 +276,28 @@ func (g *Gosh) runGoFile() {
 func (g *Gosh) executeProgram() {
 	defer g.dbgStack.Start("executeProgram",
 		"Executing the program: "+g.execName)()
+
 	intro := g.dbgStack.Tag()
 
-	cmd := exec.Command(filepath.Join(g.goshDir, g.execName), g.args...)
+	cmd := exec.Command( //nolint:gosec
+		filepath.Join(g.goshDir, g.execName), g.args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	env := os.Environ()
+
 	if g.clearEnv {
 		env = []string{}
 	}
+
 	cmd.Env = g.populateEnv(env)
 
 	g.exitStatus = 0
+
 	err := cmd.Run()
 	if err != nil {
 		var ec int
+
 		if ee, ok := err.(*exec.ExitError); ok {
 			ec = ee.ProcessState.ExitCode()
 		}
@@ -287,6 +310,7 @@ func (g *Gosh) executeProgram() {
 			verbose.Println(intro, " Program interrupted")
 		default:
 			fmt.Println("Error:", err.Error())
+
 			g.exitStatus = goshExitStatusRunFail
 			g.dontCleanup = true
 		}
@@ -313,6 +337,7 @@ func (g *Gosh) queryEditAgain() bool {
 		responder.SetIndents(0, indent))
 
 	response := editAgainResp.GetResponseOrDie()
+
 	fmt.Println()
 
 	switch response {
@@ -321,6 +346,7 @@ func (g *Gosh) queryEditAgain() bool {
 	case 'k':
 		g.dontCleanup = true
 	}
+
 	return false
 }
 
@@ -337,8 +363,11 @@ func (g *Gosh) constructGoProgram() {
 // copyFiles will read the files to be copied and write them into the gosh
 // directory with a guaranteed unique name.
 func (g *Gosh) copyFiles() {
+	const copyFilePerms = 0o600 // Owner: Read/Write, the rest, no permissions
+
 	for i, fromName := range g.copyGoFiles {
 		toName := fmt.Sprintf("goshCopy%02d%s", i, filepath.Base(fromName))
+
 		if !filepath.IsAbs(fromName) {
 			fromName = filepath.Clean(filepath.Join(g.runDir, fromName))
 		}
@@ -346,7 +375,7 @@ func (g *Gosh) copyFiles() {
 		content, err := packageRename(fromName)
 		g.reportFatalError("read the file to be copied", fromName, err)
 
-		err = os.WriteFile(toName, content, 0o600)
+		err = os.WriteFile(toName, content, copyFilePerms)
 		g.reportFatalError("write the file to be copied", toName, err)
 	}
 }
@@ -368,6 +397,7 @@ func (g *Gosh) tidyModule() {
 	}
 
 	verbose.Println(intro, " Command: go mod tidy")
+
 	if g.ignoreGoModTidyErrs {
 		gogen.ExecGoCmdNoExit(gogen.NoCmdFailIO, "mod", "tidy")
 	} else {
@@ -384,16 +414,20 @@ func (g *Gosh) initModule() {
 		verbose.Println(intro, " Skipping - GO111MODULES == 'off'")
 		return
 	}
+
 	verbose.Println(intro, " Command: go mod init "+g.execName)
 	gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "init", g.execName)
 
 	keys := []string{}
+
 	for k := range g.localModules {
 		keys = append(keys, k)
 	}
+
 	if len(keys) > 0 {
 		verbose.Println(intro, " Adding local modules")
 		sort.Strings(keys)
+
 		for _, k := range keys {
 			importPath := strings.TrimSuffix(k, "/")
 			verbose.Println(intro,
@@ -435,9 +469,11 @@ func (g *Gosh) reportFatalError(action, name string, err error) {
 	}
 
 	fmt.Fprintf(os.Stderr, "Couldn't %s", action)
+
 	if name != "" {
 		fmt.Fprintf(os.Stderr, " %q", name)
 	}
+
 	fmt.Fprintf(os.Stderr, ": %v\n", err)
 
 	g.reportGoshfiles()

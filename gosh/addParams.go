@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go/token"
+	"math"
 	"os"
 	"regexp"
 	"strings"
@@ -188,6 +189,7 @@ func snippetPAF(g *Gosh, sName *string, scriptName string) param.ActionFunc {
 		}
 
 		g.AddScriptEntry(scriptName, *sName, snippetExpand)
+
 		return nil
 	}
 }
@@ -276,7 +278,9 @@ func packageFilePAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
 		if err != nil {
 			return err
 		}
+
 		g.AddScriptEntry(scriptName, contents, verbatim)
+
 		return nil
 	}
 }
@@ -303,15 +307,18 @@ func checkImports(v string) error {
 	if id == "." {
 		return nil
 	}
+
 	if token.IsIdentifier(id) {
 		return nil
 	}
+
 	return errors.New(`"` + id + `" is not a valid Go identifier`)
 }
 
 // addSnippetParams will add the parameters in the "snippet" parameter group
 func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 	checkStringNotEmpty := check.StringLength[string](check.ValGT(0))
+
 	return func(ps *param.PSet) error {
 		ps.Add(paramNameSnippetDir,
 			psetter.PathnameListAppender{
@@ -334,6 +341,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		var snippetName string
+
 		ps.Add("exec-snippet",
 			psetter.String[string]{
 				Value:  &snippetName,
@@ -403,6 +411,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 // addWebParams will add the parameters in the "web" parameter group
 func addWebParams(g *Gosh) func(ps *param.PSet) error {
 	checkStringNotEmpty := check.StringLength[string](check.ValGT(0))
+
 	return func(ps *param.PSet) error {
 		ps.AddGroup(paramGroupNameWeb,
 			"parameters relating to building a script as a web-server.")
@@ -430,7 +439,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 					Value: &g.httpPort,
 					Checks: []check.Int64{
 						check.ValGT[int64](0),
-						check.ValLT[int64]((1 << 16) + 1),
+						check.ValLE[int64](math.MaxUint16),
 					},
 				},
 				"set the port number that the webserver will listen on."+
@@ -704,6 +713,7 @@ func addStdinParams(g *Gosh) func(ps *param.PSet) error {
 					"multiple ...-stdin parameters have been given: %s",
 					stdinCount.SetBy())
 			}
+
 			return nil
 		})
 
@@ -714,8 +724,10 @@ func addStdinParams(g *Gosh) func(ps *param.PSet) error {
 // addParams returns a func that will add parameters to the passed ParamSet
 func addParams(g *Gosh) func(ps *param.PSet) error {
 	checkStringNotEmpty := check.StringLength[string](check.ValGT(0))
+
 	return func(ps *param.PSet) error {
 		var codeVal string
+
 		var fileName string
 
 		// Exec section params
@@ -1124,18 +1136,22 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 				errStr := "gosh cannot run in a read-loop" +
 					" and run as a webserver at the same time." +
 					" Parameters set at:"
+
 				for _, p := range g.runAsWebserverSetters {
 					for _, w := range p.WhereSet() {
 						errStr += "\n\t" + w
 					}
 				}
+
 				for _, p := range g.runInReadloopSetters {
 					for _, w := range p.WhereSet() {
 						errStr += "\n\t" + w
 					}
 				}
+
 				return errors.New(errStr)
 			}
+
 			return nil
 		})
 
@@ -1164,11 +1180,15 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 		)
 
 		execNameRE := regexp.MustCompile(`^[a-zA-Z][-a-zA-Z0-9+._]*$`)
+
+		const maxExecNameLen = 50
+
 		ps.Add(paramNameSetExecName,
 			psetter.String[string]{
 				Value: &g.execName,
 				Checks: []check.String{
-					check.StringLength[string](check.ValBetween(1, 50)),
+					check.StringLength[string](
+						check.ValBetween(1, maxExecNameLen)),
 					check.StringMatchesPattern[string](execNameRE,
 						"The program name must start with a letter and"+
 							" be followed by zero or more"+
@@ -1181,7 +1201,11 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 				" also prevent the generated code from being cleared after"+
 				" execution has successfully completed, the assumption being"+
 				" that if you have set the program name you will want to"+
-				" preserve it.",
+				" preserve it."+
+				"\n\n"+
+				fmt.Sprintf(
+					"The program name must be between 1 and %d characters long",
+					maxExecNameLen),
 			param.AltNames(
 				"set-program-name", "program-name", "executable-name"),
 			param.PostAction(paction.SetVal(&g.dontCleanupUserChoice, true)),
@@ -1422,6 +1446,7 @@ func addGoshParams(g *Gosh) func(ps *param.PSet) error {
 			if g.formatCode && !g.edit {
 				g.dontCleanupUserChoice = true
 			}
+
 			return nil
 		})
 
