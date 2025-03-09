@@ -182,6 +182,7 @@ var (
 
 func (prog *Prog) makeReport(dirs ...string) *col.Report {
 	var maxDirNameLen uint
+
 	for _, d := range dirs {
 		if uint(len(d)) > maxDirNameLen {
 			maxDirNameLen = uint(len(d))
@@ -189,10 +190,12 @@ func (prog *Prog) makeReport(dirs ...string) *col.Report {
 	}
 
 	cols := make([]*col.Col, 0, len(fields))
+
 	h, err := col.NewHeader()
 	if err != nil {
 		log.Fatal("couldn't create the table header: ", err)
 	}
+
 	if noLabel {
 		err = col.HdrOptDontPrint(h)
 		if err != nil {
@@ -210,10 +213,12 @@ func (prog *Prog) makeReport(dirs ...string) *col.Report {
 
 func getStat(dirName string) unix.Statfs_t {
 	var s unix.Statfs_t
+
 	err := unix.Statfs(dirName, &s)
 	if err != nil {
 		log.Fatal("Couldn't stat ", dirName, " Err: ", err, "\n")
 	}
+
 	return s
 }
 
@@ -221,10 +226,12 @@ func (prog *Prog) reportStatAsTable(
 	rpt *col.Report, dirName string, s unix.Statfs_t,
 ) {
 	reportArgs := make([]any, 0, len(fields))
+
 	for _, f := range fields {
 		fi := prog.getFieldInfo(f)
 		reportArgs = append(reportArgs, fi.fieldVal(dirName, &s))
 	}
+
 	err := rpt.PrintRow(reportArgs...)
 	if err != nil {
 		log.Fatal("Couldn't print Row: ", err)
@@ -236,11 +243,14 @@ func (prog *Prog) reportStat(dirName string, s unix.Statfs_t) {
 		if !noLabel {
 			fmt.Print(f, ": ")
 		}
+
 		fi := prog.getFieldInfo(f)
 		format := fi.format()
+
 		if noLabel {
 			format = fi.shortFmt()
 		}
+
 		fmt.Printf(format, fi.fieldVal(dirName, &s))
 		fmt.Println()
 	}
@@ -253,6 +263,7 @@ func (prog *Prog) getFieldInfo(f string) fieldInfo {
 	if !ok {
 		log.Fatal("internal error: unknown field: ", f)
 	}
+
 	return fi
 }
 
@@ -267,6 +278,7 @@ func main() {
 	}
 
 	rpt := prog.makeReport(dirs...)
+
 	for _, dirName := range dirs {
 		s := getStat(dirName)
 

@@ -13,6 +13,7 @@ import (
 // addParams will add parameters to the passed ParamSet
 func addParams(prog *Prog) param.PSetOptFunc {
 	checkStringNotEmpty := check.StringLength[string](check.ValGT(0))
+
 	return func(ps *param.PSet) error {
 		goNameRE := regexp.MustCompile("^[A-Za-z][a-zA-Z0-9_]*$")
 		ps.Add("type-name",
@@ -108,13 +109,17 @@ func addParams(prog *Prog) param.PSetOptFunc {
 					"only one of %q and %q may be set at the same time",
 					fileNameParam.Name(), noFileParam.Name())
 			}
+
 			if !fileNameParam.HasBeenSet() && !noFileParam.HasBeenSet() {
 				suffix := ".go"
+
 				if prog.forTesting {
 					suffix = "_test.go"
 				}
+
 				prog.outputFileName = "type" + prog.typeName + suffix
 			}
+
 			return nil
 		})
 

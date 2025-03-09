@@ -116,6 +116,7 @@ func (prog *Prog) makeGroupSuffix() string {
 	// Now split the group name into words and Titleise each word, adding it
 	// to the group suffix
 	localGroupName = strings.ReplaceAll(localGroupName, "-", ".")
+
 	groupParts := strings.Split(localGroupName, ".")
 	for _, part := range groupParts {
 		r := []rune(part)
@@ -151,6 +152,7 @@ func (prog *Prog) makeConfigFileName() string {
 	if prog.groupName == "" {
 		return "common.cfg"
 	}
+
 	return "group-" + prog.groupName + ".cfg"
 }
 
@@ -162,6 +164,7 @@ func (prog *Prog) printFuncIntro(f io.Writer, name string) {
 	twc.Wrap(name+
 		" adds a config file to the set which the param parser will process"+
 		" before checking the command line parameters.", 0)
+
 	if prog.whichFuncs == "all" {
 		fmt.Fprintln(f)
 		twc.Wrap(
@@ -174,6 +177,7 @@ func (prog *Prog) printFuncIntro(f io.Writer, name string) {
 				" policy.",
 			0)
 	}
+
 	fmt.Fprintln(f, "*/")
 	fmt.Fprint(f, "func "+name+"(ps *param.PSet) error {")
 }
@@ -186,6 +190,7 @@ func (prog *Prog) printFuncPersonal(f io.Writer) {
 
 	prog.printFuncIntro(f, prog.makeFuncNamePersonal())
 	fmt.Fprint(f, "\n\tbaseDir := ")
+
 	if prog.baseDirPersonal != "" {
 		fmt.Fprintf(f, "%q\n", prog.baseDirPersonal)
 	} else {
@@ -205,7 +210,9 @@ func (prog *Prog) printFuncGlobal(f io.Writer) {
 	if prog.whichFuncs != "all" && prog.whichFuncs != "globalOnly" {
 		return
 	}
+
 	prog.printFuncIntro(f, prog.makeFuncNameGlobal())
+
 	if prog.baseDirGlobal != "" {
 		fmt.Fprintf(f, "\n\tbaseDir := %q\n", prog.baseDirGlobal)
 	} else {
@@ -231,10 +238,13 @@ func (prog *Prog) printAddCF(f io.Writer, dirs []string, funcName, cfgFName stri
 	fmt.Fprint(f, `
 	`+funcName+`
 		filepath.Join(baseDir`)
+
 	const sep = ",\n\t\t\t"
+
 	for _, p := range dirs {
 		fmt.Fprintf(f, "%s%q", sep, p)
 	}
+
 	fmt.Fprintf(f, "%s%q),", sep, cfgFName)
 
 	if mustExist {

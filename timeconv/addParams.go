@@ -31,6 +31,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 				return err
 			}
 		}
+
 		return nil
 	}
 }
@@ -43,6 +44,7 @@ func setFormat(prog *Prog, fmt string, zone *time.Location) param.ActionFunc {
 		if zone != nil {
 			prog.toZone = zone
 		}
+
 		return nil
 	}
 }
@@ -140,6 +142,7 @@ func addTimeSettingParams(prog *Prog, ps *param.PSet) error {
 			return fmt.Errorf("you may set at most one of %q or %q",
 				dtParam.Name(), tParam.Name())
 		}
+
 		return nil
 	})
 
@@ -154,6 +157,7 @@ func addTimeSettingParams(prog *Prog, ps *param.PSet) error {
 					tParam.Name())
 			}
 		}
+
 		return nil
 	})
 
@@ -351,6 +355,7 @@ func addTimeFormattingParams(prog *Prog, ps *param.PSet) error {
 		if fmtFlagCounter.Count() >= 1 {
 			prog.setOutputFormat()
 		}
+
 		return nil
 	})
 
@@ -360,6 +365,7 @@ func addTimeFormattingParams(prog *Prog, ps *param.PSet) error {
 				"the output format has been set multiple times: " +
 					fmtCounter.SetBy())
 		}
+
 		return nil
 	})
 

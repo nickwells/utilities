@@ -70,18 +70,26 @@ func (prog Prog) listTimezoneNames() {
 // seconds are present and if not it will try again with the seconds set to
 // 00.
 func (prog Prog) parseTime(ts string) (time.Time, error) {
+	const zeroSeconds = ":00"
+
+	lenSeconds := len(zeroSeconds)
+
 	t, err := time.ParseInLocation(inFormat, ts, prog.fromZone)
 	if err == nil {
 		return t, nil
 	}
-	if len(ts) == len(inFormat)-3 {
-		ts += ":00"
+
+	if len(ts) == len(inFormat)-lenSeconds {
+		ts += zeroSeconds
+
 		var err2 error
+
 		t, err2 = time.ParseInLocation(inFormat, ts, prog.fromZone)
 		if err2 == nil {
 			return t, nil
 		}
 	}
+
 	return t, err
 }
 
@@ -96,19 +104,23 @@ func (prog Prog) getTime() time.Time {
 			fmt.Println("Cannot parse the date and time:", err)
 			os.Exit(1)
 		}
+
 		return tIn
 	case tsTimeStr:
 		dtStr := time.Now().In(prog.fromZone).Format(dfltDateFmt) +
 			" " + prog.tStr
+
 		tIn, err := prog.parseTime(dtStr)
 		if err != nil {
 			fmt.Println("Cannot parse the time:", err)
 			os.Exit(1)
 		}
+
 		return tIn
 	}
 
 	fmt.Println("Unknown time source:", prog.timeSource)
+
 	return time.Time{}
 }
 
@@ -116,28 +128,37 @@ func (prog Prog) getTime() time.Time {
 func (prog Prog) makeTimePart() string {
 	hourPart := "15"
 	AMPMsuffix := ""
+
 	if prog.showAMPM {
 		hourPart = "03"
 		AMPMsuffix = " PM"
 	}
+
 	secsPart := ":05"
+
 	if prog.noSecs {
 		secsPart = ""
 	}
+
 	TZPart := ""
+
 	if prog.showTimezone {
 		TZPart = " MST"
 	}
+
 	return hourPart + ":" + "04" + secsPart + AMPMsuffix + TZPart
 }
 
 // makeDatePart makes the datepart of the format string
 func (prog Prog) makeDatePart() string {
 	monthPart := "01"
+
 	if prog.showMonthName {
 		monthPart = "Jan"
 	}
+
 	yearPart := "2006"
+
 	if prog.noCentury {
 		yearPart = "06"
 	}
@@ -153,8 +174,10 @@ func (prog Prog) makeDatePart() string {
 // specifications
 func (prog *Prog) setOutputFormat() {
 	prog.outFormat = ""
+
 	if prog.showDate {
 		prog.outFormat = prog.makeDatePart() + prog.dateTimeSep
 	}
+
 	prog.outFormat += prog.makeTimePart()
 }

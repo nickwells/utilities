@@ -18,6 +18,14 @@ const (
 	paramNameRepeat = "repeat"
 )
 
+const (
+	minutesPerDay        = 24 * 60
+	secondsPerDay        = 24 * 60 * 60
+	secondsPerHour       = 60 * 60
+	secondsPerMinute     = 60
+	nanoSecondsPerSecond = 1e9
+)
+
 // addActionParams adds the program parameters to the PSet
 func addActionParams(prog *Prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
@@ -73,6 +81,7 @@ func addActionParams(prog *Prog) param.PSetOptFunc {
 					"you have chosen to repeat the sleep" +
 						" but have not specified any actions")
 			}
+
 			return nil
 		})
 
@@ -121,6 +130,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 		)
 
 		const absTimeFormat = "20060102 15:04:05"
+
 		var (
 			absTimeLocation, _ = time.LoadLocation("Local")
 			absTimeStr         string
@@ -160,7 +170,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 				Value: &prog.timeMins,
 				Checks: []check.Int64{
 					check.ValGT[int64](0),
-					check.ValDivides[int64](24 * 60),
+					check.ValDivides[int64](minutesPerDay),
 				},
 			},
 			"the minute to sleep until",
@@ -174,7 +184,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 				Value: &prog.timeSecs,
 				Checks: []check.Int64{
 					check.ValGT[int64](0),
-					check.ValDivides[int64](24 * 60 * 60),
+					check.ValDivides[int64](secondsPerDay),
 				},
 			},
 			"the second to sleep until",
@@ -188,7 +198,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 				Value: &prog.perDay,
 				Checks: []check.Int64{
 					check.ValGT[int64](0),
-					check.ValDivides[int64](24 * 60 * 60),
+					check.ValDivides[int64](secondsPerDay),
 				},
 			},
 			"the number of parts to split the day into. "+
@@ -202,7 +212,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 				Value: &prog.perHour,
 				Checks: []check.Int64{
 					check.ValGT[int64](0),
-					check.ValDivides[int64](60 * 60),
+					check.ValDivides[int64](secondsPerHour),
 				},
 			},
 			"the number of parts to split the hour into."+
@@ -217,7 +227,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 				Value: &prog.perMinute,
 				Checks: []check.Int64{
 					check.ValGT[int64](0),
-					check.ValDivides[int64](60),
+					check.ValDivides[int64](secondsPerMinute),
 				},
 			},
 			"the number of parts to split the minute into."+
@@ -264,6 +274,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 					" for a time to be interpreted in but no time has been" +
 					" given.")
 			}
+
 			if !hasAbsTime {
 				return nil
 			}
@@ -275,6 +286,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 			}
 
 			var err error
+
 			prog.absTime, err = time.ParseInLocation(
 				absTimeFormat,
 				absTimeStr,
@@ -283,14 +295,18 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 				return fmt.Errorf("couldn't parse target time: %q: %w",
 					absTimeStr, err)
 			}
+
 			now := time.Now()
+
 			if prog.useUTC {
 				now = now.UTC()
 			}
+
 			if prog.absTime.Sub(now) < 0 {
 				return fmt.Errorf("the target time %q is in the past",
 					prog.absTime)
 			}
+
 			return nil
 		})
 
@@ -298,11 +314,13 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 			if timeVal.Count() == 0 {
 				return errors.New("no time specification has been set")
 			}
+
 			if timeVal.Count() > 1 {
 				return fmt.Errorf(
 					"the time specification has been set more than once: %s",
 					timeVal.SetBy())
 			}
+
 			return nil
 		})
 

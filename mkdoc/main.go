@@ -113,6 +113,7 @@ func main() {
 	for _, pp := range prog.parts {
 		docText += pp.generate(cmd)
 	}
+
 	if docText == "" {
 		fmt.Println("No Documentation!")
 		return
@@ -147,8 +148,8 @@ func (prog *Prog) buildCmd(cmdName string) string {
 			"cannot create the temporary directory for the build:", err)
 		os.Exit(1)
 	}
-	cmd := filepath.Join(dirName, cmdName)
 
+	cmd := filepath.Join(dirName, cmdName)
 	buildCmd := []string{"build", "-o", cmd}
 	buildCmd = append(buildCmd, prog.buildArgs...)
 	gogen.ExecGoCmd(gogen.NoCmdIO, buildCmd...)
@@ -174,6 +175,7 @@ func commandName() string {
 // in the list of valid module prefixes or else it is explicitly excluded.
 func (prog *Prog) skipModule(modName string) bool {
 	skip := true
+
 	for _, pfx := range prog.snippetModPfx {
 		if strings.HasPrefix(modName, pfx) {
 			skip = false
@@ -203,25 +205,31 @@ func (prog *Prog) getModuleSnippets(cmd string) []string {
 
 	modVerCmd := []string{"version", "-m", cmd}
 	buf := new(bytes.Buffer)
+
 	gogen.ExecGoCmdCaptureOutput(buf, modVerCmd...)
 
 	snippetFiles := []string{}
+
 	s := bufio.NewScanner(buf)
 	for s.Scan() {
 		parts := strings.Fields(s.Text())
 		if len(parts) != 4 && parts[0] != "dep" {
 			continue
 		}
+
 		modName := parts[1]
 		vsn := parts[2]
+
 		if prog.skipModule(modName) {
 			continue
 		}
+
 		filename := filepath.Join(gopath,
 			"pkg",
 			"mod",
 			modName+"@"+vsn,
 			snippetFile)
+
 		if _, err := os.Stat(filename); err == nil {
 			snippetFiles = append(snippetFiles, filename)
 		}
@@ -257,11 +265,13 @@ func (pp partParams) generate(cmd string) string {
 	var text string
 	text += getText(pp.headFile)
 	text += getDocPart(cmd, pp.partName)
+
 	for _, extraFile := range pp.extraFiles {
 		if extraText := getText(extraFile); extraText != "" {
 			text += "\n\n" + extraText
 		}
 	}
+
 	text += getText(pp.tailFile)
 	if text == "" {
 		_ = os.Remove(pp.filename(cmd))
@@ -279,6 +289,7 @@ func (pp partParams) generate(cmd string) string {
 			"\n" +
 			"For " + pp.desc + " [see here](" + filename + ")\n"
 	}
+
 	return ""
 }
 
@@ -290,6 +301,7 @@ func makeFile(filename, contents string) bool {
 		fmt.Fprintln(os.Stderr, "Could not create the file:", err)
 		return false
 	}
+
 	defer f.Close()
 
 	_, err = f.WriteString("<!-- Created by mkdoc DO NOT EDIT. -->\n\n")
@@ -297,11 +309,13 @@ func makeFile(filename, contents string) bool {
 		fmt.Fprintln(os.Stderr, "Could not write to the file:", err)
 		return false
 	}
+
 	_, err = f.WriteString(contents)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Could not write to the file:", err)
 		return false
 	}
+
 	return true
 }
 
@@ -319,6 +333,7 @@ func getText(filename string) string {
 		fmt.Fprintln(os.Stderr, "there was a problem reading the file:", err)
 		os.Exit(1)
 	}
+
 	return string(text)
 }
 
@@ -349,12 +364,14 @@ func getDocPart(cmdPath, part string) string {
 		cmdLine := []string{cmdPath}
 		cmdLine = append(cmdLine, args...)
 		cmdLineStr := strings.Join(cmdLine, " ")
+
 		fmt.Fprintln(os.Stderr, "Couldn't exec the command")
 		fmt.Fprintln(os.Stderr, "\t"+cmdLineStr)
 		fmt.Fprintln(os.Stderr, "\tError Out:", stdErr.String())
 		fmt.Fprintln(os.Stderr, "\tError:", err)
 		os.Exit(1)
 	}
+
 	return stdOut.String()
 }
 
@@ -418,7 +435,9 @@ func addNotes(prog *Prog) func(ps *param.PSet) error {
 // makePartsNote generates the text describing the extra text files available
 func makePartsNote(parts []partParams) string {
 	var text string
+
 	sep := ""
+
 	for _, pp := range parts {
 		text += sep
 		sep = "\n\n"
@@ -430,5 +449,6 @@ func makePartsNote(parts []partParams) string {
 		text += fmt.Sprintf(" and any text to come after in a file called %q.",
 			pp.tailFile)
 	}
+
 	return text
 }

@@ -50,23 +50,25 @@ func NewProg() *Prog {
 // sleepCalc calculates the time to sleep
 func sleepCalc(durationSecs, offsetSecs int64, now time.Time) time.Duration {
 	s := int64(now.Second())
-	s += int64(now.Minute()) * 60
-	s += int64(now.Hour()) * 3600
-	s *= 1e9
+	s += int64(now.Minute()) * secondsPerMinute
+	s += int64(now.Hour()) * secondsPerHour
+	s *= nanoSecondsPerSecond
 	s += int64(now.Nanosecond())
 
-	durationNano := durationSecs * 1e9
+	durationNano := durationSecs * nanoSecondsPerSecond
 
 	offsetNormalised := offsetSecs % durationSecs
-	offsetNano := offsetNormalised * 1e9
+	offsetNano := offsetNormalised * nanoSecondsPerSecond
 
 	var sleepNano int64
 
 	remainder := (s % durationNano)
 	remainder -= offsetNano
+
 	if remainder < 0 {
 		remainder += durationNano
 	}
+
 	remainder %= durationNano
 	if remainder != 0 {
 		sleepNano = durationNano - remainder
@@ -95,7 +97,9 @@ func (prog *Prog) runShellCmd() {
 	if len(prog.afterSleepCmd) > 0 {
 		out, err := exec.Command("/bin/bash", "-c",
 			prog.afterSleepCmd).CombinedOutput()
+
 		fmt.Print(string(out))
+
 		if err != nil {
 			fmt.Println("Command failed:", err)
 			os.Exit(1)
@@ -107,17 +111,21 @@ func (prog *Prog) calcDurationSecs() int64 {
 	if prog.timeSecs > 0 {
 		return prog.timeSecs
 	}
+
 	if prog.timeMins > 0 {
-		return prog.timeMins * 60
+		return prog.timeMins * secondsPerMinute
 	}
+
 	if prog.perDay > 0 {
-		return 24 * 60 * 60 / prog.perDay
+		return secondsPerDay / prog.perDay
 	}
+
 	if prog.perHour > 0 {
-		return 60 * 60 / prog.perHour
+		return secondsPerHour / prog.perHour
 	}
+
 	if prog.perMinute > 0 {
-		return 60 / prog.perMinute
+		return secondsPerMinute / prog.perMinute
 	}
 
 	return 0
@@ -141,7 +149,9 @@ func main() {
 			}
 
 			prog.sleepToTarget(now,
-				sleepCalc(durationSecs, prog.offset+(prog.offsetMins*60), now))
+				sleepCalc(durationSecs,
+					prog.offset+(prog.offsetMins*secondsPerMinute),
+					now))
 			prog.action()
 
 			if prog.finished() {
@@ -157,6 +167,7 @@ func (prog *Prog) action() {
 	if len(prog.msg) > 0 {
 		fmt.Println(prog.msg)
 	}
+
 	prog.runShellCmd()
 }
 
@@ -174,6 +185,7 @@ func (prog *Prog) finished() bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -181,6 +193,7 @@ func (prog *Prog) finished() bool {
 func (prog *Prog) sleepToTarget(now time.Time, sleepFor time.Duration) {
 	if verbose.IsOn() {
 		format := "15:04:05.000000"
+
 		verbose.Println("sleeping for: ", sleepFor.String())
 		verbose.Println("        from: ", now.Format(format))
 		verbose.Println("       until: ", now.Add(sleepFor).Format(format))

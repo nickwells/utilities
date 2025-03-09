@@ -10,6 +10,7 @@ import (
 // addParams will add parameters to the passed ParamSet
 func addParams(prog *Prog) param.PSetOptFunc {
 	checkStringNotEmpty := check.StringLength[string](check.ValGT(0))
+
 	return func(ps *param.PSet) error {
 		ps.Add("group",
 			psetter.String[string]{
@@ -31,6 +32,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 						prog.outputFileName = groupFileNameBase +
 							prog.makeGroupSuffix() + ".go"
 					}
+
 					return nil
 				}),
 		)

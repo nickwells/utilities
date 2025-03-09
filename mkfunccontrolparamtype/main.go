@@ -40,12 +40,14 @@ func main() {
 	ps.Parse()
 
 	f := os.Stdout
+
 	if prog.makeFile {
 		if prog.forTesting {
 			f = gogen.MakeTestFileOrDie(prog.outputFileName)
 		} else {
 			f = gogen.MakeFileOrDie(prog.outputFileName)
 		}
+
 		defer f.Close()
 	}
 
@@ -61,6 +63,7 @@ func (prog *Prog) printFile(f *os.File, ps *param.PSet) {
 	}
 
 	prog.printTypeDeclaration(f)
+
 	if prog.printIsValid {
 		prog.printIsValidFunc(f)
 	}
@@ -75,13 +78,16 @@ func (prog *Prog) printTypeDeclaration(f *os.File) {
 	fmt.Fprintf(f, "type %s int\n", fullTypeName)
 
 	suffix := " " + fullTypeName + " = iota"
+
 	fmt.Fprint(f, `
 const (
 `)
+
 	for _, v := range prog.constNames {
 		fmt.Fprintln(f, "\t"+v+suffix)
 		suffix = ""
 	}
+
 	fmt.Fprint(f, `)
 
 `)
