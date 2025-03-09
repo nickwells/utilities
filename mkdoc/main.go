@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/nickwells/gogen.mod/gogen"
@@ -186,11 +187,11 @@ func (prog *Prog) skipModule(modName string) bool {
 	if skip {
 		return true
 	}
-	for _, skipMod := range prog.snippetModSkip {
-		if modName == skipMod {
-			return true
-		}
+
+	if slices.Contains(prog.snippetModSkip, modName) {
+		return true
 	}
+
 	return false
 }
 
