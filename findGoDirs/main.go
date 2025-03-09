@@ -304,7 +304,8 @@ func entryFound(name string, entries []fs.DirEntry) bool {
 // directory has the required content and return false if any of the required
 // content is not in any file. It will only return true if all the required
 // content is present in at least one of the files in the directory. In any
-// case it returns the map of content discovered.
+// case the map of content discovered for the given directory will have been
+// populated.
 func (fgd *Prog) hasRequiredContent(dir string) bool {
 	fgd.dirContent[dir] = contentMap{}
 
@@ -335,16 +336,24 @@ func (fgd *Prog) hasRequiredContent(dir string) bool {
 // writing it into the contentMap
 func (fgd *Prog) checkContent(dir, fname string) error {
 	statusChecks := []StatusCheck{}
+
 	for _, c := range fgd.contentChecks {
 		if c.FileNameOK(fname) {
 			statusChecks = append(statusChecks, StatusCheck{chk: c})
 		}
 	}
+
 	if len(statusChecks) == 0 {
 		return nil
 	}
 
-	pathname := filepath.Join(dir, fname)
+	pathname := filepath.Join(dir, fname) // for error reporting
+
+	// Use fname not pathname - the open is relative to the current directory
+	// so if the directory name is a relative path (containing '..') then
+	// the pathname will not necessarily be available when the fname is.
+	// This is because the process's working directory will have changed as
+	// the process walks the tree of directories searching for matches.
 	f, err := os.Open(fname)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Couldn't open %q: %v\n", pathname, err)
