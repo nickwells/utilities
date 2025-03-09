@@ -24,8 +24,18 @@ import (
 const (
 	installAction = "install"
 	cmpAction     = "compare"
+)
 
+const (
 	dfltMaxSubDirs = 10
+)
+
+const (
+	listItemIndent = 8
+)
+
+const (
+	dfltDirPerms = 0o755 // User: Read/Write/Search, the rest: Read/Search
 )
 
 type Prog struct {
@@ -72,6 +82,7 @@ func (prog *Prog) getFileSystems() {
 	}
 
 	var err error
+
 	prog.sourceFS, err = fs.Sub(snippetsDir, "_snippets")
 	if err != nil {
 		fmt.Fprintf(os.Stderr,
@@ -110,13 +121,16 @@ func (prog *Prog) reportSnippetCounts() {
 	if !verbose.IsOn() {
 		return
 	}
+
 	sourceCount := len(prog.sourceSnippets.names)
 	targetCount := len(prog.targetSnippets.names)
 
 	fmt.Printf("       snippets to install:%4d\n", sourceCount)
+
 	if targetCount == 0 {
 		return
 	}
+
 	fmt.Printf("snippets already installed:%4d\n", targetCount)
 }
 
@@ -145,6 +159,7 @@ func (l *Status) handleErr(err error, errCat, snippetName string) bool {
 
 	l.errs.AddError(errCat, err)
 	l.badInstalls = append(l.badInstalls, snippetName)
+
 	return true
 }
 
@@ -156,6 +171,7 @@ func trimPrefix(vals []string, prefix string) []string {
 	for _, v := range vals {
 		rval = append(rval, strings.TrimPrefix(v, prefix))
 	}
+
 	return rval
 }
 
@@ -175,6 +191,7 @@ func (l Status) report(dir string) {
 	if l.clearCount > 0 {
 		fmt.Printf("Existing snippets cleared:%4d\n", l.clearCount)
 		fmt.Printf("         snippets changed:%4d\n", l.diffCount)
+
 		if l.timestampedCount > 0 {
 			fmt.Printf("       Timestamped copies:%4d\n", l.timestampedCount)
 		}
@@ -190,7 +207,7 @@ func (l Status) report(dir string) {
 			fmt.Println("in", dir)
 			twc.List(
 				trimPrefix(l.removedFiles, dir+string(filepath.Separator)),
-				8)
+				listItemIndent)
 		}
 
 		if len(l.renamedFiles) > 0 {
@@ -206,7 +223,7 @@ func (l Status) report(dir string) {
 			fmt.Println("in", dir)
 			twc.List(
 				trimPrefix(l.renamedFiles, dir+string(filepath.Separator)),
-				8)
+				listItemIndent)
 
 			if l.timestampedCount > 0 {
 				twc.Wrap("\nNote that some files have a timestamped copy"+
@@ -223,7 +240,7 @@ func (l Status) reportErrors() {
 
 	if len(l.badInstalls) > 0 {
 		twc.Wrap("The following snippets could not be installed", 0)
-		twc.List(l.badInstalls, 8)
+		twc.List(l.badInstalls, listItemIndent)
 	}
 
 	if l.errs.HasErrors() {
@@ -263,17 +280,21 @@ func (prog *Prog) createTargetFS() {
 				"The target exists but is not a directory: %q\n", prog.toDir)
 			os.Exit(1)
 		}
+
 		prog.targetFS = os.DirFS(prog.toDir)
+
 		return
 	}
 
 	verbose.Println("creating the target directory: ", prog.toDir)
-	err := os.MkdirAll(prog.toDir, 0o755)
+
+	err := os.MkdirAll(prog.toDir, dfltDirPerms)
 	if err != nil {
 		fmt.Fprintf(os.Stderr,
 			"Failed to create the target directory (%q): %v\n", prog.toDir, err)
 		os.Exit(1)
 	}
+
 	prog.targetFS = os.DirFS(prog.toDir)
 }
 
@@ -294,6 +315,7 @@ func (prog *Prog) compareSnippets() {
 			fmt.Println("      New: ", name)
 		}
 	}
+
 	for _, name := range prog.targetSnippets.names {
 		if _, ok := prog.sourceSnippets.files[name]; !ok {
 			fmt.Println("    Extra: ", name)
@@ -307,6 +329,7 @@ func (prog *Prog) installSnippets() {
 	verbose.Println("Installing snippets into ", prog.toDir)
 
 	var err error
+
 	for _, snippetName := range prog.sourceSnippets.names {
 		verbose.Println("\tinstalling ", snippetName)
 		fromS := prog.sourceSnippets.files[snippetName]
@@ -326,14 +349,17 @@ func (prog *Prog) installSnippets() {
 				err = writeSnippet(fromS, fileName)
 				prog.status.handleErr(err, "Write failure", snippetName)
 			}
+
 			continue
 		}
 		// new snippet
 		prog.status.newCount++
+
 		err = prog.makeSubDir(fromS)
 		if prog.status.handleErr(err, "Mkdir failure", snippetName) {
 			continue
 		}
+
 		err = writeSnippet(fromS, fileName)
 		if prog.status.handleErr(err, "Write failure", snippetName) {
 			continue
@@ -356,12 +382,13 @@ func (prog *Prog) makeSubDir(s snippet) error {
 		return nil
 	}
 
-	err := os.MkdirAll(subDirName, 0o777)
+	err := os.MkdirAll(subDirName, dfltDirPerms)
 	if err == nil {
 		return nil
 	}
 
 	name := subDirName
+
 	exists := filecheck.Provisos{Existence: filecheck.MustExist}
 	for exists.StatusCheck(name) != nil &&
 		name != prog.toDir {
@@ -373,7 +400,7 @@ func (prog *Prog) makeSubDir(s snippet) error {
 	}
 
 	if prog.clearFile(s.name, name) {
-		return os.MkdirAll(subDirName, 0o777)
+		return os.MkdirAll(subDirName, dfltDirPerms)
 	}
 
 	return errors.New("Cannot clear the blocking non-dir: " + name)
@@ -388,6 +415,7 @@ func (prog *Prog) clearFile(snippetName, fileName string) bool {
 	if prog.noCopy {
 		prog.status.removedFiles = append(prog.status.removedFiles, fileName)
 		err := os.Remove(fileName)
+
 		return !prog.status.handleErr(err, "Remove failure", snippetName)
 	}
 
@@ -400,7 +428,9 @@ func (prog *Prog) clearFile(snippetName, fileName string) bool {
 	}
 
 	prog.status.renamedFiles = append(prog.status.renamedFiles, copyName)
+
 	err := os.Rename(fileName, copyName)
+
 	return !prog.status.handleErr(err, "Rename failure", snippetName)
 }
 
@@ -443,29 +473,35 @@ func (prog *Prog) getFSContent(f fs.FS, name string) sSet {
 			prog.readSubDir(f, []string{de.Name()}, &snipSet, errs)
 			continue
 		}
+
 		err := addSnippet(f, de, []string{}, &snipSet)
 		if err != nil {
 			errs.AddError("addSnippet", err)
 			continue
 		}
 	}
+
 	return snipSet
 }
 
 // readSnippet reads the snippet contents from the FS
 func readSnippet(f fs.FS, de fs.DirEntry) (snippet, error) {
 	s := snippet{}
+
 	fi, err := de.Info()
 	if err != nil {
 		return s, err
 	}
+
 	file, err := f.Open(de.Name())
 	if err != nil {
 		return s, err
 	}
+
 	defer file.Close()
 
 	s.content = make([]byte, fi.Size())
+
 	_, err = file.Read(s.content)
 	if err != nil {
 		return s, err
@@ -484,8 +520,10 @@ func (prog *Prog) readSubDir(f fs.FS, names []string, snips *sSet, errs *errutil
 			fmt.Errorf(
 				"The directories at %q exceed the maximum directory depth (%d)",
 				filepath.Join(names...), prog.maxSubDirs))
+
 		return
 	}
+
 	f, err := fs.Sub(f, names[len(names)-1])
 	if err != nil {
 		errs.AddError("Cannot construct the sub-filesystem", err)
@@ -503,6 +541,7 @@ func (prog *Prog) readSubDir(f fs.FS, names []string, snips *sSet, errs *errutil
 			prog.readSubDir(f, append(names, de.Name()), snips, errs)
 			continue
 		}
+
 		err := addSnippet(f, de, names, snips)
 		if err != nil {
 			errs.AddError("addSnippet", err)
@@ -523,5 +562,6 @@ func addSnippet(f fs.FS, de fs.DirEntry, names []string, snipSet *sSet) error {
 	s.name = filepath.Join(s.dirName, de.Name())
 	snipSet.files[s.name] = s
 	snipSet.names = append(snipSet.names, s.name)
+
 	return nil
 }
