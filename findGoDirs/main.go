@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -168,12 +169,15 @@ func (fgd *Prog) findMatchingDirs() []string {
 		for _, err := range errs {
 			fmt.Fprintf(os.Stderr, "Error: %q : %v\n", dir, err)
 		}
+
 		for d := range matches {
 			dirs = append(dirs, d)
 		}
 	}
+
 	sort.Strings(dirs)
-	return dirs
+
+	return slices.Compact(dirs)
 }
 
 // onMatchDo performs the actions if the directory is a go package directory
