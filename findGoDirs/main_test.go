@@ -39,32 +39,38 @@ func TestCd(t *testing.T) {
 		t.Fatal("cannot get the current directory (before testing):", err)
 		return
 	}
+
 	for _, tc := range testCases {
 		fakeIO, err := testhelper.NewStdioFromString("")
 		if err != nil {
 			t.Fatal("Cannot make the fakeIO: ", err)
 		}
+
 		err = testCd(tc.dir)
 		testhelper.CheckExpErr(t, err, tc)
+
 		postTestWD, err := os.Getwd()
 		if err != nil {
 			t.Log(tc.IDStr())
 			t.Fatal("cannot get the current directory (after testing):", err)
 		}
+
 		if preTestWD != postTestWD {
 			t.Log(tc.IDStr())
 			t.Log("\t:  pre-test working dir:", preTestWD)
 			t.Log("\t: post-test working dir:", postTestWD)
 			t.Errorf("\t: cd failed\n")
 		}
+
 		stdout, stderr, err := fakeIO.Done()
 		if err != nil {
 			t.Log(tc.IDStr())
 			t.Fatal("cannot get the std IO buffers:", err)
 		}
-		testhelper.DiffString[string](t, tc.IDStr(), "stdout",
+
+		testhelper.DiffString(t, tc.IDStr(), "stdout",
 			string(stdout), tc.expStdout)
-		testhelper.DiffString[string](t, tc.IDStr(), "stderr",
+		testhelper.DiffString(t, tc.IDStr(), "stderr",
 			string(stderr), tc.expStderr)
 	}
 }
@@ -77,17 +83,21 @@ func testCd(dir string) error {
 	if err != nil {
 		return err
 	}
+
 	defer undo()
+
 	return nil
 }
 
 func TestHasFiles(t *testing.T) {
 	const testdir = "testdata/gopkg"
+
 	undo, err := cd(testdir)
 	if err != nil {
 		t.Fatal("couldn't cd into", testdir)
 		return
 	}
+
 	defer undo()
 
 	testCases := []struct {
@@ -148,10 +158,12 @@ func copyDirFromTo(from, to string) error {
 				newFromDir = filepath.Join(from, fi.Name())
 				newToDir   = filepath.Join(to, fi.Name())
 			)
+
 			err = os.Mkdir(newToDir, fi.Mode()&fs.ModePerm)
 			if err != nil {
 				return err
 			}
+
 			err = copyDirFromTo(newFromDir, newToDir)
 			if err != nil {
 				return err
@@ -161,10 +173,12 @@ func copyDirFromTo(from, to string) error {
 				fromFile = filepath.Join(from, fi.Name())
 				toFile   = filepath.Join(to, fi.Name())
 			)
+
 			fromBytes, err := os.ReadFile(fromFile)
 			if err != nil {
 				return err
 			}
+
 			err = os.WriteFile(toFile, fromBytes, fi.Mode()&fs.ModePerm)
 			if err != nil {
 				return err
@@ -175,6 +189,7 @@ func copyDirFromTo(from, to string) error {
 				fi.Name())
 		}
 	}
+
 	return nil
 }
 
@@ -188,6 +203,7 @@ func copyDir(fromDir string) (string, func() error, error) {
 	}
 
 	err = copyDirFromTo(fromDir, tmpDir)
+
 	return tmpDir, func() error { return os.RemoveAll(tmpDir) }, err
 }
 
@@ -240,8 +256,10 @@ func TestPkgMatches(t *testing.T) {
 			t.Log("copyDir failed")
 			t.Fatal(err)
 		}
+
 		err = checkPkg(dir, tc.pkgNames)
 		testhelper.CheckExpErr(t, err, tc)
+
 		if cleanup != nil {
 			if err := cleanup(); err != nil {
 				t.Log("cleanup failed")
@@ -267,8 +285,10 @@ func checkPkg(dir string, pkgNames []string) error {
 
 	fgd := NewProg()
 	fgd.pkgNames = pkgNames
+
 	if !fgd.pkgMatches(pkg) {
 		return errors.New("no packages match")
 	}
+
 	return nil
 }

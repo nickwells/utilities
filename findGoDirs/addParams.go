@@ -34,6 +34,7 @@ func (rh remHandler) HandleRemainder(ps *param.PSet, _ *location.L) {
 			ps.AddErr("bad directory", err)
 			continue
 		}
+
 		*rh.dirs = append(*rh.dirs, dirName)
 	}
 }
@@ -47,12 +48,14 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 			dirs:     &fgd.baseDirs,
 			provisos: dirProvisos,
 		}
+
 		err := ps.SetNamedRemHandler(rh, "directory")
 		if err != nil {
 			return err
 		}
 
 		var dir string
+
 		ps.Add("dir",
 			psetter.Pathname{
 				Value:       &dir,
@@ -210,6 +213,7 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 		)
 
 		var skipDir string
+
 		ps.Add("skip-dir", psetter.String[string]{Value: &skipDir},
 			"exclude a directory with this name and skip any sub-directories."+
 				" This parameter may be given more than once, each"+
@@ -222,6 +226,7 @@ func addParams(fgd *Prog) func(ps *param.PSet) error {
 			if len(fgd.actions) == 0 {
 				fgd.actions[printAct] = true
 			}
+
 			return nil
 		})
 

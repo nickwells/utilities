@@ -25,6 +25,7 @@ func doPrint(fgd *Prog, name string) {
 		fmt.Printf("%-20.20s : %s\n", "print", name)
 		return
 	}
+
 	fmt.Println(name)
 }
 
@@ -37,11 +38,15 @@ func doContent(fgd *Prog, name string) {
 		fmt.Printf("%-20.20s : %s\n", "content", name)
 		return
 	}
+
 	keys := []string{}
+
 	for k := range fgd.dirContent[name] {
 		keys = append(keys, k)
 	}
+
 	sort.Strings(keys)
+
 	for _, k := range keys {
 		for _, match := range fgd.dirContent[name][k] {
 			fmt.Println(match.String())
@@ -59,11 +64,15 @@ func doFilenames(fgd *Prog, name string) {
 		fmt.Printf("%-20.20s : %s\n", "filenames", name)
 		return
 	}
+
 	keys := []string{}
+
 	for k := range fgd.dirContent[name] {
 		keys = append(keys, k)
 	}
+
 	sort.Strings(keys)
+
 	for _, k := range keys {
 		for _, match := range fgd.dirContent[name][k] {
 			fmt.Println(match.Source())
@@ -100,8 +109,10 @@ func (fgd *Prog) doGoCommand(name, command string, cmdArgs []string) {
 		fmt.Printf("%-20.20s : %s\n", "go "+command, name)
 		return
 	}
+
 	args := []string{command}
 	args = append(args, cmdArgs...)
+
 	verbose.Println(intro, "go "+strings.Join(args, " "))
 	gogen.ExecGoCmd(gogen.ShowCmdIO, args...)
 }
@@ -134,6 +145,7 @@ func (fgd *Prog) findMatchingDirs() []string {
 		"Find dirs matching criteria")()
 
 	var dirs []string
+
 	dirChecks := []check.FileInfo{
 		check.FileInfoName(check.Not(
 			check.ValEQ("testdata"),
@@ -150,6 +162,7 @@ func (fgd *Prog) findMatchingDirs() []string {
 				check.ValEQ(".."),
 			)),
 	}
+
 	for _, skipDir := range fgd.skipDirs {
 		dirChecks = append(dirChecks, check.FileInfoName(check.Not(
 			check.ValEQ(skipDir),
@@ -162,6 +175,7 @@ func (fgd *Prog) findMatchingDirs() []string {
 	if len(fgd.baseDirs) == 0 {
 		fgd.baseDirs = []string{"."}
 	}
+
 	for _, dir := range fgd.baseDirs {
 		matches, errs := dirsearch.FindRecursePrune(dir, -1,
 			dirChecks,
@@ -217,6 +231,7 @@ func (fgd *Prog) onMatchDo(dir string) {
 	if !fgd.hasRequiredContent(dir) {
 		delete(fgd.dirContent, dir)
 		verbose.Println(intro, " Skipping: missing required content")
+
 		return
 	}
 
@@ -241,11 +256,13 @@ func cd(dir string) (func(), error) {
 		fmt.Fprintln(os.Stderr, "Cannot get the current directory:", err)
 		return nil, err
 	}
+
 	err = os.Chdir(dir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot chdir to %q: %v\n", dir, err)
 		return nil, err
 	}
+
 	return func() {
 		os.Chdir(cwd) //nolint: errcheck
 	}, nil
@@ -259,11 +276,10 @@ func (fgd *Prog) pkgMatches(pkg string) bool {
 		return true
 	}
 
-	for _, name := range fgd.pkgNames {
-		if pkg == name { // this name matches
-			return true
-		}
+	if slices.Contains(fgd.pkgNames, pkg) {
+		return true
 	}
+
 	return false // no name matches
 }
 
@@ -286,6 +302,7 @@ func hasEntries(entries []string) bool {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -297,6 +314,7 @@ func entryFound(name string, entries []fs.DirEntry) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -329,6 +347,7 @@ func (fgd *Prog) hasRequiredContent(dir string) bool {
 			break
 		}
 	}
+
 	return len(fgd.dirContent[dir]) == len(fgd.contentChecks)
 }
 
@@ -363,12 +382,12 @@ func (fgd *Prog) checkContent(dir, fname string) error {
 	defer f.Close()
 
 	loc := location.New(pathname)
-	var allChecksComplete bool
 	s := bufio.NewScanner(f)
 
 	for s.Scan() {
 		loc.Incr()
-		allChecksComplete = true
+
+		allChecksComplete := true
 
 		for _, sc := range statusChecks {
 			if sc.CheckLine(s.Text()) {
@@ -377,13 +396,16 @@ func (fgd *Prog) checkContent(dir, fname string) error {
 				fgd.dirContent[dir][sc.chk.name] = append(
 					fgd.dirContent[dir][sc.chk.name], locCopy)
 			}
+
 			if !sc.stopped {
 				allChecksComplete = false
 			}
 		}
+
 		if allChecksComplete {
 			break
 		}
 	}
+
 	return nil
 }

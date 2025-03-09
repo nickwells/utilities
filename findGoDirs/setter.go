@@ -98,16 +98,22 @@ func (chk ContChkSetter) AllowedValues() string {
 // CurrentValue returns the current setting of the parameter value
 func (chk ContChkSetter) CurrentValue() string {
 	rval := ""
+
 	var checks []string
+
 	for k := range *chk.Value {
 		checks = append(checks, k)
 	}
+
 	sort.Strings(checks)
+
 	sep := ""
+
 	for _, k := range checks {
 		rval += sep + (*chk.Value)[k].String()
 		sep = "\n"
 	}
+
 	return rval
 }
 

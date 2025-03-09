@@ -32,18 +32,22 @@ func (cc ContentCheck) String() string {
 	rval := cc.name + ":\n"
 	partPrefix := strings.Repeat(" ", len(cc.name)+1)
 	valPrefix := partPrefix + "    "
+
 	rval += partPrefix + "Matching:\n"
 	rval += valPrefix + cc.matchPattern.String()
+
 	if cc.skipPattern != nil {
 		rval += "\n" +
 			partPrefix + "Skip if matches:\n" +
 			valPrefix + cc.skipPattern.String()
 	}
+
 	if cc.stopPattern != nil {
 		rval += "\n" +
 			partPrefix + "Stop after matching:\n" +
 			valPrefix + cc.stopPattern.String()
 	}
+
 	if cc.filenamePattern != nil {
 		rval += "\n" +
 			partPrefix + "Only search files matching:\n" +
@@ -58,6 +62,7 @@ func (cc ContentCheck) FileNameOK(fn string) bool {
 	if cc.filenamePattern == nil {
 		return true
 	}
+
 	return cc.filenamePattern.MatchString(fn)
 }
 
@@ -66,6 +71,7 @@ func (cc ContentCheck) Stop(s string) bool {
 	if cc.stopPattern == nil {
 		return false
 	}
+
 	return cc.stopPattern.MatchString(s)
 }
 
@@ -75,6 +81,7 @@ func (cc ContentCheck) Match(s string) bool {
 	if cc.matchPattern == nil {
 		return false
 	}
+
 	if !cc.matchPattern.MatchString(s) {
 		return false
 	}
@@ -82,6 +89,7 @@ func (cc ContentCheck) Match(s string) bool {
 	if cc.skipPattern == nil {
 		return true
 	}
+
 	return !cc.skipPattern.MatchString(s)
 }
 
@@ -107,6 +115,7 @@ func setMatchPattern(chk *ContentCheck, s string) error {
 	}
 
 	chk.matchPattern = re
+
 	return nil
 }
 
@@ -132,6 +141,7 @@ func setSkipPattern(chk *ContentCheck, s string) error {
 	}
 
 	chk.skipPattern = re
+
 	return nil
 }
 
@@ -157,6 +167,7 @@ func setStopPattern(chk *ContentCheck, s string) error {
 	}
 
 	chk.stopPattern = re
+
 	return nil
 }
 
@@ -182,6 +193,7 @@ func setFilenamePattern(chk *ContentCheck, s string) error {
 	}
 
 	chk.filenamePattern = re
+
 	return nil
 }
 
@@ -228,11 +240,13 @@ var checkerParts = map[string]checkerPart{
 // excluding the default part.
 func checkerPartNames() []string {
 	var partNames []string
+
 	for k := range checkerParts {
 		if k != dfltCheckerPart {
 			partNames = append(partNames, k)
 		}
 	}
+
 	sort.Strings(partNames)
 
 	return partNames
@@ -241,8 +255,9 @@ func checkerPartNames() []string {
 // checkerPartsHelpText returns a formatted string describing the named parts
 // of a checker. Note that the default, 'match', is excluded.
 func checkerPartsHelpText() string {
-	partNames := checkerPartNames()
 	maxNameLen := 0
+
+	partNames := checkerPartNames()
 	for _, k := range partNames {
 		if len(k) > maxNameLen {
 			maxNameLen = len(k)
@@ -251,6 +266,7 @@ func checkerPartsHelpText() string {
 
 	rval := ""
 	sep := "  "
+
 	for _, k := range partNames {
 		rval += fmt.Sprintf("%s%-*s: %s",
 			sep, maxNameLen, k, checkerParts[k].desc)
@@ -273,6 +289,7 @@ func (sc *StatusCheck) CheckLine(s string) bool {
 	if sc.stopped {
 		return false
 	}
+
 	if sc.chk.Stop(s) {
 		sc.stopped = true
 		return false
