@@ -60,7 +60,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 				Value: &prog.outputFileName,
 				Checks: []check.String{
 					check.StringHasSuffix[string](".go"),
-					check.Not[string](
+					check.Not(
 						check.StringHasSuffix[string]("_test.go"),
 						"a test file"),
 				},
@@ -124,11 +124,12 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		})
 
 		ps.AddFinalCheck(func() error {
-			if len(prog.constNames) < 2 {
-				return errors.New("There must be at least 2 value names given")
+			if len(prog.constNames) <= 1 {
+				return errors.New(
+					"There must be more than one value name given")
 			}
-			err := check.SliceHasNoDups(prog.constNames)
-			return err
+
+			return check.SliceHasNoDups(prog.constNames)
 		})
 
 		return nil

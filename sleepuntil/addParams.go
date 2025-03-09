@@ -39,7 +39,7 @@ func addActionParams(prog *Prog) param.PSetOptFunc {
 			psetter.String[string]{
 				Value: &prog.msg,
 				Checks: []check.String{
-					check.StringLength[string](check.ValGT[int](0)),
+					check.StringLength[string](check.ValGT(0)),
 				},
 			},
 			"print this message when you wake up",
@@ -52,7 +52,7 @@ func addActionParams(prog *Prog) param.PSetOptFunc {
 			psetter.String[string]{
 				Value: &prog.afterSleepCmd,
 				Checks: []check.String{
-					check.StringLength[string](check.ValGT[int](0)),
+					check.StringLength[string](check.ValGT(0)),
 				},
 			},
 			"run the command in a subshell when you wake up",
@@ -154,7 +154,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 			psetter.String[string]{
 				Value: &absTimeStr,
 				Checks: []check.String{
-					check.StringLength[string](check.ValEQ[int](absTimeLen)),
+					check.StringLength[string](check.ValEQ(absTimeLen)),
 				},
 			},
 			"the actual time to sleep until. Format: '"+absTimeFormat+"'."+

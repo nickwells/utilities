@@ -46,6 +46,8 @@ type Prog struct {
 }
 
 // NewProg returns a new Prog instance with the default values set
+//
+//nolint:mnd
 func NewProg() *Prog {
 	prog := &Prog{
 		dataFamily: units.GetFamilyOrPanic(units.Data),
@@ -56,7 +58,7 @@ func NewProg() *Prog {
 
 	prog.fiMap = map[string]fieldInfo{
 		nameStr: {
-			fieldVal: func(name string, s *unix.Statfs_t) any {
+			fieldVal: func(name string, _ *unix.Statfs_t) any {
 				return name
 			},
 			format:   func() string { return "%s" },
@@ -66,10 +68,10 @@ func NewProg() *Prog {
 			},
 		},
 		fSpStr: {
-			fieldVal: func(name string, s *unix.Statfs_t) any {
+			fieldVal: func(_ string, s *unix.Statfs_t) any {
 				vu := units.ValUnit{
 					U: prog.baseUnit,
-					V: float64(s.Bfree * uint64(s.Bsize)),
+					V: float64(s.Bfree * uint64(s.Bsize)), //nolint:gosec
 				}
 				return vu.ConvertOrPanic(prog.displayUnits).V
 			},
@@ -83,10 +85,10 @@ func NewProg() *Prog {
 			},
 		},
 		avSpStr: {
-			fieldVal: func(name string, s *unix.Statfs_t) any {
+			fieldVal: func(_ string, s *unix.Statfs_t) any {
 				vu := units.ValUnit{
 					U: prog.baseUnit,
-					V: float64(s.Bavail * uint64(s.Bsize)),
+					V: float64(s.Bavail * uint64(s.Bsize)), //nolint:gosec
 				}
 				return vu.ConvertOrPanic(prog.displayUnits).V
 			},
@@ -96,14 +98,15 @@ func NewProg() *Prog {
 			shortFmt: func() string { return "%.0f" },
 			col: func(_ uint) *col.Col {
 				units := "Units: " + prog.displayUnits.Name()
-				return col.New(&colfmt.Float{W: 15}, units, "space", "available")
+				return col.New(&colfmt.Float{W: 15}, units,
+					"space", "available")
 			},
 		},
 		totSpStr: {
-			fieldVal: func(name string, s *unix.Statfs_t) any {
+			fieldVal: func(_ string, s *unix.Statfs_t) any {
 				vu := units.ValUnit{
 					U: prog.baseUnit,
-					V: float64(s.Blocks * uint64(s.Bsize)),
+					V: float64(s.Blocks * uint64(s.Bsize)), //nolint:gosec
 				}
 				return vu.ConvertOrPanic(prog.displayUnits).V
 			},
@@ -117,10 +120,10 @@ func NewProg() *Prog {
 			},
 		},
 		usedSpStr: {
-			fieldVal: func(name string, s *unix.Statfs_t) any {
+			fieldVal: func(_ string, s *unix.Statfs_t) any {
 				vu := units.ValUnit{
 					U: prog.baseUnit,
-					V: float64((s.Blocks - s.Bfree) * uint64(s.Bsize)),
+					V: float64((s.Blocks - s.Bfree) * uint64(s.Bsize)), //nolint:gosec
 				}
 				return vu.ConvertOrPanic(prog.displayUnits).V
 			},
@@ -134,7 +137,7 @@ func NewProg() *Prog {
 			},
 		},
 		fileCntStr: {
-			fieldVal: func(name string, s *unix.Statfs_t) any {
+			fieldVal: func(_ string, s *unix.Statfs_t) any {
 				return s.Files
 			},
 			format:   func() string { return "%d" },
@@ -144,7 +147,7 @@ func NewProg() *Prog {
 			},
 		},
 		freeFCntStr: {
-			fieldVal: func(name string, s *unix.Statfs_t) any {
+			fieldVal: func(_ string, s *unix.Statfs_t) any {
 				return s.Ffree
 			},
 			format:   func() string { return "%d" },

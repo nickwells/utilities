@@ -21,11 +21,9 @@ func (prog *Prog) addAllowedFields() {
 }
 
 // addFieldInfo adds the extra Linux-specific field info
+//
+//nolint:mnd
 func (prog *Prog) addFieldInfo() {
-	const (
-		maxFlagsLen = 30
-	)
-
 	mountFlags := map[int64]string{
 		unix.MS_MANDLOCK:    "mandatory locking permitted",
 		unix.MS_NOATIME:     "access times not updated",
@@ -39,7 +37,7 @@ func (prog *Prog) addFieldInfo() {
 	}
 
 	prog.fiMap[maxNameStr] = fieldInfo{
-		fieldVal: func(name string, s *unix.Statfs_t) any {
+		fieldVal: func(_ string, s *unix.Statfs_t) any {
 			return s.Namelen
 		},
 		format:   func() string { return "%d" },
@@ -49,7 +47,7 @@ func (prog *Prog) addFieldInfo() {
 		},
 	}
 	prog.fiMap[flagsStr] = fieldInfo{
-		fieldVal: func(name string, s *unix.Statfs_t) any {
+		fieldVal: func(_ string, s *unix.Statfs_t) any {
 			rval := ""
 			sep := ""
 			for f, flagName := range mountFlags {
@@ -63,7 +61,7 @@ func (prog *Prog) addFieldInfo() {
 		format:   func() string { return "%s" },
 		shortFmt: func() string { return "%s" },
 		col: func(_ uint) *col.Col {
-			return col.New(colfmt.String{W: maxFlagsLen}, "FS", "flags")
+			return col.New(colfmt.String{W: 30}, "FS", "flags")
 		},
 	}
 }

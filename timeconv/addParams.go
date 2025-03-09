@@ -118,7 +118,7 @@ func addTimeSettingParams(prog *Prog, ps *param.PSet) error {
 			"For instance: '20190321 15:10:30'",
 		param.AltNames("dt"),
 		param.GroupName(timeGroupname),
-		param.PostAction(paction.SetVal[int](
+		param.PostAction(paction.SetVal(
 			&prog.timeSource, tsDateTimeStr)),
 	)
 
@@ -133,7 +133,7 @@ func addTimeSettingParams(prog *Prog, ps *param.PSet) error {
 			" a day before or after the current time in your timezone.",
 		param.AltNames("from", "t"),
 		param.GroupName(timeGroupname),
-		param.PostAction(paction.SetVal[int](&prog.timeSource, tsTimeStr)),
+		param.PostAction(paction.SetVal(&prog.timeSource, tsTimeStr)),
 	)
 
 	ps.AddFinalCheck(func() error {

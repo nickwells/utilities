@@ -95,7 +95,7 @@ func (prog *Prog) sleepToAbsTime() {
 // check for errors and report them; it exits on any error
 func (prog *Prog) runShellCmd() {
 	if len(prog.afterSleepCmd) > 0 {
-		out, err := exec.Command("/bin/bash", "-c",
+		out, err := exec.Command("/bin/bash", "-c", //nolint:gosec
 			prog.afterSleepCmd).CombinedOutput()
 
 		fmt.Print(string(out))
