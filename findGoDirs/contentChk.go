@@ -33,24 +33,24 @@ func (cc ContentCheck) String() string {
 	partPrefix := strings.Repeat(" ", len(cc.name)+1)
 	valPrefix := partPrefix + "    "
 
-	rval += partPrefix + "Matching:\n"
+	rval += partPrefix + "A file has a line matching pattern:\n"
 	rval += valPrefix + cc.matchPattern.String()
 
 	if cc.skipPattern != nil {
 		rval += "\n" +
-			partPrefix + "Skip if matches:\n" +
+			partPrefix + "Skip if line also matches pattern:\n" +
 			valPrefix + cc.skipPattern.String()
 	}
 
 	if cc.stopPattern != nil {
 		rval += "\n" +
-			partPrefix + "Stop after matching:\n" +
+			partPrefix + "Stop looking after a line matching pattern:\n" +
 			valPrefix + cc.stopPattern.String()
 	}
 
 	if cc.filenamePattern != nil {
 		rval += "\n" +
-			partPrefix + "Only search files matching:\n" +
+			partPrefix + "Only search files matching pattern:\n" +
 			valPrefix + cc.filenamePattern.String()
 	}
 
