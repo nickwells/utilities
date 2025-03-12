@@ -41,3 +41,16 @@ findGoDirs -having-go-generate -do content
 This will find all the Go directories with go:generate comments and prints the
 matching lines\.
 
+```sh
+findGoDirs -having-content 'nolint=//nolint:' -do content
+```
+This will find all the Go directories with some file having a nolint comment and
+prints the matching lines\.
+
+```sh
+findGoDirs -having-content 'nolint=//nolint:' -having-content 'nolint.skip=errcheck' -do content
+```
+This will find all the Go directories with some file having a nolint comment but
+where the line matching //nolint doesn&apos;t also match errcheck and prints the
+matching lines\.
+

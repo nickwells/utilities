@@ -30,8 +30,13 @@ additional pattern
 You can add these additional features using the &apos;having\-content&apos;
 parameter\. You repeat the checker name and add
 
-    a period \(&apos;\.&apos;\),    a part name,    an equals \(&apos;=&apos;\)
-and the pattern for that part\.
+    a period \(&apos;\.&apos;\),
+
+    a part name,
+
+    an equals \(&apos;=&apos;\)
+
+    and the pattern for that part\.
 
 Valid part names are:
 
