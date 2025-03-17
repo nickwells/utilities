@@ -3,8 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/nickwells/filecheck.mod/filecheck"
@@ -66,14 +67,7 @@ func (s ModuleMapSetter) ValDescribe() string {
 // CurrentValue returns the current setting of the parameter value
 func (s ModuleMapSetter) CurrentValue() string {
 	cv := ""
-
-	keys := make([]string, 0, len(*s.Value))
-	for k := range *s.Value {
-		keys = append(keys, k)
-	}
-
-	sort.Strings(keys)
-
+	keys := slices.Sorted(maps.Keys(*s.Value))
 	sep := ""
 
 	for _, k := range keys {

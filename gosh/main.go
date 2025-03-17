@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/nickwells/cli.mod/cli/responder"
@@ -418,15 +419,10 @@ func (g *Gosh) initModule() {
 	verbose.Println(intro, " Command: go mod init "+g.execName)
 	gogen.ExecGoCmd(gogen.NoCmdIO, "mod", "init", g.execName)
 
-	keys := []string{}
-
-	for k := range g.localModules {
-		keys = append(keys, k)
-	}
+	keys := slices.Sorted(maps.Keys(g.localModules))
 
 	if len(keys) > 0 {
 		verbose.Println(intro, " Adding local modules")
-		sort.Strings(keys)
 
 		for _, k := range keys {
 			importPath := strings.TrimSuffix(k, "/")

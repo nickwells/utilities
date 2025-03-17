@@ -1,7 +1,8 @@
 package main
 
 import (
-	"sort"
+	"maps"
+	"slices"
 
 	"github.com/nickwells/param.mod/v6/paction"
 	"github.com/nickwells/param.mod/v6/param"
@@ -87,8 +88,7 @@ func addSnippetListParams(slp *snippetListParams) func(ps *param.PSet) error {
 		)
 
 		validParts := psetter.AllowedVals[string](snippet.ValidParts())
-		allParts, _ := validParts.Keys()
-		sort.Strings(allParts)
+		allParts := slices.Sorted(maps.Keys(validParts))
 
 		ps.Add(paramNameSnippetListPart,
 			psetter.EnumList[string]{

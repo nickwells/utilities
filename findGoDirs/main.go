@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -39,13 +40,7 @@ func doContent(fgd *Prog, name string) {
 		return
 	}
 
-	keys := []string{}
-
-	for k := range fgd.dirContent[name] {
-		keys = append(keys, k)
-	}
-
-	sort.Strings(keys)
+	keys := slices.Sorted(maps.Keys(fgd.dirContent[name]))
 
 	for _, k := range keys {
 		for _, match := range fgd.dirContent[name][k] {
@@ -65,13 +60,7 @@ func doFilenames(fgd *Prog, name string) {
 		return
 	}
 
-	keys := []string{}
-
-	for k := range fgd.dirContent[name] {
-		keys = append(keys, k)
-	}
-
-	sort.Strings(keys)
+	keys := slices.Sorted(maps.Keys(fgd.dirContent[name]))
 
 	for _, k := range keys {
 		for _, match := range fgd.dirContent[name][k] {
