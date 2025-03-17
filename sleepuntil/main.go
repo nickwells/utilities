@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/nickwells/tempus.mod/tempus"
 	"github.com/nickwells/verbose.mod/verbose"
 )
 
@@ -49,9 +50,11 @@ func NewProg() *Prog {
 
 // sleepCalc calculates the time to sleep
 func sleepCalc(durationSecs, offsetSecs int64, now time.Time) time.Duration {
+	const nanoSecondsPerSecond = 1e9
+
 	s := int64(now.Second())
-	s += int64(now.Minute()) * secondsPerMinute
-	s += int64(now.Hour()) * secondsPerHour
+	s += int64(now.Minute()) * tempus.SecondsPerMinute
+	s += int64(now.Hour()) * tempus.SecondsPerHour
 	s *= nanoSecondsPerSecond
 	s += int64(now.Nanosecond())
 
@@ -113,19 +116,19 @@ func (prog *Prog) calcDurationSecs() int64 {
 	}
 
 	if prog.timeMins > 0 {
-		return prog.timeMins * secondsPerMinute
+		return prog.timeMins * tempus.SecondsPerMinute
 	}
 
 	if prog.perDay > 0 {
-		return secondsPerDay / prog.perDay
+		return tempus.SecondsPerDay / prog.perDay
 	}
 
 	if prog.perHour > 0 {
-		return secondsPerHour / prog.perHour
+		return tempus.SecondsPerHour / prog.perHour
 	}
 
 	if prog.perMinute > 0 {
-		return secondsPerMinute / prog.perMinute
+		return tempus.SecondsPerMinute / prog.perMinute
 	}
 
 	return 0
@@ -150,7 +153,7 @@ func main() {
 
 			prog.sleepToTarget(now,
 				sleepCalc(durationSecs,
-					prog.offset+(prog.offsetMins*secondsPerMinute),
+					prog.offset+(prog.offsetMins*tempus.SecondsPerMinute),
 					now))
 			prog.action()
 

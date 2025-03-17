@@ -3,7 +3,7 @@ module github.com/nickwells/utilities
 go 1.24
 
 require (
-	github.com/nickwells/check.mod/v2 v2.1.16
+	github.com/nickwells/check.mod/v2 v2.1.17
 	github.com/nickwells/cli.mod v1.1.3
 	github.com/nickwells/dirsearch.mod/v2 v2.0.16
 	github.com/nickwells/english.mod v1.2.0
@@ -25,7 +25,7 @@ require (
 	golang.org/x/sys v0.31.0
 )
 
-require github.com/nickwells/tempus.mod v1.2.1
+require github.com/nickwells/tempus.mod v1.2.3
 
 require (
 	github.com/nickwells/col.mod/v4 v4.0.1

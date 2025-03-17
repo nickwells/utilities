@@ -1,5 +1,5 @@
-github.com/nickwells/check.mod/v2 v2.1.16 h1:wz67cJJnYnyA3z68L/f0ZufTAW0IRUn5WNhuDA5D+nQ=
-github.com/nickwells/check.mod/v2 v2.1.16/go.mod h1:PCPa6zy+MhpreJHQgeJ0/DzkXpLtyi3IYsW4kifGKUo=
+github.com/nickwells/check.mod/v2 v2.1.17 h1:cmAOeg4Be3dCy0ZqRCsHfpHmwfUYIf5jsNYmoVWelLc=
+github.com/nickwells/check.mod/v2 v2.1.17/go.mod h1:89X+Nl6H6HuZXA31Ba7WVJuo6+CR6oTyMtSwm/CJ3fw=
 github.com/nickwells/cli.mod v1.1.3 h1:NfWgA0RxgMhnQD1nJPGswM8tEprfsXrtNo+5UBkzP8k=
 github.com/nickwells/cli.mod v1.1.3/go.mod h1:TUhkoilwjIpzwoVMZS+P49OWjoKn9AaLyzYmJjpsxn0=
 github.com/nickwells/col.mod/v4 v4.0.1 h1:cJJIRJAGeti02sBskAL6PKfIKxjCMKD+/ESA6VYs87A=
@@ -28,8 +28,8 @@ github.com/nickwells/snippet.mod v1.2.10 h1:SZUBdZDXCNJKRNbiB8j96bSDBon+P4NGdgDF
 github.com/nickwells/snippet.mod v1.2.10/go.mod h1:1ifADk9LOuDNY3P+1DxVF3ORwajWXRHdbzI3k+Yc/tY=
 github.com/nickwells/strdist.mod/v2 v2.0.1 h1:5pW7KXluGC4Vsvf4Vqjb+82SjP+82i0VXJGt/VeiIrw=
 github.com/nickwells/strdist.mod/v2 v2.0.1/go.mod h1:567A/JRzmSGLAQuxWV+RZ7QMgxpqp48Ds6waYC42lmI=
-github.com/nickwells/tempus.mod v1.2.1 h1:9JqMOHZLNoxtjba/UBJGbK0/Wzp98hVf58WT2McsR/I=
-github.com/nickwells/tempus.mod v1.2.1/go.mod h1:fW4rAGiPVh4DGS9cq1Osa5zVMZwVqLPH6hPWFRF0p40=
+github.com/nickwells/tempus.mod v1.2.3 h1:APNzSJpKRQn85SWP4idjLu4cZEt+54FEkYlKTdM2/wc=
+github.com/nickwells/tempus.mod v1.2.3/go.mod h1:fW4rAGiPVh4DGS9cq1Osa5zVMZwVqLPH6hPWFRF0p40=
 github.com/nickwells/testhelper.mod/v2 v2.3.1 h1:+MoIM5+l+rS6koT4YWxhD6mA9sdzYT5DgYrf/4d/j/s=
 github.com/nickwells/testhelper.mod/v2 v2.3.1/go.mod h1:sqfsJGl4kHsjaFeHMnitr54GVR5GWX6RN693zSPonOg=
 github.com/nickwells/timer.mod v1.2.4 h1:dEqqz+LKlLNYVAak9SKWp0UyEJXMjGYyuSbdaozSoZU=

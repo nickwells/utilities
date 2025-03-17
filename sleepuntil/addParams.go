@@ -9,6 +9,7 @@ import (
 	"github.com/nickwells/param.mod/v6/paction"
 	"github.com/nickwells/param.mod/v6/param"
 	"github.com/nickwells/param.mod/v6/psetter"
+	"github.com/nickwells/tempus.mod/tempus"
 )
 
 const (
@@ -16,14 +17,6 @@ const (
 	paramGroupNameTime    = "cmd-time"
 
 	paramNameRepeat = "repeat"
-)
-
-const (
-	minutesPerDay        = 24 * 60
-	secondsPerDay        = 24 * 60 * 60
-	secondsPerHour       = 60 * 60
-	secondsPerMinute     = 60
-	nanoSecondsPerSecond = 1e9
 )
 
 // addActionParams adds the program parameters to the PSet
@@ -170,7 +163,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 				Value: &prog.timeMins,
 				Checks: []check.Int64{
 					check.ValGT[int64](0),
-					check.ValDivides[int64](minutesPerDay),
+					check.ValDivides[int64](tempus.MinutesPerDay),
 				},
 			},
 			"the minute to sleep until",
@@ -184,7 +177,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 				Value: &prog.timeSecs,
 				Checks: []check.Int64{
 					check.ValGT[int64](0),
-					check.ValDivides[int64](secondsPerDay),
+					check.ValDivides[int64](tempus.SecondsPerDay),
 				},
 			},
 			"the second to sleep until",
@@ -198,7 +191,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 				Value: &prog.perDay,
 				Checks: []check.Int64{
 					check.ValGT[int64](0),
-					check.ValDivides[int64](secondsPerDay),
+					check.ValDivides[int64](tempus.SecondsPerDay),
 				},
 			},
 			"the number of parts to split the day into. "+
@@ -212,7 +205,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 				Value: &prog.perHour,
 				Checks: []check.Int64{
 					check.ValGT[int64](0),
-					check.ValDivides[int64](secondsPerHour),
+					check.ValDivides[int64](tempus.SecondsPerHour),
 				},
 			},
 			"the number of parts to split the hour into."+
@@ -227,7 +220,7 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 				Value: &prog.perMinute,
 				Checks: []check.Int64{
 					check.ValGT[int64](0),
-					check.ValDivides[int64](secondsPerMinute),
+					check.ValDivides[int64](tempus.SecondsPerMinute),
 				},
 			},
 			"the number of parts to split the minute into."+
