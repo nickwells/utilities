@@ -259,6 +259,7 @@ func (prog *Prog) printAddCF(f io.Writer, dirs []string, funcName, cfgFName stri
 // printFuncEnd prints the common last lines of the function
 func printFuncEnd(f io.Writer) {
 	fmt.Fprint(f, `
+
 	return nil
 }
 `)
