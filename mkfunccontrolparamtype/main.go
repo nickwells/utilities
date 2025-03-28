@@ -110,9 +110,11 @@ func (prog *Prog) printIsValidFunc(f *os.File) {
 	fmt.Fprintf(f, "\tif v < %s {\n", prog.constNames[0])
 	fmt.Fprintf(f, "\t\treturn false\n")
 	fmt.Fprintln(f, "\t}")
+	fmt.Fprintln(f)
 	fmt.Fprintf(f, "\tif v > %s {\n", prog.constNames[len(prog.constNames)-1])
 	fmt.Fprintf(f, "\t\treturn false\n")
 	fmt.Fprintln(f, "\t}")
+	fmt.Fprintln(f)
 	fmt.Fprintf(f, "\treturn true\n")
 	fmt.Fprintln(f, "}")
 }
