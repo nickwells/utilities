@@ -6,6 +6,7 @@ import (
 
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/twrap.mod/twrap"
 )
 
 // Created: Sat Mar 21 11:18:36 2020
@@ -74,14 +75,20 @@ func (prog *Prog) printFile(f *os.File, ps *param.PSet) {
 func (prog *Prog) printTypeDeclaration(f *os.File) {
 	fullTypeName := prog.typeName + "Type"
 
-	fmt.Fprintf(f, "// %s %s\n", fullTypeName, prog.typeDesc)
-	fmt.Fprintf(f, "type %s int\n", fullTypeName)
+	twc := twrap.NewTWConfOrPanic(
+		twrap.SetWriter(f),
+		twrap.SetTargetLineLen(75))
+
+	fmt.Fprintln(f, "/*")
+	twc.Wrap(fullTypeName+" "+prog.typeDesc, 0)
+	fmt.Fprintln(f, "*/")
+	fmt.Fprintf(f, "type %s int\n\n", fullTypeName)
+
+	fmt.Fprintf(f, "// These constants are the allowed values of %s\n",
+		fullTypeName)
+	fmt.Fprintln(f, "const (")
 
 	suffix := " " + fullTypeName + " = iota"
-
-	fmt.Fprint(f, `
-const (
-`)
 
 	for _, v := range prog.constNames {
 		fmt.Fprintln(f, "\t"+v+suffix)
