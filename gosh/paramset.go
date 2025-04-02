@@ -11,7 +11,7 @@ import (
 // various parameters to the paramset). This is separated out from the
 // paramset creation so that it can be used in testing to create several
 // distinct paramsets.
-func paramOptFuncs(g *Gosh, slp *snippetListParams) []param.PSetOptFunc {
+func paramOptFuncs(g *gosh, slp *snippetListParams) []param.PSetOptFunc {
 	return []param.PSetOptFunc{
 		verbose.AddParams,
 		verbose.AddTimingParams(g.dbgStack),
@@ -59,6 +59,6 @@ func paramOptFuncs(g *Gosh, slp *snippetListParams) []param.PSetOptFunc {
 }
 
 // makeParamSet creates the parameter set ready for argument parsing
-func makeParamSet(g *Gosh, slp *snippetListParams) *param.PSet {
+func makeParamSet(g *gosh, slp *snippetListParams) *param.PSet {
 	return paramset.NewOrPanic(paramOptFuncs(g, slp)...)
 }

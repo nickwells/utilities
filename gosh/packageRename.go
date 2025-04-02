@@ -12,7 +12,7 @@ import (
 // It returns the edited content and any error. If the error is
 // not nil the returned string should not be used.
 func packageRename(fileName string) ([]byte, error) {
-	content, err := os.ReadFile(fileName)
+	content, err := os.ReadFile(fileName) //nolint:gosec
 	if err != nil {
 		return []byte{}, err
 	}

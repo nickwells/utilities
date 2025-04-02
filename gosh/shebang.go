@@ -11,7 +11,7 @@ const shebangGoshParam = "#gosh.param:"
 // initial line starting with '#!'. It returns the edited content and any
 // error. If the error is not nil the returned string should not be used.
 func shebangFileContents(fileName string) ([]byte, []byte, error) {
-	content, err := os.ReadFile(fileName)
+	content, err := os.ReadFile(fileName) //nolint:gosec
 	if err != nil {
 		return []byte{}, []byte{}, err
 	}

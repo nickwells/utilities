@@ -181,7 +181,7 @@ func makeShebangFileHelpText(sect string) string {
 // this is necessary otherwise we are passing the text value at the point the
 // PAF is being generated not at the point where the parameter value is
 // given.
-func snippetPAF(g *Gosh, sName *string, scriptName string) param.ActionFunc {
+func snippetPAF(g *gosh, sName *string, scriptName string) param.ActionFunc {
 	return func(_ location.L, _ *param.ByName, _ []string) error {
 		err := g.CacheSnippet(*sName)
 		if err != nil {
@@ -201,7 +201,7 @@ func snippetPAF(g *Gosh, sName *string, scriptName string) param.ActionFunc {
 // - this is necessary otherwise we are passing the text value at the point
 // the PAF is being generated not at the point where the parameter value is
 // given.
-func scriptPAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
+func scriptPAF(g *gosh, text *string, scriptName string) param.ActionFunc {
 	return func(_ location.L, _ *param.ByName, _ []string) error {
 		g.AddScriptEntry(scriptName, *text, verbatim)
 		return nil
@@ -210,7 +210,7 @@ func scriptPAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
 
 // stdinPAF generates the Post-Action func (PAF) that reads from os.Stdin and
 // adds the resulting text into the named script.
-func stdinPAF(g *Gosh, scriptName string) param.ActionFunc {
+func stdinPAF(g *gosh, scriptName string) param.ActionFunc {
 	return func(_ location.L, _ *param.ByName, _ []string) error {
 		g.AddScriptEntry(scriptName, "", readFromStdin)
 		return nil
@@ -223,15 +223,15 @@ func parseShebangConfig(loc location.L, p *param.ByName, config []byte) error {
 	f, err := os.CreateTemp("", "gosh-shebang-*.cfg")
 	if err != nil {
 		return fmt.Errorf(
-			"Could not create the temporary shebang config file: %w",
+			"could not create the temporary shebang config file: %w",
 			err)
 	}
-	defer os.Remove(f.Name())
+	defer os.Remove(f.Name()) //nolint:errcheck
 
 	_, err = f.Write(config)
 	if err != nil {
 		return fmt.Errorf(
-			"Could not write the temporary shebang config file: %w",
+			"could not write the temporary shebang config file: %w",
 			err)
 	}
 
@@ -247,7 +247,7 @@ func parseShebangConfig(loc location.L, p *param.ByName, config []byte) error {
 // - this is necessary otherwise we are passing the text value at the point
 // the PAF is being generated not at the point where the parameter value is
 // given.
-func shebangFilePAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
+func shebangFilePAF(g *gosh, text *string, scriptName string) param.ActionFunc {
 	return func(loc location.L, p *param.ByName, _ []string) error {
 		script, config, err := shebangFileContents(*text)
 		if err != nil {
@@ -272,7 +272,7 @@ func shebangFilePAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
 // - this is necessary otherwise we are passing the text value at the point
 // the PAF is being generated not at the point where the parameter value is
 // given.
-func packageFilePAF(g *Gosh, text *string, scriptName string) param.ActionFunc {
+func packageFilePAF(g *gosh, text *string, scriptName string) param.ActionFunc {
 	return func(_ location.L, _ *param.ByName, _ []string) error {
 		contents, err := packageFileContents(*text)
 		if err != nil {
@@ -316,7 +316,7 @@ func checkImports(v string) error {
 }
 
 // addSnippetParams will add the parameters in the "snippet" parameter group
-func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
+func addSnippetParams(g *gosh) func(ps *param.PSet) error {
 	checkStringNotEmpty := check.StringLength[string](check.ValGT(0))
 
 	return func(ps *param.PSet) error {
@@ -409,7 +409,7 @@ func addSnippetParams(g *Gosh) func(ps *param.PSet) error {
 }
 
 // addWebParams will add the parameters in the "web" parameter group
-func addWebParams(g *Gosh) func(ps *param.PSet) error {
+func addWebParams(g *gosh) func(ps *param.PSet) error {
 	checkStringNotEmpty := check.StringLength[string](check.ValGT(0))
 
 	return func(ps *param.PSet) error {
@@ -509,9 +509,9 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 			if len(g.scripts[execSect]) > 0 &&
 				g.httpHandler != dfltHTTPHandlerName {
 				return errors.New(
-					"You have provided an HTTP handler but also given" +
+					"you have provided an HTTP handler but also given" +
 						" lines of code to run. These lines of code will" +
-						" never run.")
+						" never run")
 			}
 
 			return nil
@@ -523,7 +523,7 @@ func addWebParams(g *Gosh) func(ps *param.PSet) error {
 
 // addReadloopParams will add the parameters in the "readloop" parameter
 // group
-func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
+func addReadloopParams(g *gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		var codeVal string
 
@@ -621,20 +621,20 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 		ps.AddFinalCheck(func() error {
 			if len(ps.Remainder()) == 0 && g.inPlaceEdit {
 				return fmt.Errorf(
-					"You have given the %q parameter but no filenames have"+
+					"you have given the %q parameter but no filenames have"+
 						" been given (they should be supplied following %q)",
 					"-"+paramNameInPlaceEdit, ps.TerminalParam())
 			}
 
 			if writeToIPEFile.HasBeenSet() && !g.inPlaceEdit {
 				return fmt.Errorf(
-					"You are writing to the file used when in-place editing"+
+					"you are writing to the file used when in-place editing"+
 						" (through one of the %q printing parameters)"+
 						" but you are not editing any files."+
 						"\n\n"+
 						"Give the %q parameter if you want to"+
 						" edit a file in-place or else write to standard"+
-						" output with a different printing parameter.",
+						" output with a different printing parameter",
 					"-"+paramNameWPrint, "-"+paramNameInPlaceEdit)
 			}
 
@@ -647,7 +647,7 @@ func addReadloopParams(g *Gosh) func(ps *param.PSet) error {
 
 // addStdinParams returns a func that will add parameters to the passed
 // ParamSet for specifying reading the code from stdin.
-func addStdinParams(g *Gosh) func(ps *param.PSet) error {
+func addStdinParams(g *gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		var stdinCount paction.Counter
 		commonOpts := []param.OptFunc{
@@ -722,7 +722,7 @@ func addStdinParams(g *Gosh) func(ps *param.PSet) error {
 }
 
 // addParams returns a func that will add parameters to the passed ParamSet
-func addParams(g *Gosh) func(ps *param.PSet) error {
+func addParams(g *gosh) func(ps *param.PSet) error {
 	checkStringNotEmpty := check.StringLength[string](check.ValGT(0))
 
 	return func(ps *param.PSet) error {
@@ -1161,7 +1161,7 @@ func addParams(g *Gosh) func(ps *param.PSet) error {
 
 // addGoshParams returns a function that adds the parameters which control
 // the behaviour of the gosh command rather than the program it generates.
-func addGoshParams(g *Gosh) func(ps *param.PSet) error {
+func addGoshParams(g *gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		ps.AddGroup(paramGroupNameGosh,
 			"parameters controlling the behaviour of the gosh command"+

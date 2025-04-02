@@ -43,19 +43,19 @@ const (
 	goshExitStatusRunFail
 )
 
-type expandFunc func(*Gosh, string) ([]string, error)
+type expandFunc func(*gosh, string) ([]string, error)
 
-// ScriptEntry holds the values describing what should be added to the
+// scriptEntry holds the values describing what should be added to the
 // script. The value can be either a snippet filename or else text to be
 // added verbatim; the expand func is set to handle these two cases
 // appropriately.
-type ScriptEntry struct {
+type scriptEntry struct {
 	expand expandFunc
 	value  string
 }
 
-// Gosh records all the details needed to build a Gosh program
-type Gosh struct {
+// gosh records all the details needed to build a gosh program
+type gosh struct {
 	preCheck bool
 
 	w           *os.File
@@ -64,7 +64,7 @@ type Gosh struct {
 
 	imports []string
 
-	scripts     map[string][]ScriptEntry
+	scripts     map[string][]scriptEntry
 	copyGoFiles []string
 
 	runInReadLoop bool
@@ -130,7 +130,7 @@ type Gosh struct {
 
 // CacheSnippet will cache the named snippet and copy any imports it requires
 // into the set of imports for the gosh script
-func (g *Gosh) CacheSnippet(sName string) error {
+func (g *gosh) CacheSnippet(sName string) error {
 	s, err := g.snippets.Add(g.snippetDirs, sName)
 	if err != nil {
 		return err
@@ -143,7 +143,7 @@ func (g *Gosh) CacheSnippet(sName string) error {
 
 // snippetExpand will return the snippet text. It also checks that the
 // snippet is being used in the correct order and returns an error if not.
-func snippetExpand(g *Gosh, sName string) ([]string, error) {
+func snippetExpand(g *gosh, sName string) ([]string, error) {
 	s, err := g.snippets.Get(sName)
 	if err != nil {
 		return nil, err
@@ -180,15 +180,15 @@ func addSnippetComment(script *[]string, message string) {
 
 // newGosh creates a new instance of the Gosh struct with all the initial
 // default values set correctly.
-func newGosh() *Gosh {
+func newGosh() *gosh {
 	cwd, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't get the working directory:", err)
 		os.Exit(goshExitStatusMisc)
 	}
 
-	g := &Gosh{
-		scripts: map[string][]ScriptEntry{
+	g := &gosh{
+		scripts: map[string][]scriptEntry{
 			globalSect:      {},
 			beforeSect:      {},
 			beforeInnerSect: {},
@@ -221,7 +221,7 @@ func newGosh() *Gosh {
 }
 
 // setDfltSnippetPath populates the snippetsDirs slice with the default value.
-func (g *Gosh) setDfltSnippetPath() {
+func (g *gosh) setDfltSnippetPath() {
 	snippetPath := []string{
 		"github.com",
 		"nickwells",
@@ -243,13 +243,13 @@ func (g *Gosh) setDfltSnippetPath() {
 
 // verbatim returns the passed string without any expansion. It is suitable
 // as a ScriptEntry expand func for code to be added directly to the file
-func verbatim(_ *Gosh, s string) ([]string, error) {
+func verbatim(_ *gosh, s string) ([]string, error) {
 	return []string{s}, nil
 }
 
 // AddScriptEntry adds the script entry to the named script. It panics if the
 // script name is invalid or the expandFunc is nil.
-func (g *Gosh) AddScriptEntry(sName, v string, ef expandFunc) {
+func (g *gosh) AddScriptEntry(sName, v string, ef expandFunc) {
 	s, ok := g.scripts[sName]
 	if !ok {
 		panic(fmt.Errorf("the script name is invalid: %q", sName))
@@ -259,16 +259,16 @@ func (g *Gosh) AddScriptEntry(sName, v string, ef expandFunc) {
 		panic(errors.New("the expansion function is nil"))
 	}
 
-	g.scripts[sName] = append(s, ScriptEntry{expand: ef, value: v})
+	g.scripts[sName] = append(s, scriptEntry{expand: ef, value: v})
 }
 
 // addError adds the error to the named error map entry
-func (g *Gosh) addError(name string, err error) {
+func (g *gosh) addError(name string, err error) {
 	g.errMap.AddError(name, err)
 }
 
 // checkScripts checks that not all the scripts are empty
-func (g *Gosh) checkScripts() {
+func (g *gosh) checkScripts() {
 	for _, s := range g.scripts {
 		if len(s) > 0 {
 			return
@@ -279,12 +279,12 @@ func (g *Gosh) checkScripts() {
 		return
 	}
 
-	g.addError("no code", errors.New("There is no code to run"))
+	g.addError("no code", errors.New("there is no code to run"))
 }
 
 // reportErrors checks if there are errors to report and if there are it
 // reports them and exits.
-func (g *Gosh) reportErrors() {
+func (g *gosh) reportErrors() {
 	if g.errMap.HasErrors() {
 		g.errMap.Report(os.Stderr, "gosh")
 		os.Exit(goshExitStatusMisc)
@@ -292,23 +292,23 @@ func (g *Gosh) reportErrors() {
 }
 
 // in increases the indent level by 1
-func (g *Gosh) in() {
+func (g *gosh) in() {
 	g.indent++
 }
 
 // out decreases the indent level by 1
-func (g *Gosh) out() {
+func (g *gosh) out() {
 	g.indent--
 }
 
 // indentStr returns a string to provide the current indent
-func (g *Gosh) indentStr() string {
+func (g *gosh) indentStr() string {
 	return strings.Repeat("\t", g.indent)
 }
 
 // comment returns the standard comment string explaining why the line is
 // in the generated code
-func (g *Gosh) comment(text string) string {
+func (g *gosh) comment(text string) string {
 	if !g.addComments {
 		return ""
 	}
@@ -375,7 +375,7 @@ var knownVarMap = varMap{
 // nameType looks up the name in knownVarMap and if it is found it will
 // return the name and type as a single string suitable for use as a variable
 // or parameter declaration
-func (g *Gosh) nameType(name string) string {
+func (g *gosh) nameType(name string) string {
 	vi, ok := knownVarMap[name]
 	if !ok {
 		panic(fmt.Errorf("%q is not in the map of known variables", name))
@@ -387,7 +387,7 @@ func (g *Gosh) nameType(name string) string {
 // gDecl declares a variable. The variable must be in the map of known
 // variables (which is used to provide a note for the usage message). The
 // declaration is indented and the Gosh comment is added
-func (g *Gosh) gDecl(name, initVal, tag string) {
+func (g *gosh) gDecl(name, initVal, tag string) {
 	fmt.Fprintln(g.w,
 		g.indentStr()+"var "+g.nameType(name)+initVal+g.comment(tag))
 }
@@ -430,7 +430,7 @@ func makeKnownVarList() string {
 }
 
 // gPrint prints the text with the appropriate indent and the Gosh comment
-func (g *Gosh) gPrint(s, tag string) {
+func (g *gosh) gPrint(s, tag string) {
 	if s == "" {
 		fmt.Fprintln(g.w)
 		return
@@ -441,18 +441,18 @@ func (g *Gosh) gPrint(s, tag string) {
 
 // gPrintErr prints a line that reports an error with the appropriate indent
 // and the Gosh comment
-func (g *Gosh) gPrintErr(s, tag string) {
+func (g *gosh) gPrintErr(s, tag string) {
 	fmt.Fprintln(g.w,
 		g.indentStr()+"fmt.Fprintf(os.Stderr, "+s+")"+g.comment(tag))
 }
 
 // print prints the text with the appropriate indent and no comment. This
 // should be used for user-supplied code
-func (g *Gosh) print(s string) {
+func (g *gosh) print(s string) {
 	fmt.Fprintln(g.w, g.indentStr()+s)
 }
 
 // printBlank prints a blank line with no comment.
-func (g *Gosh) printBlank() {
+func (g *gosh) printBlank() {
 	fmt.Fprintln(g.w)
 }

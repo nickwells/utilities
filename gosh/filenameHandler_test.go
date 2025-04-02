@@ -13,21 +13,21 @@ func TestPopulateFilesToRead(t *testing.T) {
 	type tcs struct {
 		testhelper.ID
 		files   []string
-		g       *Gosh
-		expGosh *Gosh
+		g       *gosh
+		expGosh *gosh
 	}
 
 	var testCases []tcs
 
 	{
-		var g *Gosh
+		var g *gosh
 
-		var eg *Gosh
+		var eg *gosh
 
 		noRemainder := []string{}
 
-		g = mkTestGosh(func(g *Gosh) { g.runInReadLoop = true })
-		eg = mkTestGosh(func(g *Gosh) { g.runInReadLoop = true })
+		g = mkTestGosh(func(g *gosh) { g.runInReadLoop = true })
+		eg = mkTestGosh(func(g *gosh) { g.runInReadLoop = true })
 
 		testCases = append(testCases, tcs{
 			ID:      testhelper.MkID("no remainder, run-in-readloop"),
@@ -38,17 +38,17 @@ func TestPopulateFilesToRead(t *testing.T) {
 	}
 
 	{
-		var g *Gosh
+		var g *gosh
 
-		var eg *Gosh
+		var eg *gosh
 
 		remainder := []string{testDataFile1}
 
-		g = mkTestGosh(func(g *Gosh) {
+		g = mkTestGosh(func(g *gosh) {
 			g.runInReadLoop = true
 			g.inPlaceEdit = true
 		})
-		eg = mkTestGosh(func(g *Gosh) {
+		eg = mkTestGosh(func(g *gosh) {
 			g.runInReadLoop = true
 			g.inPlaceEdit = true
 			g.filesToRead = true
@@ -64,16 +64,16 @@ func TestPopulateFilesToRead(t *testing.T) {
 	}
 
 	{
-		var g *Gosh
+		var g *gosh
 
-		var eg *Gosh
+		var eg *gosh
 
 		remainder := []string{testDataFile1, testDataFile1}
 
-		g = mkTestGosh(func(g *Gosh) {
+		g = mkTestGosh(func(g *gosh) {
 			g.runInReadLoop = true
 		})
-		eg = mkTestGosh(func(g *Gosh) {
+		eg = mkTestGosh(func(g *gosh) {
 			g.runInReadLoop = true
 			g.filesToRead = true
 			g.args = []string{testDataFile1}
@@ -92,17 +92,17 @@ func TestPopulateFilesToRead(t *testing.T) {
 	}
 
 	{
-		var g *Gosh
+		var g *gosh
 
-		var eg *Gosh
+		var eg *gosh
 
 		remainder := []string{testHasOrigFile}
 
-		g = mkTestGosh(func(g *Gosh) {
+		g = mkTestGosh(func(g *gosh) {
 			g.runInReadLoop = true
 			g.inPlaceEdit = true
 		})
-		eg = mkTestGosh(func(g *Gosh) {
+		eg = mkTestGosh(func(g *gosh) {
 			g.runInReadLoop = true
 			g.inPlaceEdit = true
 			g.addError("original file check",

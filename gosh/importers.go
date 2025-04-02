@@ -59,7 +59,7 @@ func importerPrograms() string {
 // findImporter will find the first available importer in the PATH. it
 // returns the importer, the full path and true if the importer is found,
 // empty values and false otherwise.
-func findImporter(g *Gosh) (Importer, string, bool) {
+func findImporter(g *gosh) (Importer, string, bool) {
 	defer g.dbgStack.Start("findImporter",
 		"Finding the import generating command")()
 

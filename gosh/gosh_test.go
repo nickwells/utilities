@@ -27,7 +27,7 @@ func TestComment(t *testing.T) {
 		},
 	}
 
-	g := &Gosh{}
+	g := &gosh{}
 	for _, tc := range testCases {
 		g.addComments = tc.addComments
 		comment := g.comment(tc.text)
@@ -38,33 +38,33 @@ func TestComment(t *testing.T) {
 func TestIndent(t *testing.T) {
 	testCases := []struct {
 		testhelper.ID
-		funcList  []func(*Gosh)
+		funcList  []func(*gosh)
 		expIndent string
 	}{
 		{
 			ID:        testhelper.MkID("<nil>"),
-			funcList:  []func(*Gosh){},
+			funcList:  []func(*gosh){},
 			expIndent: "",
 		},
 		{
 			ID:        testhelper.MkID("in"),
-			funcList:  []func(*Gosh){(*Gosh).in},
+			funcList:  []func(*gosh){(*gosh).in},
 			expIndent: "\t",
 		},
 		{
 			ID:        testhelper.MkID("in,out"),
-			funcList:  []func(*Gosh){(*Gosh).in, (*Gosh).out},
+			funcList:  []func(*gosh){(*gosh).in, (*gosh).out},
 			expIndent: "",
 		},
 		{
 			ID:        testhelper.MkID("in,in,out"),
-			funcList:  []func(*Gosh){(*Gosh).in, (*Gosh).in, (*Gosh).out},
+			funcList:  []func(*gosh){(*gosh).in, (*gosh).in, (*gosh).out},
 			expIndent: "\t",
 		},
 	}
 
 	for _, tc := range testCases {
-		g := &Gosh{}
+		g := &gosh{}
 		for _, f := range tc.funcList {
 			f(g)
 		}

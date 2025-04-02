@@ -6,7 +6,7 @@ import (
 )
 
 // populateEnv generates the environment for the generated program
-func (g *Gosh) populateEnv(env []string) []string {
+func (g *gosh) populateEnv(env []string) []string {
 	newEnv := []string{}
 
 	replace := map[string]string{

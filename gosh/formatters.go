@@ -41,7 +41,7 @@ func formatterCmds() string {
 // findFormatter will find the first available formatter in the PATH. it
 // returns the formatter, the full path and true if the formatter is found,
 // empty values and false otherwise.
-func findFormatter(g *Gosh) (Formatter, string, bool) {
+func findFormatter(g *gosh) (Formatter, string, bool) {
 	defer g.dbgStack.Start("findFormatter", "Finding the formatting command")()
 	intro := g.dbgStack.Tag()
 

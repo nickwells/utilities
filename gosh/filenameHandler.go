@@ -21,7 +21,7 @@ var origFileProvisos = filecheck.IsNew()
 // 'runInReadLoop' flag set then they are treated as files and added to the
 // filesToRead. Otherwise they are added to the list of args and that is
 // looped over instead.
-func (g *Gosh) HandleRemainder(ps *param.PSet, _ *location.L) {
+func (g *gosh) HandleRemainder(ps *param.PSet, _ *location.L) {
 	if g.runInReadLoop && !g.skipArgLoop {
 		g.populateFilesToRead(ps.Remainder())
 	} else {
@@ -38,7 +38,7 @@ func (g *Gosh) HandleRemainder(ps *param.PSet, _ *location.L) {
 // extension. If any of these conditions is not met it will report the error,
 // add it to the ErrMap and return.
 
-func (g *Gosh) populateFilesToRead(names []string) {
+func (g *gosh) populateFilesToRead(names []string) {
 	goodNames := make([]string, 0, len(names))
 	dupMap := make(map[string]int)
 

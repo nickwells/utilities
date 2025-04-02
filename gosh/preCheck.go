@@ -18,7 +18,7 @@ const (
 
 // PreCheck will test the availability of the various components that gosh
 // needs and make recommendations as to how to fix any missing components.
-func preCheck(g *Gosh) {
+func preCheck(g *gosh) {
 	if !g.preCheck {
 		return
 	}
@@ -96,7 +96,7 @@ func goCmdBad(twc *twrap.TWConf) bool {
 // potential remedies and returns true.
 //
 // It will skip the check if the dontPopulateImports flag is set.
-func importersBad(g *Gosh, twc *twrap.TWConf) bool {
+func importersBad(g *gosh, twc *twrap.TWConf) bool {
 	if g.dontPopulateImports {
 		return false
 	}
@@ -178,7 +178,7 @@ func importersBad(g *Gosh, twc *twrap.TWConf) bool {
 // available and all the directories can be searched it returns
 // false. Otherwise it reports the problem, describes potential remedies and
 // returns true.
-func snippetsBad(g *Gosh, twc *twrap.TWConf) bool {
+func snippetsBad(g *gosh, twc *twrap.TWConf) bool {
 	snippetCount := 0
 
 	var snippetErrs error
@@ -233,7 +233,7 @@ func countSnippets(depth int, dir string) (int, error) {
 	depth++
 	if depth > maxSnippetDepth {
 		return 0,
-			fmt.Errorf("The snippet directory %q is too deep (> %d levels)",
+			fmt.Errorf("the snippet directory %q is too deep (> %d levels)",
 				dir, maxSnippetDepth)
 	}
 

@@ -24,7 +24,7 @@ const (
 
 // writeScript writes the contents of the named script. It panics if the
 // script name is not found.
-func (g *Gosh) writeScript(scriptName string) {
+func (g *gosh) writeScript(scriptName string) {
 	script, ok := g.scripts[scriptName]
 	if !ok {
 		panic(fmt.Errorf("invalid script name: %q", scriptName))
@@ -69,7 +69,7 @@ func (g *Gosh) writeScript(scriptName string) {
 }
 
 // writeImports writes the import statements into the Go file
-func (g *Gosh) writeImports() {
+func (g *gosh) writeImports() {
 	if len(g.args) > 0 && !g.skipArgLoop {
 		g.imports = append(g.imports, "os")
 	}
@@ -96,7 +96,7 @@ func (g *Gosh) writeImports() {
 
 // writeArgsLoop writes the statements of the loop over the arguments
 // (if any) into the Go file
-func (g *Gosh) writeArgsLoop() {
+func (g *gosh) writeArgsLoop() {
 	tag := argTag
 
 	g.writeScript(beforeSect)
@@ -123,7 +123,7 @@ func (g *Gosh) writeArgsLoop() {
 
 // writeReadLoop writes the statements of the readloop
 // (if any) into the Go file
-func (g *Gosh) writeReadLoop() {
+func (g *gosh) writeReadLoop() {
 	tag := rlTag
 
 	g.gDecl("_fn", ` = "standard input"`, tag)
@@ -160,7 +160,7 @@ func (g *Gosh) writeReadLoop() {
 }
 
 // writeScanLoopOpen writes the code to open the loop reading from the scanner.
-func (g *Gosh) writeScanLoopOpen(tag string) {
+func (g *gosh) writeScanLoopOpen(tag string) {
 	g.gPrint("for _l.Scan() {", tag)
 	g.in()
 	g.gPrint("_fl++", tag)
@@ -172,7 +172,7 @@ func (g *Gosh) writeScanLoopOpen(tag string) {
 
 // writeScanLoopClose writes the code to close the loop reading from the
 // scanner.
-func (g *Gosh) writeScanLoopClose(tag string) {
+func (g *gosh) writeScanLoopClose(tag string) {
 	g.out()
 	g.gPrint("}", tag)
 	g.gPrint("if _err := _l.Err(); _err != nil {", tag)
@@ -183,7 +183,7 @@ func (g *Gosh) writeScanLoopClose(tag string) {
 }
 
 // writeFileLoopOpen writes the opening of the loop over the list of filenames.
-func (g *Gosh) writeFileLoopOpen(tag string) {
+func (g *gosh) writeFileLoopOpen(tag string) {
 	g.gPrint("for _, _fn = range os.Args[1:] {", tag)
 	{
 		g.in()
@@ -206,7 +206,7 @@ func (g *Gosh) writeFileLoopOpen(tag string) {
 
 // writeFileLoopClose writes the code to close the loop ranging over the file
 // names.
-func (g *Gosh) writeFileLoopClose(tag string) {
+func (g *gosh) writeFileLoopClose(tag string) {
 	g.gPrint(`_f.Close()`, tag)
 
 	g.writeInPlaceEditClose(tag + ipeSfx)
@@ -218,7 +218,7 @@ func (g *Gosh) writeFileLoopClose(tag string) {
 // writeInPlaceEditOpen writes the declaration and initialisation of the
 // writer used for in-place editing. It writes code to handle any errors
 // detected.
-func (g *Gosh) writeInPlaceEditOpen(tag string) {
+func (g *gosh) writeInPlaceEditOpen(tag string) {
 	if !g.inPlaceEdit {
 		return
 	}
@@ -277,7 +277,7 @@ func (g *Gosh) writeInPlaceEditOpen(tag string) {
 
 // writeInPlaceEditClose writes the code to complete the operation of the
 // in-place edit of the given files.
-func (g *Gosh) writeInPlaceEditClose(tag string) {
+func (g *gosh) writeInPlaceEditClose(tag string) {
 	if !g.inPlaceEdit {
 		return
 	}
@@ -301,7 +301,7 @@ func (g *Gosh) writeInPlaceEditClose(tag string) {
 
 // writeWebserverInit writes the webserver boilerplate code
 // (if any) into the Go file
-func (g *Gosh) writeWebserverInit() {
+func (g *gosh) writeWebserverInit() {
 	tag := webTag
 
 	g.writeScript(beforeSect)
@@ -321,7 +321,7 @@ func (g *Gosh) writeWebserverInit() {
 
 // httpHandlerInstance returns either the value of the httpHandler (or, if it
 // is still set to the default, an instance of that)
-func (g *Gosh) httpHandlerInstance() string {
+func (g *gosh) httpHandlerInstance() string {
 	if g.httpHandler != dfltHTTPHandlerName {
 		return g.httpHandler
 	}
@@ -331,7 +331,7 @@ func (g *Gosh) httpHandlerInstance() string {
 
 // writeWebserverHandler writes the webserver handler function
 // (if any) into the Go file
-func (g *Gosh) writeWebserverHandler() {
+func (g *gosh) writeWebserverHandler() {
 	if g.httpHandler != dfltHTTPHandlerName {
 		return
 	}
@@ -351,7 +351,7 @@ func (g *Gosh) writeWebserverHandler() {
 
 // defaultHandlerFuncDecl returns the func declaration for the default HTTP
 // Handler func
-func (g *Gosh) defaultHandlerFuncDecl() string {
+func (g *gosh) defaultHandlerFuncDecl() string {
 	return fmt.Sprintf("func (%s)ServeHTTP(%s, %s)",
 		dfltHTTPHandlerName,
 		g.nameType("_rw"),
@@ -360,7 +360,7 @@ func (g *Gosh) defaultHandlerFuncDecl() string {
 
 // writeGoFile creates the gosh.go file and writes its contents. It is run
 // from within the temp directory.
-func (g *Gosh) writeGoFile() {
+func (g *gosh) writeGoFile() {
 	defer g.dbgStack.Start("writeGoFile", "Writing the Go file")()
 	intro := g.dbgStack.Tag()
 
@@ -404,20 +404,20 @@ func (g *Gosh) writeGoFile() {
 }
 
 // writeMainOpen writes the opening of the main func.
-func (g *Gosh) writeMainOpen() {
+func (g *gosh) writeMainOpen() {
 	g.gPrint("", frameTag)
 	g.gPrint("func main() {", frameTag)
 	g.in()
 }
 
 // writeMainClose writes the closing of the main func.
-func (g *Gosh) writeMainClose() {
+func (g *gosh) writeMainClose() {
 	g.out()
 	g.gPrint("}", frameTag)
 }
 
 // writeGoshComment writes the introductory comment
-func (g *Gosh) writeGoshComment() {
+func (g *gosh) writeGoshComment() {
 	defer g.print(`// ` + equals)
 	g.print(`
 

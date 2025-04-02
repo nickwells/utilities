@@ -15,7 +15,7 @@ import (
 // setEditor sets the script editor to be used. If the editor is set but
 // cannot be found in the execution path then an error is added to the error
 // map.
-func (g *Gosh) setEditor() {
+func (g *gosh) setEditor() {
 	if !g.edit {
 		return
 	}
@@ -44,7 +44,7 @@ func (g *Gosh) setEditor() {
 		parts := strings.Fields(editor)
 		if parts[0] == editor {
 			g.addError("bad editor",
-				fmt.Errorf("Cannot find %s (source: %s): %w",
+				fmt.Errorf("cannot find %s (source: %s): %w",
 					editor, trialEditor.source, err))
 
 			continue
@@ -59,7 +59,7 @@ func (g *Gosh) setEditor() {
 		}
 
 		g.addError("bad editor",
-			fmt.Errorf("Cannot find %s (source: %s): %w",
+			fmt.Errorf("cannot find %s (source: %s): %w",
 				editor, trialEditor.source, err))
 
 		continue
@@ -74,14 +74,14 @@ func (g *Gosh) setEditor() {
 	intro := "    "
 
 	g.addError("no editor",
-		errors.New("No editor has been given."+
+		errors.New("no editor has been given."+
 			" Possible sources are:\n"+intro+
 			english.Join(sources, ",\n"+intro, "\n or ")+
 			",\nin that order."))
 }
 
 // editGoFile starts an editor to edit the program
-func (g *Gosh) editGoFile() {
+func (g *gosh) editGoFile() {
 	if !g.edit {
 		return
 	}

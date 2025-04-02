@@ -24,7 +24,7 @@ func TestPopulateEnv(t *testing.T) {
 	testCases := []struct {
 		testhelper.ID
 		env    []string
-		g      *Gosh
+		g      *gosh
 		expEnv []string
 	}{
 		{
@@ -34,7 +34,7 @@ func TestPopulateEnv(t *testing.T) {
 				bPre,
 				cPre,
 			},
-			g: &Gosh{
+			g: &gosh{
 				env:      []string{aPost},
 				clearEnv: true,
 				goshDir:  "somewhere",
@@ -52,7 +52,7 @@ func TestPopulateEnv(t *testing.T) {
 				bPre,
 				cPre,
 			},
-			g: &Gosh{
+			g: &gosh{
 				env:      []string{aPost},
 				goshDir:  "somewhere",
 				execName: "G",
@@ -71,7 +71,7 @@ func TestPopulateEnv(t *testing.T) {
 				bPre,
 				cPre,
 			},
-			g: &Gosh{
+			g: &gosh{
 				clearEnv: true,
 				goshDir:  "somewhere",
 				execName: "G",
@@ -87,7 +87,7 @@ func TestPopulateEnv(t *testing.T) {
 				bPre,
 				cPre,
 			},
-			g: &Gosh{
+			g: &gosh{
 				goshDir:  "somewhere",
 				execName: "G",
 			},
@@ -105,7 +105,7 @@ func TestPopulateEnv(t *testing.T) {
 				bPre,
 				cPre,
 			},
-			g: &Gosh{
+			g: &gosh{
 				env:      []string{newD},
 				clearEnv: true,
 				goshDir:  "somewhere",
@@ -123,7 +123,7 @@ func TestPopulateEnv(t *testing.T) {
 				bPre,
 				cPre,
 			},
-			g: &Gosh{
+			g: &gosh{
 				env:      []string{newD},
 				goshDir:  "somewhere",
 				execName: "G",

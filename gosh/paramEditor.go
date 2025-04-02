@@ -66,7 +66,7 @@ func (ap addPrint) Edit(paramName, paramVal string) (string, error) {
 	}
 
 	if ap.needsVal[paramName] && paramVal == "" {
-		return "", errors.New("The parameter value must not be empty")
+		return "", errors.New("the parameter value must not be empty")
 	}
 
 	return callName + paramVal + ")", nil

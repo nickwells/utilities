@@ -64,7 +64,7 @@ func main() {
 // listSnippets checks the snippet list parameters and lists the snippet
 // details accordingly. If any listing is done then the program will exit
 // after listing is complete.
-func listSnippets(g *Gosh, slp *snippetListParams) {
+func listSnippets(g *gosh, slp *snippetListParams) {
 	if !slp.listSnippets && !slp.listDirs {
 		return
 	}
@@ -91,7 +91,7 @@ func listSnippets(g *Gosh, slp *snippetListParams) {
 }
 
 // reportGoshfiles prints out the gosh directory and file names
-func (g *Gosh) reportGoshfiles() {
+func (g *gosh) reportGoshfiles() {
 	if g.goshDir == "" {
 		fmt.Println("There is no gosh directory")
 		return
@@ -106,7 +106,7 @@ func (g *Gosh) reportGoshfiles() {
 
 // cleanup removes the created program file, any module files and the
 // containing directory unless the dontClearFile flag is set
-func (g *Gosh) cleanup() {
+func (g *gosh) cleanup() {
 	defer g.dbgStack.Start("cleanup", "Cleaning-up the Go files")()
 	intro := g.dbgStack.Tag()
 
@@ -124,7 +124,7 @@ func (g *Gosh) cleanup() {
 
 // formatFile runs the formatter over the populated (and possibly edited)
 // program file
-func (g *Gosh) formatFile() {
+func (g *gosh) formatFile() {
 	if !g.formatCode {
 		return
 	}
@@ -159,7 +159,7 @@ func (g *Gosh) formatFile() {
 }
 
 // populateImports runs the importPopulator over the program file
-func (g *Gosh) populateImports() {
+func (g *gosh) populateImports() {
 	defer g.dbgStack.Start("populateImports",
 		"Setting imports for the Go file")()
 
@@ -204,7 +204,7 @@ func (g *Gosh) populateImports() {
 
 // chdirInto will attempt to chdir into the given directory and will exit if
 // it can't.
-func (g Gosh) chdirInto(dir string) {
+func (g gosh) chdirInto(dir string) {
 	defer g.dbgStack.Start("chdirInto", "cd'ing into "+dir)()
 
 	err := os.Chdir(dir)
@@ -214,7 +214,7 @@ func (g Gosh) chdirInto(dir string) {
 // createGoshTmpDir creates the temporary directory that gosh will use to
 // generate the program. It will change directory into this dir and create
 // the module files and any requested workplace
-func (g *Gosh) createGoshTmpDir() {
+func (g *gosh) createGoshTmpDir() {
 	defer g.dbgStack.Start("createGoshTmpDir", "Creating the gosh directory")()
 	intro := g.dbgStack.Tag()
 
@@ -232,7 +232,7 @@ func (g *Gosh) createGoshTmpDir() {
 }
 
 // makeExecutable runs go build to make the executable file
-func (g *Gosh) makeExecutable() bool {
+func (g *gosh) makeExecutable() bool {
 	defer g.dbgStack.Start("makeExecutable", "Building the program")()
 	intro := g.dbgStack.Tag()
 
@@ -255,7 +255,7 @@ func (g *Gosh) makeExecutable() bool {
 
 // runGoFile will call go build to generate the executable and then will run
 // it unless dontRun is set.
-func (g *Gosh) runGoFile() {
+func (g *gosh) runGoFile() {
 	defer g.dbgStack.Start("runGoFile", "Running the program")()
 	intro := g.dbgStack.Tag()
 
@@ -274,7 +274,7 @@ func (g *Gosh) runGoFile() {
 }
 
 // executeProgram executes the newly built executeProgram
-func (g *Gosh) executeProgram() {
+func (g *gosh) executeProgram() {
 	defer g.dbgStack.Start("executeProgram",
 		"Executing the program: "+g.execName)()
 
@@ -300,7 +300,7 @@ func (g *Gosh) executeProgram() {
 		var ec int
 
 		if ee, ok := err.(*exec.ExitError); ok {
-			ec = ee.ProcessState.ExitCode()
+			ec = ee.ExitCode()
 		}
 
 		switch {
@@ -320,7 +320,7 @@ func (g *Gosh) executeProgram() {
 
 // queryEditAgain will prompt the user asking if they want to edit the program
 // again and return true if they reply yes or false if not
-func (g *Gosh) queryEditAgain() bool {
+func (g *gosh) queryEditAgain() bool {
 	if !g.editRepeat {
 		return false
 	}
@@ -353,7 +353,7 @@ func (g *Gosh) queryEditAgain() bool {
 
 // constructGoProgram creates the Go file and then writes the code into the
 // file. Finally, it copies in any requested files.
-func (g *Gosh) constructGoProgram() {
+func (g *gosh) constructGoProgram() {
 	defer g.dbgStack.Start("constructGoProgram", "Constructing the program")()
 
 	g.createGoshTmpDir()
@@ -363,7 +363,7 @@ func (g *Gosh) constructGoProgram() {
 
 // copyFiles will read the files to be copied and write them into the gosh
 // directory with a guaranteed unique name.
-func (g *Gosh) copyFiles() {
+func (g *gosh) copyFiles() {
 	const copyFilePerms = 0o600 // Owner: Read/Write, the rest, no permissions
 
 	for i, fromName := range g.copyGoFiles {
@@ -383,7 +383,7 @@ func (g *Gosh) copyFiles() {
 
 // tidyModule runs go mod tidy after the file is fully constructed to
 // populate the go.mod and go.sum files
-func (g *Gosh) tidyModule() {
+func (g *gosh) tidyModule() {
 	defer g.dbgStack.Start("tidyModule", "Tidying & populating module files")()
 	intro := g.dbgStack.Tag()
 
@@ -407,7 +407,7 @@ func (g *Gosh) tidyModule() {
 }
 
 // initModule runs go mod init
-func (g *Gosh) initModule() {
+func (g *gosh) initModule() {
 	defer g.dbgStack.Start("initModule", "Initialising the module files")()
 	intro := g.dbgStack.Tag()
 
@@ -437,7 +437,7 @@ func (g *Gosh) initModule() {
 
 // initWorkspace initialises the workspace file if any workspace use values
 // have been given
-func (g *Gosh) initWorkspace() {
+func (g *gosh) initWorkspace() {
 	if len(g.workspace) == 0 {
 		return
 	}
@@ -459,7 +459,7 @@ func (g *Gosh) initWorkspace() {
 
 // reportFatalError will report the failure of the action if the err is
 // non-nil and will exit.
-func (g *Gosh) reportFatalError(action, name string, err error) {
+func (g *gosh) reportFatalError(action, name string, err error) {
 	if err == nil {
 		return
 	}
