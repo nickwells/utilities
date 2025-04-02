@@ -20,7 +20,7 @@ const (
 )
 
 // addActionParams adds the program parameters to the PSet
-func addActionParams(prog *Prog) param.PSetOptFunc {
+func addActionParams(prog *prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		ps.AddGroup(paramGroupNameActions,
 			"what to do when the sleeping finishes.")
@@ -83,7 +83,7 @@ func addActionParams(prog *Prog) param.PSetOptFunc {
 }
 
 // addParams adds the program parameters to the PSet
-func addParams(prog *Prog) param.PSetOptFunc {
+func addParams(prog *prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		ps.Add(paramNameRepeat, psetter.Bool{Value: &prog.repeat},
 			"repeatedly sleep. Sleep and then sleep again and again...",
@@ -110,7 +110,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 
 // addTimeParams adds the program parameters relating to specifying how
 // long to sleep for to the PSet
-func addTimeParams(prog *Prog) param.PSetOptFunc {
+func addTimeParams(prog *prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		ps.AddGroup(paramGroupNameTime, "specify how long to sleep for.")
 
@@ -263,9 +263,9 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 
 		ps.AddFinalCheck(func() error {
 			if needAbsTime && !hasAbsTime {
-				return errors.New("A location (timezone) has been specified" +
+				return errors.New("a location (timezone) has been specified" +
 					" for a time to be interpreted in but no time has been" +
-					" given.")
+					" given")
 			}
 
 			if !hasAbsTime {
@@ -274,8 +274,8 @@ func addTimeParams(prog *Prog) param.PSetOptFunc {
 
 			if prog.repeat {
 				return errors.New(
-					"You cannot give an absolute time and ask that the sleep" +
-						" should repeat.")
+					"you cannot give an absolute time and ask that the sleep" +
+						" should repeat")
 			}
 
 			var err error

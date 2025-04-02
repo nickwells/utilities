@@ -12,8 +12,8 @@ import (
 
 const dfltShowTimeFmt = "20060102.150405"
 
-// Prog holds program parameters and status
-type Prog struct {
+// prog holds program parameters and status
+type prog struct {
 	absTime time.Time
 
 	showTimeFmt   string
@@ -38,10 +38,9 @@ type Prog struct {
 	perMinute int64
 }
 
-// NewProg returns a new Prog instance with the default values set
-
-func NewProg() *Prog {
-	return &Prog{
+// newProg returns a new Prog instance with the default values set
+func newProg() *prog {
+	return &prog{
 		showTimeFmt: dfltShowTimeFmt,
 		doSleep:     true,
 		repeatCount: -1,
@@ -82,7 +81,7 @@ func sleepCalc(durationSecs, offsetSecs int64, now time.Time) time.Duration {
 
 // sleepToAbsTime parses the value of the absTime into a time in the given
 // timezone (Local if no value is given) and sleeps until that time
-func (prog *Prog) sleepToAbsTime() {
+func (prog *prog) sleepToAbsTime() {
 	now := time.Now()
 	if prog.useUTC {
 		now = now.UTC()
@@ -96,7 +95,7 @@ func (prog *Prog) sleepToAbsTime() {
 
 // runShellCmd will run the given command, if any, in a subshell. it will
 // check for errors and report them; it exits on any error
-func (prog *Prog) runShellCmd() {
+func (prog *prog) runShellCmd() {
 	if len(prog.afterSleepCmd) > 0 {
 		out, err := exec.Command("/bin/bash", "-c", //nolint:gosec
 			prog.afterSleepCmd).CombinedOutput()
@@ -110,7 +109,7 @@ func (prog *Prog) runShellCmd() {
 	}
 }
 
-func (prog *Prog) calcDurationSecs() int64 {
+func (prog *prog) calcDurationSecs() int64 {
 	if prog.timeSecs > 0 {
 		return prog.timeSecs
 	}
@@ -135,7 +134,7 @@ func (prog *Prog) calcDurationSecs() int64 {
 }
 
 func main() {
-	prog := NewProg()
+	prog := newProg()
 	ps := makeParamSet(prog)
 	ps.Parse()
 
@@ -166,7 +165,7 @@ func main() {
 
 // action will perform the actions that should happen after waking up from
 // the sleep
-func (prog *Prog) action() {
+func (prog *prog) action() {
 	if len(prog.msg) > 0 {
 		fmt.Println(prog.msg)
 	}
@@ -176,7 +175,7 @@ func (prog *Prog) action() {
 
 // finished returns true if the repeats of the sleep are complete, false
 // otherwise
-func (prog *Prog) finished() bool {
+func (prog *prog) finished() bool {
 	if !prog.repeat {
 		return true
 	}
@@ -193,7 +192,7 @@ func (prog *Prog) finished() bool {
 }
 
 // sleepToTarget sleeps for the specified duration
-func (prog *Prog) sleepToTarget(now time.Time, sleepFor time.Duration) {
+func (prog *prog) sleepToTarget(now time.Time, sleepFor time.Duration) {
 	if verbose.IsOn() {
 		format := "15:04:05.000000"
 
