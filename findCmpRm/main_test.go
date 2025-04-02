@@ -31,7 +31,7 @@ type filePairInfo struct {
 // setProg tests the setProg func and if it is not nil it will call it on the
 // prog variable. If the set function returns an error it is reported as
 // a fatal error
-func setProg(t *testing.T, name string, prog *Prog, setP func(*Prog) error) {
+func setProg(t *testing.T, name string, prog *prog, setP func(*prog) error) {
 	t.Helper()
 
 	if setP != nil {
@@ -59,7 +59,7 @@ func (fi *fileInfo) makeFile(name string) error {
 		return os.MkdirAll(name, perm)
 	}
 
-	f, err := os.Create(name)
+	f, err := os.Create(name) //nolint:gosec
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func makeTestDir(dir, extension string, fpInfo ...filePairInfo) error {
 // getFilesTestCleanup checks that the necessary function is present and runs
 // it, checking for errors. Any problem results in a Fatal test.
 func getFilesTestCleanup(t *testing.T, name string,
-	prog *Prog, post func(*Prog) error,
+	prog *prog, post func(*prog) error,
 ) {
 	t.Helper()
 
@@ -129,7 +129,7 @@ func getFilesTestCleanup(t *testing.T, name string,
 // getFilesTestSetup checks that the necessary functions are present and runs
 // them, checking for errors. Any problem results in a Fatal test.
 func getFilesTestSetup(t *testing.T, name string,
-	prog *Prog, pre func(*Prog) error,
+	prog *prog, pre func(*prog) error,
 ) {
 	t.Helper()
 
@@ -142,7 +142,7 @@ func getFilesTestSetup(t *testing.T, name string,
 }
 
 // setupFakeIO constructs a FakeIO and reports any errors
-func setupFakeIO(t *testing.T, prog *Prog, testname, testpart, input string,
+func setupFakeIO(t *testing.T, prog *prog, testname, testpart, input string,
 ) *testhelper.FakeIO {
 	t.Helper()
 
@@ -220,8 +220,8 @@ func TestGetFiles(t *testing.T) {
 
 	testCases := []struct {
 		testhelper.ID
-		setProg       func(prog *Prog) error
-		pre, post     func(prog *Prog) error
+		setProg       func(prog *prog) error
+		pre, post     func(prog *prog) error
 		expFilenames  []string
 		expDuplicates []string
 		expBadFiles   []badFile
@@ -234,7 +234,7 @@ func TestGetFiles(t *testing.T) {
 	}{
 		{
 			ID: testhelper.MkID("bad search directory"),
-			setProg: func(prog *Prog) error {
+			setProg: func(prog *prog) error {
 				prog.searchDir = filepath.Join("testdata", "nonesuch")
 				return nil
 			},
@@ -242,11 +242,11 @@ func TestGetFiles(t *testing.T) {
 		},
 		{
 			ID: testhelper.MkID("good search directory, with errors and dups"),
-			setProg: func(prog *Prog) error {
+			setProg: func(prog *prog) error {
 				prog.searchDir = tempTestDir
 				return nil
 			},
-			pre: func(prog *Prog) error {
+			pre: func(prog *prog) error {
 				return makeTestDir(prog.searchDir, prog.fileExtension,
 					filePairInfo{
 						name:           "f1",
@@ -332,12 +332,12 @@ func TestGetFiles(t *testing.T) {
 		},
 		{
 			ID: testhelper.MkID("good search directory, no recursive search"),
-			setProg: func(prog *Prog) error {
+			setProg: func(prog *prog) error {
 				prog.searchDir = tempTestDir
 				prog.searchSubDirs = false
 				return nil
 			},
-			pre: func(prog *Prog) error {
+			pre: func(prog *prog) error {
 				return makeTestDir(prog.searchDir, prog.fileExtension,
 					filePairInfo{
 						name:           "f1",
@@ -378,7 +378,7 @@ func TestGetFiles(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		prog := NewProg()
+		prog := newProg()
 		setProg(t, tc.IDStr(), prog, tc.setProg)
 
 		getFilesTestSetup(t, tc.IDStr(), prog, tc.pre)
@@ -455,7 +455,7 @@ func TestShortNames(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		prog := NewProg()
+		prog := newProg()
 		prog.searchDir = tc.searchDir
 		shortnames, maxLen := prog.shortNames(tc.names)
 		testhelper.DiffInt(t, tc.IDStr(), "maxLen", maxLen, tc.expMaxLen)
@@ -478,8 +478,8 @@ func TestProcessDuplicateFiles(t *testing.T) {
 		expFileCount int
 		expStdout    string
 		expStderr    string
-		pre, post    func(prog *Prog) error
-		setProg      func(prog *Prog) error
+		pre, post    func(prog *prog) error
+		setProg      func(prog *prog) error
 	}{
 		{
 			ID:           testhelper.MkID("do not delete dups"),
@@ -490,7 +490,7 @@ func TestProcessDuplicateFiles(t *testing.T) {
 		{
 			ID:       testhelper.MkID("delete dups"),
 			response: 'y',
-			setProg: func(prog *Prog) error {
+			setProg: func(prog *prog) error {
 				prog.status.dupFile.deleted = len(dupFiles)
 				return nil
 			},
@@ -499,7 +499,7 @@ func TestProcessDuplicateFiles(t *testing.T) {
 		{
 			ID:       testhelper.MkID("delete dups (fail)"),
 			response: 'y',
-			setProg: func(prog *Prog) error {
+			setProg: func(prog *prog) error {
 				prog.status.dupFile.delErrs = len(dupFiles)
 				return nil
 			},
@@ -512,11 +512,11 @@ func TestProcessDuplicateFiles(t *testing.T) {
 				"Couldn't delete the file:" +
 				" remove " + f3 + ": permission denied\n" +
 				"3 duplicate files could not be deleted\n\n",
-			pre: func(_ *Prog) error {
-				return os.Chmod(tempTestDir, 0o500)
+			pre: func(_ *prog) error {
+				return os.Chmod(tempTestDir, 0o500) //nolint:gosec
 			},
-			post: func(_ *Prog) error {
-				return os.Chmod(tempTestDir, 0o700)
+			post: func(_ *prog) error {
+				return os.Chmod(tempTestDir, 0o700) //nolint:gosec
 			},
 		},
 	}
@@ -544,12 +544,12 @@ func TestProcessDuplicateFiles(t *testing.T) {
 			t.Fatal("\t: unexpected makeTestDir error: ", err)
 		}
 
-		prog := NewProg()
+		prog := newProg()
 		prog.searchDir = tempTestDir
 		prog.deleteDupR = responder.FixedResponse{Response: tc.response}
 		prog.status.dupFile.total = len(dupFiles)
 
-		expProg := NewProg()
+		expProg := newProg()
 		expProg.searchDir = tempTestDir
 		expProg.status.dupFile.total = len(dupFiles)
 		setProg(t, tc.IDStr(), expProg, tc.setProg)
@@ -607,18 +607,18 @@ func TestProcessComparableFiles(t *testing.T) {
 	testCases := []struct {
 		testhelper.ID
 		response     rune
-		expProg      *Prog
+		expProg      *prog
 		expFileCount int
 		expStdout    string
 		expStderr    string
-		pre, post    func(prog *Prog) error
-		setProg      func(prog *Prog) error
+		pre, post    func(prog *prog) error
+		setProg      func(prog *prog) error
 	}{
 		{
 			ID:       testhelper.MkID("do not compare files"),
 			response: 'n',
-			expProg: func() *Prog {
-				prog := NewProg()
+			expProg: func() *prog {
+				prog := newProg()
 				prog.status.cmpFile.total = len(cmpFiles)
 				return prog
 			}(),
@@ -630,11 +630,11 @@ func TestProcessComparableFiles(t *testing.T) {
 		{
 			ID:       testhelper.MkID("delete all files"),
 			response: 'd',
-			expProg: func() *Prog {
-				prog := NewProg()
+			expProg: func() *prog {
+				prog := newProg()
 				prog.status.cmpFile.total = len(cmpFiles)
 				prog.status.cmpFile.deleted = len(cmpFiles)
-				prog.cmpAction = CADeleteAll
+				prog.cmpAction = caDeleteAll
 				return prog
 			}(),
 			expStdout: "    (1 / 3) f1.orig: \n\n",
@@ -642,11 +642,11 @@ func TestProcessComparableFiles(t *testing.T) {
 		{
 			ID:       testhelper.MkID("revert all files"),
 			response: 'r',
-			expProg: func() *Prog {
-				prog := NewProg()
+			expProg: func() *prog {
+				prog := newProg()
 				prog.status.cmpFile.total = len(cmpFiles)
 				prog.status.cmpFile.reverted = len(cmpFiles)
-				prog.cmpAction = CARevertAll
+				prog.cmpAction = caRevertAll
 				return prog
 			}(),
 			expStdout: "    (1 / 3) f1.orig: \n\n",
@@ -654,10 +654,10 @@ func TestProcessComparableFiles(t *testing.T) {
 		{
 			ID:       testhelper.MkID("keep all files"),
 			response: 'q',
-			expProg: func() *Prog {
-				prog := NewProg()
+			expProg: func() *prog {
+				prog := newProg()
 				prog.status.cmpFile.total = len(cmpFiles)
-				prog.cmpAction = CAKeepAll
+				prog.cmpAction = caKeepAll
 				return prog
 			}(),
 			expFileCount: len(cmpFiles),
@@ -667,12 +667,12 @@ func TestProcessComparableFiles(t *testing.T) {
 		{
 			ID:       testhelper.MkID("diff all files (failing)"),
 			response: 'y',
-			setProg: func(prog *Prog) error {
+			setProg: func(prog *prog) error {
 				prog.diff.name = nosuchDiff
 				return nil
 			},
-			expProg: func() *Prog {
-				prog := NewProg()
+			expProg: func() *prog {
+				prog := newProg()
 				prog.status.cmpFile.total = len(cmpFiles)
 				prog.status.cmpFile.cmpErrs = len(cmpFiles)
 				prog.diff.name = nosuchDiff
@@ -729,7 +729,7 @@ func TestProcessComparableFiles(t *testing.T) {
 			t.Fatal("\t: unexpected makeTestDir error: ", err)
 		}
 
-		prog := NewProg()
+		prog := newProg()
 		prog.searchDir = tempTestDir
 		prog.showDiffR = responder.FixedResponse{Response: tc.response}
 		prog.status.cmpFile.total = len(cmpFiles)

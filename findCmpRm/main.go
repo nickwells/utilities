@@ -28,32 +28,36 @@ const (
 	filenameIndent = 8
 )
 
-type DupAction string
+// dupAction records the action to perform on a duplicate file
+type dupAction string
 
+// these constants represent the allowed values of a dupAction variable
 const (
-	DADelete = DupAction("delete")
-	DAQuery  = DupAction("query")
-	DAKeep   = DupAction("keep")
+	daDelete = dupAction("delete")
+	daQuery  = dupAction("query")
+	daKeep   = dupAction("keep")
 )
 
-type CmpAction string
+// cmpAction records the action to perform on a comparable file
+type cmpAction string
 
+// these constants represent the allowed values of a cmpAction variable
 const (
-	CAShowDiff  = CmpAction("show-diffs")
-	CAQuery     = CmpAction("query")
-	CAKeepAll   = CmpAction("keep-all")
-	CADeleteAll = CmpAction("delete-all")
-	CARevertAll = CmpAction("revert-all")
+	caShowDiff  = cmpAction("show-diffs")
+	caQuery     = cmpAction("query")
+	caKeepAll   = cmpAction("keep-all")
+	caDeleteAll = cmpAction("delete-all")
+	caRevertAll = cmpAction("revert-all")
 )
 
-// CmdInfo records the command name and the parameters to be supplied
-type CmdInfo struct {
+// cmdInfo records the command name and the parameters to be supplied
+type cmdInfo struct {
 	name   string
 	params []string
 }
 
-// Prog holds program parameters and status
-type Prog struct {
+// prog holds program parameters and status
+type prog struct {
 	stack *verbose.Stack
 
 	// parameters
@@ -61,15 +65,15 @@ type Prog struct {
 	searchSubDirs bool
 	fileExtension string
 
-	diff CmdInfo
-	less CmdInfo
+	diff cmdInfo
+	less cmdInfo
 
 	showDiffR  responder.Responder
 	deleteDupR responder.Responder
 	postDiffR  responder.Responder
 
-	dupAction DupAction
-	cmpAction CmpAction
+	dupAction dupAction
+	cmpAction cmpAction
 
 	// display
 	twc    *twrap.TWConf
@@ -79,20 +83,20 @@ type Prog struct {
 	status Status
 }
 
-// NewProg returns a new Prog instance with the default values set
-func NewProg() *Prog {
-	return &Prog{
+// newProg returns a new Prog instance with the default values set
+func newProg() *prog {
+	return &prog{
 		stack: &verbose.Stack{},
 
 		searchDir:     dfltDir,
 		searchSubDirs: true,
 		fileExtension: dfltExtension,
 
-		diff: CmdInfo{name: dfltDiffCmd},
-		less: CmdInfo{name: dfltLessCmd},
+		diff: cmdInfo{name: dfltDiffCmd},
+		less: cmdInfo{name: dfltLessCmd},
 
-		dupAction: DAQuery,
-		cmpAction: CAQuery,
+		dupAction: daQuery,
+		cmpAction: caQuery,
 
 		twc: twrap.NewTWConfOrPanic(),
 
@@ -101,7 +105,7 @@ func NewProg() *Prog {
 }
 
 // setResponders sets the responders on the Prog
-func (prog *Prog) setResponders() {
+func (prog *prog) setResponders() {
 	prog.showDiffR = responder.NewOrPanic(
 		"Show differences",
 		map[rune]string{
@@ -143,7 +147,7 @@ type badFile struct {
 }
 
 func main() {
-	prog := NewProg()
+	prog := newProg()
 	ps := makeParamSet(prog)
 
 	ps.Parse()
@@ -174,7 +178,7 @@ func main() {
 
 // shortNames returns a list of filenames with the search directory name
 // removed. It also returns the maximum length of the names
-func (prog Prog) shortNames(filenames []string) ([]string, int) {
+func (prog prog) shortNames(filenames []string) ([]string, int) {
 	shortNames := make([]string, 0, len(filenames))
 	maxLen := 0
 
@@ -192,7 +196,7 @@ func (prog Prog) shortNames(filenames []string) ([]string, int) {
 }
 
 // showBadFiles displays the list of files for which problems were detected
-func (prog *Prog) showBadFiles(badFiles []badFile) {
+func (prog *prog) showBadFiles(badFiles []badFile) {
 	if len(badFiles) == 0 {
 		return
 	}
@@ -224,7 +228,7 @@ func (prog *Prog) showBadFiles(badFiles []badFile) {
 
 // showDuplicateFiles displays the list of duplicate files and prompts the user
 // to delete them
-func (prog *Prog) showDuplicateFiles(dupFiles []string) {
+func (prog *prog) showDuplicateFiles(dupFiles []string) {
 	if len(dupFiles) == 0 {
 		return
 	}
@@ -241,7 +245,7 @@ func (prog *Prog) showDuplicateFiles(dupFiles []string) {
 
 // processDuplicateFiles checks the duplicate action and then either deletes
 // all the duplicates, keeps them all or queries the user.
-func (prog *Prog) processDuplicateFiles(dupFiles []string) {
+func (prog *prog) processDuplicateFiles(dupFiles []string) {
 	if len(dupFiles) == 0 {
 		return
 	}
@@ -249,9 +253,9 @@ func (prog *Prog) processDuplicateFiles(dupFiles []string) {
 	defer prog.stack.Start("processDuplicateFiles", "Start")()
 
 	switch prog.dupAction {
-	case DADelete:
+	case daDelete:
 		prog.deleteAllFiles(dupFiles, &prog.status.dupFile)
-	case DAQuery:
+	case daQuery:
 		if prog.queryDeleteDuplicates() == 'y' {
 			prog.deleteAllFiles(dupFiles, &prog.status.dupFile)
 		}
@@ -263,7 +267,7 @@ func (prog *Prog) processDuplicateFiles(dupFiles []string) {
 // showComparableFiles loops over the files prompting the user to compare
 // each one with the new instance and then asking if the file should be
 // deleted or the new file reverted.
-func (prog *Prog) showComparableFiles(cmpFiles []string) {
+func (prog *prog) showComparableFiles(cmpFiles []string) {
 	if len(cmpFiles) == 0 {
 		return
 	}
@@ -285,7 +289,7 @@ func (prog *Prog) showComparableFiles(cmpFiles []string) {
 // corresponding other. One of the choices of action is to delete all the
 // files, to revert them to their original state or to keep both members of
 // the pair.
-func (prog *Prog) processComparableFiles(cmpFiles []string) {
+func (prog *prog) processComparableFiles(cmpFiles []string) {
 	if len(cmpFiles) == 0 {
 		return
 	}
@@ -304,23 +308,23 @@ loop:
 		nameNew := strings.TrimSuffix(nameOrig, prog.fileExtension)
 
 		switch prog.cmpAction {
-		case CAQuery:
+		case caQuery:
 			fmt.Printf(nameFormat, i+1, len(cmpFiles), shortNames[i])
 			if prog.queryShowDiff() {
 				prog.showDiff(nameOrig, nameNew, &prog.status.cmpFile)
 			}
-		case CAShowDiff:
+		case caShowDiff:
 			fmt.Printf(nameFormat, i+1, len(cmpFiles), shortNames[i])
 			prog.showDiff(nameOrig, nameNew, &prog.status.cmpFile)
 		}
 
 		// queryShowDiff can change the value of prog.cmpAction so switch again
 		switch prog.cmpAction {
-		case CARevertAll:
+		case caRevertAll:
 			prog.revertFile(nameOrig, nameNew, &prog.status.cmpFile)
-		case CADeleteAll:
+		case caDeleteAll:
 			prog.deleteFile(nameOrig, &prog.status.cmpFile)
-		case CAKeepAll:
+		case caKeepAll:
 			filesRemaining := len(cmpFiles) - i
 			reportFiles(filesRemaining, "comparable", "kept")
 			break loop
@@ -346,7 +350,7 @@ func fileContentsDiffer(f1, f2 []byte) bool {
 
 // queryDeleteDuplicates returns true if the user responds that the
 // duplicates should be deleted
-func (prog *Prog) queryDeleteDuplicates() rune {
+func (prog *prog) queryDeleteDuplicates() rune {
 	response := prog.deleteDupR.GetResponseIndentOrDie(0, prog.indent)
 
 	fmt.Println()
@@ -356,7 +360,7 @@ func (prog *Prog) queryDeleteDuplicates() rune {
 
 // showDiff shows the differences between the new file and the original and
 // then queries for further actions.
-func (prog *Prog) showDiff(nameOrig, nameNew string, counts *Counts) {
+func (prog *prog) showDiff(nameOrig, nameNew string, counts *Counts) {
 	err := prog.diffs(nameOrig, nameNew)
 	if err != nil {
 		prog.twc.Wrap(fmt.Sprintf("Error: %v", err), prog.indent)
@@ -374,7 +378,7 @@ func (prog *Prog) showDiff(nameOrig, nameNew string, counts *Counts) {
 // queryShowDiff asks if the differences between the new file and the
 // original should be shown and then acts accordingly, reporting any errors
 // found.
-func (prog *Prog) queryShowDiff() bool {
+func (prog *prog) queryShowDiff() bool {
 	response := prog.showDiffR.GetResponseIndentOrDie(0, prog.indent)
 
 	fmt.Println()
@@ -396,26 +400,26 @@ func (prog *Prog) queryShowDiff() bool {
 }
 
 // setRevertAll sets the comparison action to Revert-All
-func (prog *Prog) setRevertAll() {
+func (prog *prog) setRevertAll() {
 	prog.verboseMsg("Reverting all...")
-	prog.cmpAction = CARevertAll
+	prog.cmpAction = caRevertAll
 }
 
 // setDeleteAll sets the comparison action to Delete-All
-func (prog *Prog) setDeleteAll() {
+func (prog *prog) setDeleteAll() {
 	prog.verboseMsg("Deleting all...")
-	prog.cmpAction = CADeleteAll
+	prog.cmpAction = caDeleteAll
 }
 
 // setKeepAll sets the comparison action to Keep-All
-func (prog *Prog) setKeepAll() {
+func (prog *prog) setKeepAll() {
 	prog.verboseMsg("All remaining files will be kept...")
-	prog.cmpAction = CAKeepAll
+	prog.cmpAction = caKeepAll
 }
 
 // queryDeleteFile asks if the file should be deleted and then acts
 // accordingly, reporting any errors found.
-func (prog *Prog) queryDeleteFile(nameOrig, nameNew string) {
+func (prog *prog) queryDeleteFile(nameOrig, nameNew string) {
 	response := prog.postDiffR.GetResponseIndentOrDie(prog.indent, prog.indent)
 
 	fmt.Println()
@@ -431,7 +435,7 @@ func (prog *Prog) queryDeleteFile(nameOrig, nameNew string) {
 }
 
 // deleteAllFiles deletes all of the given files
-func (prog *Prog) deleteAllFiles(filenames []string, count *Counts) {
+func (prog *prog) deleteAllFiles(filenames []string, count *Counts) {
 	for _, fName := range filenames {
 		prog.deleteFile(fName, count)
 	}
@@ -441,7 +445,7 @@ func (prog *Prog) deleteAllFiles(filenames []string, count *Counts) {
 }
 
 // deleteFile deletes the named file, reporting any errors
-func (prog *Prog) deleteFile(name string, counts *Counts) {
+func (prog *prog) deleteFile(name string, counts *Counts) {
 	prog.verboseMsg("Deleting " + name + "...")
 
 	err := os.Remove(name)
@@ -462,7 +466,7 @@ func (prog *Prog) deleteFile(name string, counts *Counts) {
 
 // revertFile reverts the file to its original contents, reporting any
 // errors.
-func (prog *Prog) revertFile(nameOrig, nameNew string, counts *Counts) {
+func (prog *prog) revertFile(nameOrig, nameNew string, counts *Counts) {
 	prog.verboseMsg("Reverting " + nameNew + " to " + nameOrig + "...")
 
 	err := os.Rename(nameOrig, nameNew)
@@ -493,7 +497,7 @@ func reportFiles(count int, desc, action string) {
 }
 
 // verboseMsg Wraps the message if verbose messaging is on
-func (prog Prog) verboseMsg(msg string) {
+func (prog prog) verboseMsg(msg string) {
 	if verbose.IsOn() {
 		prog.twc.Wrap(msg, prog.indent)
 	}
@@ -501,7 +505,7 @@ func (prog Prog) verboseMsg(msg string) {
 
 // diffs runs a diff command against the two filenames and pipes the
 // output to less
-func (prog Prog) diffs(nameOrig, nameNew string) error {
+func (prog prog) diffs(nameOrig, nameNew string) error {
 	// create the commands
 	dcp := prog.diff.params
 	dcp = append(dcp, nameOrig, nameNew)
@@ -556,7 +560,7 @@ func (prog Prog) diffs(nameOrig, nameNew string) error {
 // those files where there is a corresponding file without the extension,
 // those where the corresponding file is identical and those for which there
 // is some error.
-func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
+func (prog prog) makeFileLists(entries map[string]os.FileInfo) (
 	filenames, duplicates []string, badFiles []badFile,
 ) {
 	filenames = make([]string, 0, len(entries))
@@ -597,7 +601,7 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 			continue
 		}
 
-		newContent, err := os.ReadFile(nameNew)
+		newContent, err := os.ReadFile(nameNew) //nolint:gosec
 		if err != nil {
 			badFiles = append(badFiles,
 				badFile{
@@ -608,7 +612,7 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 			continue
 		}
 
-		origContent, err := os.ReadFile(nameOrig)
+		origContent, err := os.ReadFile(nameOrig) //nolint:gosec
 		if err != nil {
 			badFiles = append(badFiles,
 				badFile{
@@ -639,7 +643,7 @@ func (prog Prog) makeFileLists(entries map[string]os.FileInfo) (
 
 // getFiles finds all the regular files in the directory with the given
 // extension
-func (prog Prog) getFiles() (
+func (prog prog) getFiles() (
 	filenames, duplicates []string, badFiles []badFile, errs []error,
 ) {
 	findFunc := dirsearch.Find

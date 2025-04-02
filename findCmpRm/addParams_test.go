@@ -14,12 +14,12 @@ import (
 // cmpProgStruct compares the value with the expected value and returns
 // an error if they differ
 func cmpProgStruct(iVal, iExpVal any) error {
-	val, ok := iVal.(*Prog)
+	val, ok := iVal.(*prog)
 	if !ok {
 		return errors.New("Bad value: not a pointer to a Prog struct")
 	}
 
-	expVal, ok := iExpVal.(*Prog)
+	expVal, ok := iExpVal.(*prog)
 	if !ok {
 		return errors.New("Bad expected value: not a pointer to a Prog struct")
 	}
@@ -31,16 +31,16 @@ func cmpProgStruct(iVal, iExpVal any) error {
 // the testcases.
 func mkTestParser(
 	errs errutil.ErrMap, id testhelper.ID,
-	progSetter func(prog *Prog),
+	progSetter func(prog *prog),
 	preFunc, postFunc func() error,
 	args ...string,
 ) paramtest.Parser {
-	actVal := NewProg()
+	actVal := newProg()
 	ps := paramset.NewNoHelpNoExitNoErrRptOrPanic(
 		addParams(actVal),
 	)
 
-	expVal := NewProg()
+	expVal := newProg()
 	if progSetter != nil {
 		progSetter(expVal)
 	}
@@ -84,8 +84,8 @@ func TestParseParamsCmdProg(t *testing.T) {
 	{
 		testCases = append(testCases,
 			mkTestParser(nil, testhelper.MkID("good: cmp-action"),
-				func(prog *Prog) { prog.cmpAction = CAKeepAll }, nil, nil,
-				"-"+paramNameCmpAction, string(CAKeepAll)))
+				func(prog *prog) { prog.cmpAction = caKeepAll }, nil, nil,
+				"-"+paramNameCmpAction, string(caKeepAll)))
 	}
 	{
 		parseErrs := errutil.ErrMap{}
@@ -103,15 +103,15 @@ func TestParseParamsCmdProg(t *testing.T) {
 	{
 		testCases = append(testCases,
 			mkTestParser(nil, testhelper.MkID("good: dup-action"),
-				func(prog *Prog) { prog.dupAction = DAKeep }, nil, nil,
-				"-"+paramNameDupAction, string(DAKeep)))
+				func(prog *prog) { prog.dupAction = daKeep }, nil, nil,
+				"-"+paramNameDupAction, string(daKeep)))
 	}
 	{
 		const tmpDirTest = "_tmpdir.test"
 
 		testCases = append(testCases,
 			mkTestParser(nil, testhelper.MkID("good: dir"),
-				func(prog *Prog) { prog.searchDir = tmpDirTest },
+				func(prog *prog) { prog.searchDir = tmpDirTest },
 				func() error { return os.Mkdir(tmpDirTest, 0o700) },
 				func() error { return os.Remove(tmpDirTest) },
 				"-"+paramNameDir, tmpDirTest))
@@ -134,13 +134,13 @@ func TestParseParamsCmdProg(t *testing.T) {
 	{
 		testCases = append(testCases,
 			mkTestParser(nil, testhelper.MkID("good: dont-recurse"),
-				func(prog *Prog) { prog.searchSubDirs = false }, nil, nil,
+				func(prog *prog) { prog.searchSubDirs = false }, nil, nil,
 				"-"+paramNameNoRecurse))
 	}
 	{
 		testCases = append(testCases,
 			mkTestParser(nil, testhelper.MkID("good: extension"),
-				func(prog *Prog) { prog.fileExtension = ".pre" }, nil, nil,
+				func(prog *prog) { prog.fileExtension = ".pre" }, nil, nil,
 				"-"+paramNameExtension, ".pre"))
 	}
 	{

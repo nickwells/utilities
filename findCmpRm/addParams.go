@@ -18,7 +18,7 @@ const (
 )
 
 // addParams will add parameters to the passed ParamSet
-func addParams(prog *Prog) param.PSetOptFunc {
+func addParams(prog *prog) param.PSetOptFunc {
 	const (
 		exampleFileName = "F"
 		exampleOrigName = exampleFileName + dfltExtension
@@ -69,18 +69,18 @@ func addParams(prog *Prog) param.PSetOptFunc {
 			param.PostAction(
 				paction.SetVal(
 					(*string)(&prog.dupAction),
-					string(DADelete))),
+					string(daDelete))),
 		)
 
 		ps.Add(paramNameDupAction, psetter.Enum[string]{
 			Value: (*string)(&prog.dupAction),
 			AllowedVals: psetter.AllowedVals[string]{
-				string(DADelete): "delete all duplicate files" +
+				string(daDelete): "delete all duplicate files" +
 					" without prompting" +
 					" (" + duplicateAction + ")",
-				string(DAQuery): "show all duplicate files and" +
+				string(daQuery): "show all duplicate files and" +
 					" prompt to see what to do with them",
-				string(DAKeep): "keep all duplicate files" +
+				string(daKeep): "keep all duplicate files" +
 					" without prompting",
 			},
 		}, "what action should be performed with duplicate files",
@@ -92,17 +92,17 @@ func addParams(prog *Prog) param.PSetOptFunc {
 			psetter.Enum[string]{
 				Value: (*string)(&prog.cmpAction),
 				AllowedVals: psetter.AllowedVals[string]{
-					string(CAShowDiff): "show file differences" +
+					string(caShowDiff): "show file differences" +
 						" without prompting",
-					string(CAQuery): "prompt to show differences" +
+					string(caQuery): "prompt to show differences" +
 						" (the default action)",
-					string(CAKeepAll): "keep all comparable files" +
+					string(caKeepAll): "keep all comparable files" +
 						" without prompting",
-					string(CADeleteAll): "delete all comparable files with" +
+					string(caDeleteAll): "delete all comparable files with" +
 						" the given extension" +
 						" (" + dfltExtension + " by default)" +
 						" without prompting",
-					string(CARevertAll): "revert all comparable files back to" +
+					string(caRevertAll): "revert all comparable files back to" +
 						" the contents of the file with" +
 						" the given extension" +
 						" (" + dfltExtension + " by default)" +

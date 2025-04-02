@@ -80,7 +80,7 @@ func TestStatusReport(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		gfc.Check(t, tc.IDStr()+" [stdout]", tc.ID.Name+"-stdout", stdout)
-		gfc.Check(t, tc.IDStr()+" [stderr]", tc.ID.Name+"-stderr", stderr)
+		gfc.Check(t, tc.IDStr()+" [stdout]", tc.Name+"-stdout", stdout)
+		gfc.Check(t, tc.IDStr()+" [stderr]", tc.Name+"-stderr", stderr)
 	}
 }
