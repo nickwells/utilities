@@ -38,7 +38,8 @@ const (
 	dfltDirPerms = 0o755 // User: Read/Write/Search, the rest: Read/Search
 )
 
-type Prog struct {
+// prog holds program data and parameter values
+type prog struct {
 	fromDir string
 	toDir   string
 	action  string
@@ -57,9 +58,9 @@ type Prog struct {
 	targetSnippets sSet
 }
 
-// NewProg creates an initialised Prog struct
-func NewProg() *Prog {
-	return &Prog{
+// newProg creates an initialised Prog struct
+func newProg() *prog {
+	return &prog{
 		action:     cmpAction,
 		maxSubDirs: dfltMaxSubDirs,
 
@@ -73,7 +74,7 @@ func NewProg() *Prog {
 
 // getFileSystems populates the source and target file systems and gets their
 // content
-func (prog *Prog) getFileSystems() {
+func (prog *prog) getFileSystems() {
 	prog.createTargetFS()
 
 	if prog.fromDir != "" {
@@ -93,7 +94,7 @@ func (prog *Prog) getFileSystems() {
 
 // getSnippetSets populates the source and target snippet sets from the
 // corresponding file systems
-func (prog *Prog) getSnippetSets() {
+func (prog *prog) getSnippetSets() {
 	prog.sourceSnippets = prog.getFSContent(prog.sourceFS, "Snippet source")
 	if len(prog.sourceSnippets.names) == 0 {
 		fmt.Fprintln(os.Stderr, "There are no snippets to "+prog.action)
@@ -117,7 +118,7 @@ type sSet struct {
 
 // reportSnippetCounts reports the number of snippets in the source and
 // target sets if verbose is on.
-func (prog *Prog) reportSnippetCounts() {
+func (prog *prog) reportSnippetCounts() {
 	if !verbose.IsOn() {
 		return
 	}
@@ -252,7 +253,7 @@ func (l Status) reportErrors() {
 var snippetsDir embed.FS
 
 func main() {
-	prog := NewProg()
+	prog := newProg()
 	ps := makeParamSet(prog)
 	ps.Parse()
 
@@ -271,7 +272,7 @@ func main() {
 // be a directory or else it does not exist in which case it will be created.
 // Any failure to create the directory or the existence as a non-directory
 // will be reported and the program will exit.
-func (prog *Prog) createTargetFS() {
+func (prog *prog) createTargetFS() {
 	exists := filecheck.Provisos{Existence: filecheck.MustExist}
 
 	if exists.StatusCheck(prog.toDir) == nil {
@@ -300,7 +301,7 @@ func (prog *Prog) createTargetFS() {
 
 // compareSnippets compares the snippets in the from directory with those in
 // the to directory reporting any differences.
-func (prog *Prog) compareSnippets() {
+func (prog *prog) compareSnippets() {
 	verbose.Println("comparing snippets")
 
 	for _, name := range prog.sourceSnippets.names {
@@ -325,7 +326,7 @@ func (prog *Prog) compareSnippets() {
 
 // installSnippets installs the snippets from the source directory into
 // the target directory, reporting any differences.
-func (prog *Prog) installSnippets() {
+func (prog *prog) installSnippets() {
 	verbose.Println("Installing snippets into ", prog.toDir)
 
 	var err error
@@ -372,7 +373,7 @@ func (prog *Prog) installSnippets() {
 
 // makeSubDir creates the snippet's corresponding sub-directory in the target
 // directory if necessary.
-func (prog *Prog) makeSubDir(s snippet) error {
+func (prog *prog) makeSubDir(s snippet) error {
 	if s.dirName == "" {
 		return nil
 	}
@@ -409,7 +410,7 @@ func (prog *Prog) makeSubDir(s snippet) error {
 // clearFile either moves the file aside or removes it. It updates the
 // installation log and records any errors. It returns true if there were no
 // errors, false otherwise.
-func (prog *Prog) clearFile(snippetName, fileName string) bool {
+func (prog *prog) clearFile(snippetName, fileName string) bool {
 	prog.status.clearCount++
 
 	if prog.noCopy {
@@ -436,7 +437,7 @@ func (prog *Prog) clearFile(snippetName, fileName string) bool {
 
 // writeSnippet creates the named file and writes the snippet into it
 func writeSnippet(s snippet, name string) error {
-	f, err := os.Create(name)
+	f, err := os.Create(name) //nolint:gosec
 	if err != nil {
 		return err
 	}
@@ -449,7 +450,7 @@ func writeSnippet(s snippet, name string) error {
 
 // getFSContent gets the contents of the supplied filesystem, recursively
 // descending into subdirectories. It returns the results as a snippet set.
-func (prog *Prog) getFSContent(f fs.FS, name string) sSet {
+func (prog *prog) getFSContent(f fs.FS, name string) sSet {
 	errs := errutil.NewErrMap()
 	defer func() {
 		if errCount, _ := errs.CountErrors(); errCount != 0 {
@@ -498,7 +499,7 @@ func readSnippet(f fs.FS, de fs.DirEntry) (snippet, error) {
 		return s, err
 	}
 
-	defer file.Close()
+	defer file.Close() //nolint:errcheck
 
 	s.content = make([]byte, fi.Size())
 
@@ -514,11 +515,13 @@ func readSnippet(f fs.FS, de fs.DirEntry) (snippet, error) {
 // any errors, it will recursively descend into any subdirectories. If the
 // total depth of subdirectories is greater than maxSubDirs then it will
 // assume that there is a loop in the directory tree and will abort
-func (prog *Prog) readSubDir(f fs.FS, names []string, snips *sSet, errs *errutil.ErrMap) {
+func (prog *prog) readSubDir(
+	f fs.FS, names []string, snips *sSet, errs *errutil.ErrMap,
+) {
 	if int64(len(names)) > prog.maxSubDirs {
 		errs.AddError("Directories too deep - suspected loop",
 			fmt.Errorf(
-				"The directories at %q exceed the maximum directory depth (%d)",
+				"the directories at %q exceed the maximum directory depth (%d)",
 				filepath.Join(names...), prog.maxSubDirs))
 
 		return

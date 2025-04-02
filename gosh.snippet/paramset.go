@@ -8,7 +8,7 @@ import (
 )
 
 // makeParamSet ...
-func makeParamSet(prog *Prog) *param.PSet {
+func makeParamSet(prog *prog) *param.PSet {
 	return paramset.NewOrPanic(
 		verbose.AddParams,
 		versionparams.AddParams,

@@ -7,7 +7,7 @@ import (
 )
 
 func TestMakeParamSet(t *testing.T) {
-	prog := NewProg()
+	prog := newProg()
 	panicked, panicVal := testhelper.PanicSafe(func() {
 		_ = makeParamSet(prog)
 	})
