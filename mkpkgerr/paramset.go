@@ -7,7 +7,7 @@ import (
 	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
-func makeParamSet(prog *Prog) *param.PSet {
+func makeParamSet(prog *prog) *param.PSet {
 	return paramset.NewOrPanic(
 		gogen.AddParams(&prog.outputFileName, &prog.makeFile),
 		versionparams.AddParams,

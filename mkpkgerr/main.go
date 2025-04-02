@@ -15,23 +15,23 @@ const (
 	dfltFileName = "pkg_err_type.go"
 )
 
-// Prog holds program parameters and status
-type Prog struct {
+// prog holds program parameters and status
+type prog struct {
 	// parameters
 	makeFile       bool
 	outputFileName string
 }
 
-// NewProg returns a new Prog instance with the default values set
-func NewProg() *Prog {
-	return &Prog{
+// newProg returns a new Prog instance with the default values set
+func newProg() *prog {
+	return &prog{
 		makeFile:       true,
 		outputFileName: dfltFileName,
 	}
 }
 
 func main() {
-	prog := NewProg()
+	prog := newProg()
 	ps := makeParamSet(prog)
 
 	ps.Parse()
