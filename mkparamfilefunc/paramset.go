@@ -9,7 +9,7 @@ import (
 )
 
 // makeParamSet returns an initialised PSet
-func makeParamSet(prog *Prog) *param.PSet {
+func makeParamSet(prog *prog) *param.PSet {
 	return paramset.NewOrPanic(
 		gogen.AddParams(&prog.outputFileName, &prog.makeFile),
 		verbose.AddParams,

@@ -19,7 +19,8 @@ const (
 	groupFileNameBase = "setConfigFile"
 )
 
-type Prog struct {
+// prog holds the parameter values and intermediate results for the program
+type prog struct {
 	// parameters
 	mustExist         bool
 	mustExistPersonal bool
@@ -38,9 +39,9 @@ type Prog struct {
 	dirs    []string
 }
 
-// NewProg returns an initialised Prog struct
-func NewProg() *Prog {
-	return &Prog{
+// newProg returns an initialised Prog struct
+func newProg() *prog {
+	return &prog{
 		makeFile: true,
 
 		whichFuncs:     "all",
@@ -49,7 +50,7 @@ func NewProg() *Prog {
 }
 
 func main() {
-	prog := NewProg()
+	prog := newProg()
 	ps := makeParamSet(prog)
 
 	ps.Parse()
@@ -76,7 +77,7 @@ func main() {
 
 // makeFuncNameGlobal generates the name of the function for setting the
 // global config file that this program will write.
-func (prog *Prog) makeFuncNameGlobal() string {
+func (prog *prog) makeFuncNameGlobal() string {
 	prefix := "Set"
 	if prog.privateFunc {
 		prefix = "set"
@@ -90,7 +91,7 @@ func (prog *Prog) makeFuncNameGlobal() string {
 
 // makeFuncNamePersonal generates the name of the function for setting the
 // personal config file that this program will write.
-func (prog *Prog) makeFuncNamePersonal() string {
+func (prog *prog) makeFuncNamePersonal() string {
 	prefix := "Set"
 	if prog.privateFunc {
 		prefix = "set"
@@ -105,7 +106,7 @@ func (prog *Prog) makeFuncNamePersonal() string {
 // makeGroupSuffix generates the suffix for the function name from the group
 // name. It cleans up any characters in the name which are invalid characters
 // in a Go function name
-func (prog *Prog) makeGroupSuffix() string {
+func (prog *prog) makeGroupSuffix() string {
 	if prog.groupName == "" {
 		return ""
 	}
@@ -134,7 +135,7 @@ func (prog *Prog) makeGroupSuffix() string {
 // Note that the opening parenthesis is given as part of the name, this is
 // because for group config files the first parameter (the group name) is
 // generated as part of the name.
-func (prog *Prog) makeAddCFName() string {
+func (prog *prog) makeAddCFName() string {
 	if prog.groupName != "" {
 		return fmt.Sprintf("ps.AddGroupConfigFile(%q,", prog.groupName)
 	}
@@ -148,7 +149,7 @@ func (prog *Prog) makeAddCFName() string {
 
 // makeConfigFileName generates the name of the config file - this varies
 // according to whether or not this is for a group or main
-func (prog *Prog) makeConfigFileName() string {
+func (prog *prog) makeConfigFileName() string {
 	if prog.groupName == "" {
 		return "common.cfg"
 	}
@@ -157,7 +158,7 @@ func (prog *Prog) makeConfigFileName() string {
 }
 
 // printFuncIntro prints the function comment and the func name and signature
-func (prog *Prog) printFuncIntro(f io.Writer, name string) {
+func (prog *prog) printFuncIntro(f io.Writer, name string) {
 	twc := twrap.NewTWConfOrPanic(twrap.SetWriter(f))
 	fmt.Fprintln(f)
 	fmt.Fprintln(f, "/*")
@@ -183,7 +184,7 @@ func (prog *Prog) printFuncIntro(f io.Writer, name string) {
 }
 
 // printFuncPersonal writes out the function for setting a personal config file
-func (prog *Prog) printFuncPersonal(f io.Writer) {
+func (prog *prog) printFuncPersonal(f io.Writer) {
 	if prog.whichFuncs != "all" && prog.whichFuncs != "personalOnly" {
 		return
 	}
@@ -206,7 +207,7 @@ func (prog *Prog) printFuncPersonal(f io.Writer) {
 
 // printFuncGlobal writes out the function for setting a shared, global
 // config file
-func (prog *Prog) printFuncGlobal(f io.Writer) {
+func (prog *prog) printFuncGlobal(f io.Writer) {
 	if prog.whichFuncs != "all" && prog.whichFuncs != "globalOnly" {
 		return
 	}
@@ -235,7 +236,7 @@ func (prog *Prog) printFuncGlobal(f io.Writer) {
 
 // printAddCF prints the lines of code that will call filepath.Join(...)
 // with the base directory name and the strings from paramFileParts
-func (prog *Prog) printAddCF(f io.Writer, dirs []string, funcName, cfgFName string, mustExist bool) {
+func (prog *prog) printAddCF(f io.Writer, dirs []string, funcName, cfgFName string, mustExist bool) {
 	fmt.Fprint(f, `
 	`+funcName+`
 		filepath.Join(baseDir`)
