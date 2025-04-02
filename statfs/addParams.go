@@ -8,7 +8,7 @@ import (
 )
 
 // addParams will add parameters to the passed ParamSet
-func addParams(prog *Prog) param.PSetOptFunc {
+func addParams(prog *prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		ps.Add("units",
 			unitsetter.UnitSetter{

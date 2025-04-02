@@ -36,8 +36,8 @@ type fieldInfo struct {
 	col      func(uint) *col.Col
 }
 
-// Prog holds program parameters and status
-type Prog struct {
+// prog holds program parameters and status
+type prog struct {
 	dataFamily    *units.Family
 	baseUnit      units.Unit
 	displayUnits  units.Unit
@@ -45,17 +45,19 @@ type Prog struct {
 	allowedFields psetter.AllowedVals[string]
 }
 
-// NewProg returns a new Prog instance with the default values set
-//
-//nolint:mnd
-func NewProg() *Prog {
-	prog := &Prog{
+// newProg returns a new Prog instance with the default values set
+func newProg() *prog {
+	const (
+		spaceColWidth = 15
+		countColWidth = 12
+	)
+
+	prog := &prog{
 		dataFamily: units.GetFamilyOrPanic(units.Data),
 	}
 	prog.baseUnit = prog.dataFamily.GetUnitOrPanic(
 		prog.dataFamily.BaseUnitName())
 	prog.displayUnits = prog.baseUnit
-
 	prog.fiMap = map[string]fieldInfo{
 		nameStr: {
 			fieldVal: func(name string, _ *unix.Statfs_t) any {
@@ -81,7 +83,8 @@ func NewProg() *Prog {
 			shortFmt: func() string { return "%.0f" },
 			col: func(_ uint) *col.Col {
 				units := "Units: " + prog.displayUnits.Name()
-				return col.New(&colfmt.Float{W: 15}, units, "space", "free")
+				return col.New(&colfmt.Float{W: spaceColWidth}, units,
+					"space", "free")
 			},
 		},
 		avSpStr: {
@@ -98,7 +101,7 @@ func NewProg() *Prog {
 			shortFmt: func() string { return "%.0f" },
 			col: func(_ uint) *col.Col {
 				units := "Units: " + prog.displayUnits.Name()
-				return col.New(&colfmt.Float{W: 15}, units,
+				return col.New(&colfmt.Float{W: spaceColWidth}, units,
 					"space", "available")
 			},
 		},
@@ -116,14 +119,16 @@ func NewProg() *Prog {
 			shortFmt: func() string { return "%.0f" },
 			col: func(_ uint) *col.Col {
 				units := "Units: " + prog.displayUnits.Name()
-				return col.New(&colfmt.Float{W: 15}, units, "space", "total")
+				return col.New(&colfmt.Float{W: spaceColWidth}, units,
+					"space", "total")
 			},
 		},
 		usedSpStr: {
 			fieldVal: func(_ string, s *unix.Statfs_t) any {
 				vu := units.ValUnit{
 					U: prog.baseUnit,
-					V: float64((s.Blocks - s.Bfree) * uint64(s.Bsize)), //nolint:gosec
+					V: float64((s.Blocks - s.Bfree) *
+						uint64(s.Bsize)), //nolint:gosec
 				}
 				return vu.ConvertOrPanic(prog.displayUnits).V
 			},
@@ -133,7 +138,8 @@ func NewProg() *Prog {
 			shortFmt: func() string { return "%.0f" },
 			col: func(_ uint) *col.Col {
 				units := "Units: " + prog.displayUnits.Name()
-				return col.New(&colfmt.Float{W: 15}, units, "space", "used")
+				return col.New(&colfmt.Float{W: spaceColWidth}, units,
+					"space", "used")
 			},
 		},
 		fileCntStr: {
@@ -143,7 +149,8 @@ func NewProg() *Prog {
 			format:   func() string { return "%d" },
 			shortFmt: func() string { return "%d" },
 			col: func(_ uint) *col.Col {
-				return col.New(&colfmt.Int{W: 12}, "files", "available")
+				return col.New(&colfmt.Int{W: countColWidth},
+					"files", "available")
 			},
 		},
 		freeFCntStr: {
@@ -153,7 +160,8 @@ func NewProg() *Prog {
 			format:   func() string { return "%d" },
 			shortFmt: func() string { return "%d" },
 			col: func(_ uint) *col.Col {
-				return col.New(&colfmt.Int{W: 12}, "files", "remaining")
+				return col.New(&colfmt.Int{W: countColWidth},
+					"files", "remaining")
 			},
 		},
 	}
@@ -183,7 +191,7 @@ var (
 	noLabel     bool
 )
 
-func (prog *Prog) makeReport(dirs ...string) *col.Report {
+func (prog *prog) makeReport(dirs ...string) *col.Report {
 	var maxDirNameLen uint
 
 	for _, d := range dirs {
@@ -225,7 +233,7 @@ func getStat(dirName string) unix.Statfs_t {
 	return s
 }
 
-func (prog *Prog) reportStatAsTable(
+func (prog *prog) reportStatAsTable(
 	rpt *col.Report, dirName string, s unix.Statfs_t,
 ) {
 	reportArgs := make([]any, 0, len(fields))
@@ -241,7 +249,7 @@ func (prog *Prog) reportStatAsTable(
 	}
 }
 
-func (prog *Prog) reportStat(dirName string, s unix.Statfs_t) {
+func (prog *prog) reportStat(dirName string, s unix.Statfs_t) {
 	for _, f := range fields {
 		if !noLabel {
 			fmt.Print(f, ": ")
@@ -261,7 +269,7 @@ func (prog *Prog) reportStat(dirName string, s unix.Statfs_t) {
 
 // getFieldInfo returns the fieldInfo entry corresponding to the field name.
 // It will report an error and exit if the field name is not found in the map
-func (prog *Prog) getFieldInfo(f string) fieldInfo {
+func (prog *prog) getFieldInfo(f string) fieldInfo {
 	fi, ok := prog.fiMap[f]
 	if !ok {
 		log.Fatal("internal error: unknown field: ", f)
@@ -271,7 +279,7 @@ func (prog *Prog) getFieldInfo(f string) fieldInfo {
 }
 
 func main() {
-	prog := NewProg()
+	prog := newProg()
 	ps := makeParamSet(prog)
 	ps.Parse()
 

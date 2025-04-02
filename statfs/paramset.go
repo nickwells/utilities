@@ -7,7 +7,7 @@ import (
 )
 
 // makeParamSet creates a paramset ready for parsing
-func makeParamSet(prog *Prog) *param.PSet {
+func makeParamSet(prog *prog) *param.PSet {
 	return paramset.NewOrPanic(
 		versionparams.AddParams,
 

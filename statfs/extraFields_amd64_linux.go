@@ -15,7 +15,7 @@ const (
 )
 
 // addAllowedFields adds the extra Linux-specific allowed fields
-func (prog *Prog) addAllowedFields() {
+func (prog *prog) addAllowedFields() {
 	prog.allowedFields[maxNameStr] = "the maximum length of filenames"
 	prog.allowedFields[flagsStr] = "show the mount flags"
 }
@@ -23,7 +23,7 @@ func (prog *Prog) addAllowedFields() {
 // addFieldInfo adds the extra Linux-specific field info
 //
 //nolint:mnd
-func (prog *Prog) addFieldInfo() {
+func (prog *prog) addFieldInfo() {
 	mountFlags := map[int64]string{
 		unix.MS_MANDLOCK:    "mandatory locking permitted",
 		unix.MS_NOATIME:     "access times not updated",
