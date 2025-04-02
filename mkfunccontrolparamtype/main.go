@@ -11,8 +11,8 @@ import (
 
 // Created: Sat Mar 21 11:18:36 2020
 
-// Prog holds program parameters and status
-type Prog struct {
+// prog holds program parameters and status
+type prog struct {
 	typeName       string
 	typeDesc       string
 	outputFileName string
@@ -25,9 +25,9 @@ type Prog struct {
 	constNames []string
 }
 
-// NewProg returns an initialised Prog struct
-func NewProg() *Prog {
-	return &Prog{
+// newProg returns an initialised Prog struct
+func newProg() *prog {
+	return &prog{
 		makeFile:      true,
 		printPreamble: true,
 		printIsValid:  true,
@@ -35,7 +35,7 @@ func NewProg() *Prog {
 }
 
 func main() {
-	prog := NewProg()
+	prog := newProg()
 	ps := makeParamSet(prog)
 
 	ps.Parse()
@@ -56,7 +56,7 @@ func main() {
 }
 
 // printFile writes the contents of the file being generated
-func (prog *Prog) printFile(f *os.File, ps *param.PSet) {
+func (prog *prog) printFile(f *os.File, ps *param.PSet) {
 	if prog.printPreamble {
 		gogen.PrintPreamble(f, ps)
 
@@ -72,12 +72,14 @@ func (prog *Prog) printFile(f *os.File, ps *param.PSet) {
 
 // printTypeDeclaration writes the type declaration and constant values to
 // the file
-func (prog *Prog) printTypeDeclaration(f *os.File) {
+func (prog *prog) printTypeDeclaration(f *os.File) {
+	const targetLineLen = 75
+
 	fullTypeName := prog.typeName + "Type"
 
 	twc := twrap.NewTWConfOrPanic(
 		twrap.SetWriter(f),
-		twrap.SetTargetLineLen(75))
+		twrap.SetTargetLineLen(targetLineLen))
 
 	fmt.Fprintln(f, "/*")
 	twc.Wrap(fullTypeName+" "+prog.typeDesc, 0)
@@ -101,7 +103,7 @@ func (prog *Prog) printTypeDeclaration(f *os.File) {
 }
 
 // printIsValidFunc writes the IsValid function to the file being generated
-func (prog *Prog) printIsValidFunc(f *os.File) {
+func (prog *prog) printIsValidFunc(f *os.File) {
 	fullTypeName := prog.typeName + "Type"
 
 	const validFuncName = "IsValid"

@@ -11,7 +11,7 @@ import (
 )
 
 // addParams will add parameters to the passed ParamSet
-func addParams(prog *Prog) param.PSetOptFunc {
+func addParams(prog *prog) param.PSetOptFunc {
 	checkStringNotEmpty := check.StringLength[string](check.ValGT(0))
 
 	return func(ps *param.PSet) error {
@@ -126,7 +126,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 		ps.AddFinalCheck(func() error {
 			if len(prog.constNames) <= 1 {
 				return errors.New(
-					"There must be more than one value name given")
+					"there must be more than one value name given")
 			}
 
 			return check.SliceHasNoDups(prog.constNames)
