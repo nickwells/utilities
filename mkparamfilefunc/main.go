@@ -221,6 +221,7 @@ func (prog *Prog) printFuncGlobal(f io.Writer) {
 	if len(dirs) == 0 {
 		return nil
 	}
+
 	baseDir := dirs[0]
 `)
 	}
