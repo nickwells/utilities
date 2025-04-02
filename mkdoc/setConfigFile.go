@@ -30,6 +30,7 @@ func SetConfigFile(ps *param.PSet) error {
 			"mkdoc",
 			"common.cfg"),
 		filecheck.Optional)
+
 	return nil
 }
 
@@ -48,6 +49,7 @@ func SetGlobalConfigFile(ps *param.PSet) error {
 	if len(dirs) == 0 {
 		return nil
 	}
+
 	baseDir := dirs[0]
 
 	ps.AddConfigFileStrict(
@@ -58,5 +60,6 @@ func SetGlobalConfigFile(ps *param.PSet) error {
 			"mkdoc",
 			"common.cfg"),
 		filecheck.Optional)
+
 	return nil
 }

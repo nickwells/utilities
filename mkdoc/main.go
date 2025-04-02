@@ -24,8 +24,8 @@ const (
 	snippetFile = "_snippet.md"
 )
 
-// Prog holds program parameters and status
-type Prog struct {
+// prog holds program parameters and status
+type prog struct {
 	parts []partParams
 
 	// parameters
@@ -35,7 +35,8 @@ type Prog struct {
 	buildArgs []string
 }
 
-func NewProg() *Prog {
+// newProg returns an initialised prog structure
+func newProg() *prog {
 	var (
 		mainPart = partParams{
 			partName: "intro",
@@ -69,7 +70,7 @@ func NewProg() *Prog {
 		}
 	)
 
-	return &Prog{
+	return &prog{
 		parts: []partParams{
 			mainPart,
 			examplesPart,
@@ -99,7 +100,7 @@ const (
 )
 
 func main() {
-	prog := NewProg()
+	prog := newProg()
 	ps := makeParamSet(prog)
 
 	ps.Parse()
@@ -107,7 +108,7 @@ func main() {
 	packageIsMainOrExit()
 
 	cmd := prog.buildCmd(commandName())
-	defer os.RemoveAll(filepath.Dir(cmd))
+	defer os.RemoveAll(filepath.Dir(cmd)) //nolint:errcheck
 	prog.parts[0].extraFiles = prog.getModuleSnippets(cmd)
 
 	var docText string
@@ -142,7 +143,7 @@ func packageIsMainOrExit() {
 // buildCmd builds the temporary executable instance of the program and
 // returns the full pathname. The file should be removed after the last
 // use of the program.
-func (prog *Prog) buildCmd(cmdName string) string {
+func (prog *prog) buildCmd(cmdName string) string {
 	dirName, err := os.MkdirTemp("", "mkdoc_"+cmdName+"_*")
 	if err != nil {
 		fmt.Fprintln(os.Stderr,
@@ -174,7 +175,7 @@ func commandName() string {
 // skipModule returns true if the module should be skipped, false
 // otherwise. A module should be skipped if either it does not have a prefix
 // in the list of valid module prefixes or else it is explicitly excluded.
-func (prog *Prog) skipModule(modName string) bool {
+func (prog *prog) skipModule(modName string) bool {
 	skip := true
 
 	for _, pfx := range prog.snippetModPfx {
@@ -198,7 +199,7 @@ func (prog *Prog) skipModule(modName string) bool {
 // getModuleSnippets finds all the dependent modules of the command and if
 // any of them have a '_snippet.md' file in the module directory then the
 // pathname is added to the list of snippet files to return
-func (prog *Prog) getModuleSnippets(cmd string) []string {
+func (prog *prog) getModuleSnippets(cmd string) []string {
 	gopath := gogen.GetGopath()
 	if gopath == "" {
 		return []string{}
@@ -297,7 +298,7 @@ func (pp partParams) generate(cmd string) string {
 // makeFile creates the file and populates it. It returns true if the file
 // was successfully created and populated, false otherwise
 func makeFile(filename, contents string) bool {
-	f, err := os.Create(filename)
+	f, err := os.Create(filename) //nolint:gosec
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Could not create the file:", err)
 		return false
@@ -329,7 +330,7 @@ func getText(filename string) string {
 		return ""
 	}
 
-	text, err := os.ReadFile(filename)
+	text, err := os.ReadFile(filename) //nolint:gosec
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		fmt.Fprintln(os.Stderr, "there was a problem reading the file:", err)
 		os.Exit(1)
@@ -354,7 +355,7 @@ func getDocPart(cmdPath, part string) string {
 		"-params-dont-exit-on-errors",
 	}
 
-	cmd := exec.Command(cmdPath, args...)
+	cmd := exec.Command(cmdPath, args...) //nolint:gosec
 	stdOut := new(bytes.Buffer)
 	stdErr := new(bytes.Buffer)
 	cmd.Stdout = stdOut
@@ -377,7 +378,7 @@ func getDocPart(cmdPath, part string) string {
 }
 
 // addParams will add parameters to the passed ParamSet
-func addParams(prog *Prog) param.PSetOptFunc {
+func addParams(prog *prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		ps.Add("build-args",
 			psetter.StrListAppender[string]{Value: &prog.buildArgs},
@@ -404,7 +405,7 @@ func addParams(prog *Prog) param.PSetOptFunc {
 }
 
 // addNotes will add any Notes to the passed Param Set
-func addNotes(prog *Prog) func(ps *param.PSet) error {
+func addNotes(prog *prog) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		ps.AddNote("Files generated",
 			"Each of the generated Markdown files will have a"+
