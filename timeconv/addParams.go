@@ -24,7 +24,7 @@ const (
 
 // setFormat returns an action func that will set the output format (and, if
 // zone is not nil, the toZone)
-func setFormat(prog *Prog, fmt string, zone *time.Location) param.ActionFunc {
+func setFormat(prog *prog, fmt string, zone *time.Location) param.ActionFunc {
 	return func(_ location.L, _ *param.ByName, _ []string) error {
 		prog.outFormat = fmt
 		if zone != nil {
@@ -38,7 +38,7 @@ func setFormat(prog *Prog, fmt string, zone *time.Location) param.ActionFunc {
 // addParams adds the parameters for this program
 //
 //nolint:cyclop
-func addParams(prog *Prog) param.PSetOptFunc {
+func addParams(prog *prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		var toZoneParam,
 			fromZoneParam,

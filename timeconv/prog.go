@@ -20,8 +20,8 @@ const (
 	inFormat    = dfltDateFmt + " " + dfltTimeFmt
 )
 
-// Prog holds program parameters and status
-type Prog struct {
+// prog holds program parameters and status
+type prog struct {
 	fromZone *time.Location
 	toZone   *time.Location
 
@@ -45,9 +45,9 @@ type Prog struct {
 	listTZNames bool
 }
 
-// NewProg returns a new Prog instance with the default values set
-func NewProg() *Prog {
-	return &Prog{
+// newProg returns a new Prog instance with the default values set
+func newProg() *prog {
+	return &prog{
 		showDate:    true,
 		dateTimeSep: " ",
 		fromZone:    time.Local,
@@ -59,7 +59,7 @@ func NewProg() *Prog {
 }
 
 // listTimezoneNames displays the Timezone names
-func (prog Prog) listTimezoneNames() {
+func (prog prog) listTimezoneNames() {
 	for _, n := range prog.tzNames {
 		fmt.Println(n)
 	}
@@ -69,7 +69,7 @@ func (prog Prog) listTimezoneNames() {
 // the from-timezone. If the first attempt fails it will check that the
 // seconds are present and if not it will try again with the seconds set to
 // 00.
-func (prog Prog) parseTime(ts string) (time.Time, error) {
+func (prog prog) parseTime(ts string) (time.Time, error) {
 	const zeroSeconds = ":00"
 
 	lenSeconds := len(zeroSeconds)
@@ -94,7 +94,7 @@ func (prog Prog) parseTime(ts string) (time.Time, error) {
 }
 
 // getTime returns the time according to the parameters given
-func (prog Prog) getTime() time.Time {
+func (prog prog) getTime() time.Time {
 	switch prog.timeSource {
 	case tsNow:
 		return time.Now()
@@ -125,7 +125,7 @@ func (prog Prog) getTime() time.Time {
 }
 
 // makeTimePart constructs the time part of the output format
-func (prog Prog) makeTimePart() string {
+func (prog prog) makeTimePart() string {
 	hourPart := "15"
 	AMPMsuffix := ""
 
@@ -150,7 +150,7 @@ func (prog Prog) makeTimePart() string {
 }
 
 // makeDatePart makes the datepart of the format string
-func (prog Prog) makeDatePart() string {
+func (prog prog) makeDatePart() string {
 	monthPart := "01"
 
 	if prog.showMonthName {
@@ -172,7 +172,7 @@ func (prog Prog) makeDatePart() string {
 
 // setOutputFormat sets the output format in accordance with the format
 // specifications
-func (prog *Prog) setOutputFormat() {
+func (prog *prog) setOutputFormat() {
 	prog.outFormat = ""
 
 	if prog.showDate {

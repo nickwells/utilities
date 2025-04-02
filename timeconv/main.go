@@ -8,7 +8,7 @@ import (
 // Created: Sun Oct 22 11:17:41 2017
 
 func main() {
-	prog := NewProg()
+	prog := newProg()
 	ps := makeParamSet(prog)
 	ps.Parse()
 
