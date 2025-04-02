@@ -141,7 +141,7 @@ func TestHasFiles(t *testing.T) {
 // recursively for subdirectories and return the first error encountered.
 // Both "from" and "to" directories should exist before it is called.
 func copyDirFromTo(from, to string) error {
-	d, err := os.Open(from)
+	d, err := os.Open(from) //nolint:gosec
 	if err != nil {
 		return err
 	}
@@ -174,7 +174,7 @@ func copyDirFromTo(from, to string) error {
 				toFile   = filepath.Join(to, fi.Name())
 			)
 
-			fromBytes, err := os.ReadFile(fromFile)
+			fromBytes, err := os.ReadFile(fromFile) //nolint:gosec
 			if err != nil {
 				return err
 			}
@@ -283,7 +283,7 @@ func checkPkg(dir string, pkgNames []string) error {
 		return fmt.Errorf("gogen.GetPackage error: %w", err)
 	}
 
-	fgd := NewProg()
+	fgd := newProg()
 	fgd.pkgNames = pkgNames
 
 	if !fgd.pkgMatches(pkg) {

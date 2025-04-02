@@ -29,7 +29,7 @@ func (chk ContChkSetter) SetWithVal(_, paramVal string) error {
 	tag, re, hasRE := strings.Cut(paramVal, "=")
 	if !hasRE {
 		return fmt.Errorf(
-			"Missing '=': the parameter %q should be of the form: tag=RE",
+			"missing '=': the parameter %q should be of the form: tag=RE",
 			paramVal)
 	}
 
@@ -48,25 +48,25 @@ func (chk ContChkSetter) SetWithVal(_, paramVal string) error {
 			}
 
 			if len(checkers) == 0 {
-				return errors.New("No checkers have been created yet")
+				return errors.New("no checkers have been created yet")
 			}
 
 			sort.Strings(checkers)
 
-			return fmt.Errorf("No such checker: %q. Available checkers: %s",
+			return fmt.Errorf("no such checker: %q. Available checkers: %s",
 				tagName, strings.Join(checkers, ", "))
 		}
 
 		cc = &ContentCheck{name: tagName}
 		(*chk.Value)[tagName] = cc
 	} else if partName == dfltCheckerPart {
-		return fmt.Errorf("The checker %q already exists", tagName)
+		return fmt.Errorf("the checker %q already exists", tagName)
 	}
 
 	cp, ok := checkerParts[partName]
 	if !ok {
 		return fmt.Errorf(
-			"Unknown checker part name: %q. Must be one of %s",
+			"unknown checker part name: %q. Must be one of %s",
 			partName, strings.Join(checkerPartNames(), ", "))
 	}
 

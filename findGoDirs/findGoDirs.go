@@ -13,12 +13,12 @@ const (
 )
 
 type (
-	actionFunc      func(*Prog, string)
+	actionFunc      func(*prog, string)
 	dirToContentMap map[string]contentMap
 )
 
-// Prog holds the parameters and current status of the program
-type Prog struct {
+// prog holds the parameters and current status of the program
+type prog struct {
 	baseDirs      []string
 	skipDirs      []string
 	pkgNames      []string
@@ -41,8 +41,9 @@ type Prog struct {
 	dbgStack *verbose.Stack
 }
 
-func NewProg() *Prog {
-	return &Prog{
+// newProg returns a properly initialised prog structure
+func newProg() *prog {
+	return &prog{
 		contentChecks: make(checkMap),
 		dirContent:    make(dirToContentMap),
 		actions:       make(map[string]bool),

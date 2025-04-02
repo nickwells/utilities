@@ -40,7 +40,7 @@ func (rh remHandler) HandleRemainder(ps *param.PSet, _ *location.L) {
 }
 
 // addParams will add parameters to the passed ParamSet
-func addParams(fgd *Prog) func(ps *param.PSet) error {
+func addParams(fgd *prog) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		dirProvisos := filecheck.DirExists()
 

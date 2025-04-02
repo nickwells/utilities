@@ -21,7 +21,7 @@ import (
 // Created: Thu Jun 11 12:43:33 2020
 
 // doPrint will print the name
-func doPrint(fgd *Prog, name string) {
+func doPrint(fgd *prog, name string) {
 	if fgd.noAction {
 		fmt.Printf("%-20.20s : %s\n", "print", name)
 		return
@@ -32,7 +32,7 @@ func doPrint(fgd *Prog, name string) {
 
 // doContent will show the lines in the files in the directory that match
 // the content checks
-func doContent(fgd *Prog, name string) {
+func doContent(fgd *prog, name string) {
 	defer fgd.dbgStack.Start("doContent", "Print matching content in : "+name)()
 
 	if fgd.noAction {
@@ -51,7 +51,7 @@ func doContent(fgd *Prog, name string) {
 
 // doFilenames will show the names of the files in the directories that match
 // the content checks
-func doFilenames(fgd *Prog, name string) {
+func doFilenames(fgd *prog, name string) {
 	defer fgd.dbgStack.Start("doFilenames",
 		"Print files with matching content in : "+name)()
 
@@ -70,27 +70,27 @@ func doFilenames(fgd *Prog, name string) {
 }
 
 // doBuild will run go build
-func doBuild(fgd *Prog, name string) {
+func doBuild(fgd *prog, name string) {
 	fgd.doGoCommand(name, "build", fgd.buildArgs)
 }
 
 // doTest will run go test
-func doTest(fgd *Prog, name string) {
+func doTest(fgd *prog, name string) {
 	fgd.doGoCommand(name, "test", fgd.testArgs)
 }
 
 // doInstall will run go install
-func doInstall(fgd *Prog, name string) {
+func doInstall(fgd *prog, name string) {
 	fgd.doGoCommand(name, "install", fgd.installArgs)
 }
 
 // doGenerate will run go generate
-func doGenerate(fgd *Prog, name string) {
+func doGenerate(fgd *prog, name string) {
 	fgd.doGoCommand(name, "generate", fgd.generateArgs)
 }
 
 // doGoCommand will run the Go subcommand with the passed args
-func (fgd *Prog) doGoCommand(name, command string, cmdArgs []string) {
+func (fgd *prog) doGoCommand(name, command string, cmdArgs []string) {
 	defer fgd.dbgStack.Start("doGoCommand", "In : "+name)()
 	intro := fgd.dbgStack.Tag()
 
@@ -107,7 +107,7 @@ func (fgd *Prog) doGoCommand(name, command string, cmdArgs []string) {
 }
 
 func main() {
-	prog := NewProg()
+	prog := newProg()
 	ps := makeParamSet(prog)
 
 	ps.Parse()
@@ -129,7 +129,7 @@ func main() {
 //
 // It does not perform any of the other tests, on package names, file
 // presence etc.
-func (fgd *Prog) findMatchingDirs() []string {
+func (fgd *prog) findMatchingDirs() []string {
 	defer fgd.dbgStack.Start("findMatchingDirs",
 		"Find dirs matching criteria")()
 
@@ -185,7 +185,7 @@ func (fgd *Prog) findMatchingDirs() []string {
 
 // onMatchDo performs the actions if the directory is a go package directory
 // meeting the criteria
-func (fgd *Prog) onMatchDo(dir string) {
+func (fgd *prog) onMatchDo(dir string) {
 	defer fgd.dbgStack.Start("onMatchDo", "Act on matching dir: "+dir)()
 	intro := fgd.dbgStack.Tag()
 
@@ -260,7 +260,7 @@ func cd(dir string) (func(), error) {
 // pkgMatches will compare the package name against the list of target
 // packages, if any, and return true only if any of them match. If there are
 // no names to match then any name will match.
-func (fgd *Prog) pkgMatches(pkg string) bool {
+func (fgd *prog) pkgMatches(pkg string) bool {
 	if len(fgd.pkgNames) == 0 { // any name matches
 		return true
 	}
@@ -313,7 +313,7 @@ func entryFound(name string, entries []fs.DirEntry) bool {
 // content is present in at least one of the files in the directory. In any
 // case the map of content discovered for the given directory will have been
 // populated.
-func (fgd *Prog) hasRequiredContent(dir string) bool {
+func (fgd *prog) hasRequiredContent(dir string) bool {
 	fgd.dirContent[dir] = contentMap{}
 
 	if len(fgd.contentChecks) == 0 {
@@ -342,7 +342,7 @@ func (fgd *Prog) hasRequiredContent(dir string) bool {
 
 // checkContent opens the file and finds any content matching the checks,
 // writing it into the contentMap
-func (fgd *Prog) checkContent(dir, fname string) error {
+func (fgd *prog) checkContent(dir, fname string) error {
 	statusChecks := []StatusCheck{}
 
 	for _, c := range fgd.contentChecks {
@@ -362,7 +362,7 @@ func (fgd *Prog) checkContent(dir, fname string) error {
 	// the pathname will not necessarily be available when the fname is.
 	// This is because the process's working directory will have changed as
 	// the process walks the tree of directories searching for matches.
-	f, err := os.Open(fname)
+	f, err := os.Open(fname) //nolint:gosec
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Couldn't open %q: %v\n", pathname, err)
 		return err
