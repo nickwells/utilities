@@ -85,7 +85,7 @@ func addParams(fgd *prog) func(ps *param.PSet) error {
 				},
 			},
 			"set the actions to perform when a Go directory matching"+
-				" the supplied criteral is discovered",
+				" the supplied criteria is discovered",
 			param.AltNames("a", "do"),
 			param.Attrs(param.CommandLineOnly),
 		)
