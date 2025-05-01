@@ -9,7 +9,8 @@ func addExamples(ps *param.PSet) error {
 		"This will use sdiff to compare the files rather than the"+
 			" default program ("+dfltDiffCmd+")")
 	ps.AddExample(
-		"findCmpRm -diff-args '-W,170,-y,--color=always' -less-args=-R",
+		"findCmpRm -diff-args '-W,170,-y,--color=always'"+ //nolint:misspell
+			" -less-args=-R",
 		"This will use show the differences in two columns, side by side,"+
 			" with differences highlighted in colour and with less taking"+
 			" the colour output and displaying it."+
