@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/nickwells/col.mod/v4/col"
-	"github.com/nickwells/col.mod/v4/colfmt"
+	"github.com/nickwells/col.mod/v5/col"
+	"github.com/nickwells/col.mod/v5/colfmt"
 	"github.com/nickwells/param.mod/v6/psetter"
 	"github.com/nickwells/units.mod/v2/units"
 
@@ -66,7 +66,7 @@ func newProg() *prog {
 			format:   func() string { return "%s" },
 			shortFmt: func() string { return "%s" },
 			col: func(w uint) *col.Col {
-				return col.New(colfmt.String{W: w}, "Name")
+				return col.New(&colfmt.String{W: w}, "Name")
 			},
 		},
 		fSpStr: {

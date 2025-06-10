@@ -3,8 +3,8 @@
 package main
 
 import (
-	"github.com/nickwells/col.mod/v4/col"
-	"github.com/nickwells/col.mod/v4/colfmt"
+	"github.com/nickwells/col.mod/v5/col"
+	"github.com/nickwells/col.mod/v5/colfmt"
 
 	"golang.org/x/sys/unix"
 )
@@ -63,7 +63,7 @@ func (prog *Prog) addFieldInfo() {
 		format:   func() string { return "%s" },
 		shortFmt: func() string { return "%s" },
 		col: func(_ uint) *col.Col {
-			return col.New(colfmt.String{W: maxFlagsLen}, "FS", "flags")
+			return col.New(&colfmt.String{W: maxFlagsLen}, "FS", "flags")
 		},
 	}
 }
