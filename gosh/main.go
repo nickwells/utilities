@@ -108,6 +108,7 @@ func (g *gosh) reportGoshfiles() {
 // containing directory unless the dontClearFile flag is set
 func (g *gosh) cleanup() {
 	defer g.dbgStack.Start("cleanup", "Cleaning-up the Go files")()
+
 	intro := g.dbgStack.Tag()
 
 	if g.dontCleanup {
@@ -130,6 +131,7 @@ func (g *gosh) formatFile() {
 	}
 
 	defer g.dbgStack.Start("formatFile", "Formatting the Go file")()
+
 	intro := g.dbgStack.Tag()
 
 	if !g.formatterSet {
@@ -137,6 +139,7 @@ func (g *gosh) formatFile() {
 		if !ok {
 			verbose.Println(intro,
 				" No formatter is available, skipping formatting")
+
 			return
 		}
 
@@ -175,6 +178,7 @@ func (g *gosh) populateImports() {
 		if !ok {
 			verbose.Println(intro,
 				" No importer is available, skipping import population")
+
 			return
 		}
 
@@ -216,6 +220,7 @@ func (g gosh) chdirInto(dir string) {
 // the module files and any requested workplace
 func (g *gosh) createGoshTmpDir() {
 	defer g.dbgStack.Start("createGoshTmpDir", "Creating the gosh directory")()
+
 	intro := g.dbgStack.Tag()
 
 	verbose.Println(intro, " Creating the temporary directory")
@@ -234,6 +239,7 @@ func (g *gosh) createGoshTmpDir() {
 // makeExecutable runs go build to make the executable file
 func (g *gosh) makeExecutable() bool {
 	defer g.dbgStack.Start("makeExecutable", "Building the program")()
+
 	intro := g.dbgStack.Tag()
 
 	buildCmd := []string{"build"}
@@ -257,6 +263,7 @@ func (g *gosh) makeExecutable() bool {
 // it unless dontRun is set.
 func (g *gosh) runGoFile() {
 	defer g.dbgStack.Start("runGoFile", "Running the program")()
+
 	intro := g.dbgStack.Tag()
 
 	if !g.makeExecutable() {
@@ -385,6 +392,7 @@ func (g *gosh) copyFiles() {
 // populate the go.mod and go.sum files
 func (g *gosh) tidyModule() {
 	defer g.dbgStack.Start("tidyModule", "Tidying & populating module files")()
+
 	intro := g.dbgStack.Tag()
 
 	if g.dontRunGoModTidy {
@@ -409,6 +417,7 @@ func (g *gosh) tidyModule() {
 // initModule runs go mod init
 func (g *gosh) initModule() {
 	defer g.dbgStack.Start("initModule", "Initialising the module files")()
+
 	intro := g.dbgStack.Tag()
 
 	if os.Getenv("GO111MODULE") == "off" {
@@ -443,6 +452,7 @@ func (g *gosh) initWorkspace() {
 	}
 
 	defer g.dbgStack.Start("initWorkspace", "Initialising the workspace")()
+
 	intro := g.dbgStack.Tag()
 
 	verbose.Println(intro, " Command: go work init .")

@@ -67,7 +67,6 @@ func f() { fmt.Println("Hello") }
 
 	for _, tc := range testCases {
 		content, err := packageFileContents(tc.filename)
-
 		if testhelper.DiffErr(
 			t, tc.IDStr(), "error", err, tc.expErr) {
 			continue

@@ -43,6 +43,7 @@ func formatterCmds() string {
 // empty values and false otherwise.
 func findFormatter(g *gosh) (Formatter, string, bool) {
 	defer g.dbgStack.Start("findFormatter", "Finding the formatting command")()
+
 	intro := g.dbgStack.Tag()
 
 	for _, f := range formatters {

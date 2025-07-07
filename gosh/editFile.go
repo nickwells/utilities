@@ -87,6 +87,7 @@ func (g *gosh) editGoFile() {
 	}
 
 	defer g.dbgStack.Start("editGoFile", "editing the program")()
+
 	intro := g.dbgStack.Tag()
 
 	args := g.editorArgs

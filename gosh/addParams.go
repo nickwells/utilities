@@ -482,7 +482,7 @@ func addWebParams(g *gosh) func(ps *param.PSet) error {
 			),
 		)
 
-		var codeVal string
+		codeVal := ""
 		g.runAsWebserverSetters = append(g.runAsWebserverSetters,
 			ps.Add("web-print",
 				psetter.String[string]{
@@ -649,7 +649,7 @@ func addReadloopParams(g *gosh) func(ps *param.PSet) error {
 // ParamSet for specifying reading the code from stdin.
 func addStdinParams(g *gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
-		var stdinCount paction.Counter
+		stdinCount := paction.Counter{}
 		commonOpts := []param.OptFunc{
 			param.Attrs(param.CommandLineOnly),
 			param.SeeAlso(stdinParamNames...),

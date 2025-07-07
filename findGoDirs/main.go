@@ -92,6 +92,7 @@ func doGenerate(fgd *prog, name string) {
 // doGoCommand will run the Go subcommand with the passed args
 func (fgd *prog) doGoCommand(name, command string, cmdArgs []string) {
 	defer fgd.dbgStack.Start("doGoCommand", "In : "+name)()
+
 	intro := fgd.dbgStack.Tag()
 
 	if fgd.noAction {
@@ -187,6 +188,7 @@ func (fgd *prog) findMatchingDirs() []string {
 // meeting the criteria
 func (fgd *prog) onMatchDo(dir string) {
 	defer fgd.dbgStack.Start("onMatchDo", "Act on matching dir: "+dir)()
+
 	intro := fgd.dbgStack.Tag()
 
 	undo, err := cd(dir)

@@ -310,6 +310,7 @@ loop:
 		switch prog.cmpAction {
 		case caQuery:
 			fmt.Printf(nameFormat, i+1, len(cmpFiles), shortNames[i])
+
 			if prog.queryShowDiff() {
 				prog.showDiff(nameOrig, nameNew, &prog.status.cmpFile)
 			}
@@ -327,9 +328,11 @@ loop:
 		case caKeepAll:
 			filesRemaining := len(cmpFiles) - i
 			reportFiles(filesRemaining, "comparable", "kept")
+
 			break loop
 		}
 	}
+
 	fmt.Println()
 }
 

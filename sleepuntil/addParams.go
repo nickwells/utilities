@@ -25,7 +25,7 @@ func addActionParams(prog *prog) param.PSetOptFunc {
 		ps.AddGroup(paramGroupNameActions,
 			"what to do when the sleeping finishes.")
 
-		var wakeupAction paction.Counter
+		wakeupAction := paction.Counter{}
 		wakeupActionAF := wakeupAction.MakeActionFunc()
 
 		ps.Add("message",
@@ -114,7 +114,7 @@ func addTimeParams(prog *prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		ps.AddGroup(paramGroupNameTime, "specify how long to sleep for.")
 
-		var timeVal paction.Counter
+		timeVal := paction.Counter{}
 		timeValAF := timeVal.MakeActionFunc()
 
 		var (

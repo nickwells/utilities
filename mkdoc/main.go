@@ -109,6 +109,7 @@ func main() {
 
 	cmd := prog.buildCmd(commandName())
 	defer os.RemoveAll(filepath.Dir(cmd)) //nolint:errcheck
+
 	prog.parts[0].extraFiles = prog.getModuleSnippets(cmd)
 
 	var docText string
@@ -264,7 +265,7 @@ func (pp partParams) filename(cmd string) string {
 // fragment of Markdown referencing this subsidiary file. Otherwise it
 // returns the text generated.
 func (pp partParams) generate(cmd string) string {
-	var text string
+	text := ""
 	text += getText(pp.headFile)
 	text += getDocPart(cmd, pp.partName)
 

@@ -452,6 +452,7 @@ func writeSnippet(s snippet, name string) error {
 // descending into subdirectories. It returns the results as a snippet set.
 func (prog *prog) getFSContent(f fs.FS, name string) sSet {
 	errs := errutil.NewErrMap()
+
 	defer func() {
 		if errCount, _ := errs.CountErrors(); errCount != 0 {
 			errs.Report(os.Stderr, name)

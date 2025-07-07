@@ -197,6 +197,7 @@ func (g *gosh) writeFileLoopOpen(tag string) {
 			g.gPrint(`continue`, tag)
 			g.out()
 		}
+
 		g.gPrint("}", tag)
 		g.gPrint(`_fl = 0`, tag)
 
@@ -231,6 +232,7 @@ func (g *gosh) writeInPlaceEditOpen(tag string) {
 		g.gPrint(`filepath.Base(_fn) + ".*.new")`, tag)
 		g.out()
 	}
+
 	g.gPrint(`if _err != nil {`, tag)
 	{
 		g.in()
@@ -240,6 +242,7 @@ func (g *gosh) writeInPlaceEditOpen(tag string) {
 		g.gPrint(`continue`, tag)
 		g.out()
 	}
+
 	g.gPrint("}", tag)
 
 	g.gPrint("{", tag)
@@ -254,6 +257,7 @@ func (g *gosh) writeInPlaceEditOpen(tag string) {
 				tag)
 			g.out()
 		}
+
 		g.gPrint("} else {", tag)
 		{
 			g.in()
@@ -266,12 +270,15 @@ func (g *gosh) writeInPlaceEditOpen(tag string) {
 					tag)
 				g.out()
 			}
+
 			g.gPrint("}", tag)
 			g.out()
 		}
+
 		g.gPrint("}", tag)
 		g.out()
 	}
+
 	g.gPrint("}", tag)
 }
 
@@ -289,6 +296,7 @@ func (g *gosh) writeInPlaceEditClose(tag string) {
 		g.gPrintErr(`"Error making copy of %q : %v\n", _fn, _err`, tag)
 		g.out()
 	}
+
 	g.gPrint("}", tag)
 	g.gPrint(`if _err := os.Rename(_w.Name(), _fn); _err != nil {`, tag)
 	{
@@ -296,6 +304,7 @@ func (g *gosh) writeInPlaceEditClose(tag string) {
 		g.gPrintErr(`"Error recreating %q : %v\n", _fn, _err`, tag)
 		g.out()
 	}
+
 	g.gPrint("}", tag)
 }
 
@@ -362,6 +371,7 @@ func (g *gosh) defaultHandlerFuncDecl() string {
 // from within the temp directory.
 func (g *gosh) writeGoFile() {
 	defer g.dbgStack.Start("writeGoFile", "Writing the Go file")()
+
 	intro := g.dbgStack.Tag()
 
 	verbose.Println(intro, " Creating the Go file: ", goshFilename)
@@ -419,6 +429,7 @@ func (g *gosh) writeMainClose() {
 // writeGoshComment writes the introductory comment
 func (g *gosh) writeGoshComment() {
 	defer g.print(`// ` + equals)
+
 	g.print(`
 
 // ` + equals)

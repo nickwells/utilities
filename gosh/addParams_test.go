@@ -570,6 +570,7 @@ func TestParseParamsCmdWeb(t *testing.T) {
 		"-http-h",
 	} {
 		const handlerName = "HTTPHandler"
+
 		testCases = append(testCases,
 			mkTestParser(nil, testhelper.MkID(""),
 				func(g *gosh) {
@@ -580,6 +581,7 @@ func TestParseParamsCmdWeb(t *testing.T) {
 
 	{
 		const pathName = "HTTP-Path"
+
 		testCases = append(testCases,
 			mkTestParser(nil, testhelper.MkID(""),
 				func(g *gosh) {
