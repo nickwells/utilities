@@ -72,7 +72,7 @@ func TestParseParamsCmdProg(t *testing.T) {
 		parseErrs := errutil.ErrMap{}
 		parseErrs.AddError(
 			paramNameCmpAction,
-			errors.New(`value not allowed: "nonesuch"`+"\n"+
+			errors.New(`value is not allowed: "nonesuch"`+"\n"+
 				"At: [command line]:"+
 				` Supplied Parameter:2: "-comparable-action" "nonesuch"`))
 
@@ -91,7 +91,7 @@ func TestParseParamsCmdProg(t *testing.T) {
 		parseErrs := errutil.ErrMap{}
 		parseErrs.AddError(
 			paramNameDupAction,
-			errors.New(`value not allowed: "nonesuch"`+"\n"+
+			errors.New(`value is not allowed: "nonesuch"`+"\n"+
 				"At: [command line]:"+
 				` Supplied Parameter:2: "-duplicate-action" "nonesuch"`))
 
