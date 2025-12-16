@@ -12,6 +12,7 @@ func makeParamSet(prog *prog) *param.PSet {
 		versionparams.AddParams,
 
 		addParams(prog),
+		addExamples(),
 		param.SetProgramDescription("Report on the status of file systems.\n\n"+
 			"By default the file system to be reported will be that of the"+
 			" current directory '.' but you can specify a list of alternative"+

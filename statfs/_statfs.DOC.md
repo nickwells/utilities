@@ -38,3 +38,7 @@ for the program from the command line.
 
 This offers version-querying parameters that allow the user to discover the
 program version.
+
+
+## Examples
+For examples [see here](_statfs.EXAMPLES.md)
