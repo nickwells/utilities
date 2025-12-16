@@ -11,7 +11,7 @@ func addExamples(ps *param.PSet) error {
 	ps.AddExample(
 		"findCmpRm -diff-args '-W,170,-y,--color=always'"+ //nolint:misspell
 			" -less-args=-R",
-		"This will use show the differences in two columns, side by side,"+
+		"This will show the differences in two columns, side by side,"+
 			" with differences highlighted in colour and with less taking"+
 			" the colour output and displaying it."+
 			"\n\n"+
@@ -24,7 +24,7 @@ func addExamples(ps *param.PSet) error {
 			" subdirectories for the files to process."+
 			"\n\n"+
 			"It searches for files with names"+
-			" ending with '"+dfltExtension+"'.")
+			" ending with '"+dfltExtension+"' (the default).")
 	ps.AddExample(
 		"findCmpRm -d testdata -dont-recurse",
 		"This will search the testdata directory but not any"+
