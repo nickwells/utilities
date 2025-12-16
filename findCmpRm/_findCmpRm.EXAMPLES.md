@@ -11,9 +11,8 @@ This will use sdiff to compare the files rather than the default program
 ```sh
 findCmpRm -diff-args '-W,170,-y,--color=always' -less-args=-R
 ```
-This will use show the differences in two columns, side by side, with
-differences highlighted in colour and with less taking the colour output and
-displaying it\.
+This will show the differences in two columns, side by side, with differences
+highlighted in colour and with less taking the colour output and displaying it\.
 
 You might want to put these parameters in the configuration file so that you
 don&apos;t have to repeatedly set them on each use of the program\.
@@ -24,7 +23,8 @@ findCmpRm -d testdata
 This will search the testdata directory and any subdirectories for the files to
 process\.
 
-It searches for files with names ending with &apos;\.orig&apos;\.
+It searches for files with names ending with &apos;\.orig&apos; \(the
+default\)\.
 
 ```sh
 findCmpRm -d testdata -dont-recurse
