@@ -34,6 +34,7 @@ const (
 	paramNameGlobalFile        = "global-file"
 	paramNameGlobalPackageFile = "global-package-file"
 	paramNameCopyGoFile        = "copy-go-file"
+	paramNameCopyMultiFile     = "copy-multi-file"
 
 	paramNameImport              = "import"
 	paramNameWorkspaceUse        = "workspace-use"
@@ -280,6 +281,35 @@ func packageFilePAF(g *gosh, text *string, scriptName string) param.ActionFunc {
 		}
 
 		g.AddScriptEntry(scriptName, contents, verbatim)
+
+		return nil
+	}
+}
+
+// copyMultiFilePAF generates the Post-Action func (PAF) that adds the contents
+// of the package file to the named script. This will strip out any package
+// or import statements at the start of the file.
+//
+// Note that we pass a pointer to the name of the file rather than the string
+// - this is necessary otherwise we are passing the text value at the point
+// the PAF is being generated not at the point where the parameter value is
+// given.
+func copyMultiFilePAF(g *gosh) param.ActionFunc {
+	provisos := filecheck.FileExists()
+	namecheck := check.StringHasSuffix[string](".go")
+
+	return func(_ location.L, _ *param.ByName, paramParts []string) error {
+		for fname := range strings.SplitSeq(paramParts[1], " ") {
+			if err := provisos.StatusCheck(fname); err != nil {
+				return err
+			}
+
+			if err := namecheck(paramParts[1]); err != nil {
+				return err
+			}
+
+			g.copyGoFiles = append(g.copyGoFiles, fname)
+		}
 
 		return nil
 	}
@@ -1095,7 +1125,28 @@ func addParams(g *gosh) func(ps *param.PSet) error {
 				" gosh code. It also leaves the import statement unchanged"+
 				" which may be convenient.",
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
-			param.SeeAlso(paramNameGlobalPackageFile),
+			param.SeeAlso(paramNameGlobalPackageFile,
+				paramNameCopyMultiFile),
+		)
+
+		multiFiles := ""
+		ps.Add(paramNameCopyMultiFile,
+			psetter.String[string]{Value: &multiFiles},
+			"add a space-separated list of files to the list of Go files"+
+				" to be copied into"+
+				" the gosh directory before building the program. Note"+
+				" that each file must exist and will be copied with a name"+
+				" guaranteeing uniqueness so you don't need to worry"+
+				" about the files being copied having different names."+
+				" For each file if it is not already in package 'main' the"+
+				" package name will be changed so it is."+
+				"\n\n"+
+				"This is similar to "+paramNameCopyGoFile+" but it"+
+				" allows multiple files to be copied at once.",
+			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
+			param.AltNames("copy-multi-files"),
+			param.PostAction(copyMultiFilePAF(g)),
+			param.SeeAlso(paramNameCopyGoFile),
 		)
 
 		ps.Add(paramNameDontLoopOnArgs,
