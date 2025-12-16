@@ -7,7 +7,8 @@ import (
 	"github.com/nickwells/unitsetter.mod/v4/unitsetter"
 )
 
-// addParams will add parameters to the passed ParamSet
+// addParams returns a function that will add parameters to the passed
+// ParamSet
 func addParams(prog *prog) param.PSetOptFunc {
 	return func(ps *param.PSet) error {
 		ps.Add("units",
