@@ -1184,23 +1184,25 @@ func addParams(g *gosh) func(ps *param.PSet) error {
 
 		ps.AddFinalCheck(func() error {
 			if g.runAsWebserver && g.runInReadLoop {
-				errStr := "gosh cannot run in a read-loop" +
+				var errStr strings.Builder
+
+				errStr.WriteString("gosh cannot run in a read-loop" +
 					" and run as a webserver at the same time." +
-					" Parameters set at:"
+					" Parameters set at:")
 
 				for _, p := range g.runAsWebserverSetters {
 					for _, w := range p.WhereSet() {
-						errStr += "\n\t" + w
+						errStr.WriteString("\n\t" + w)
 					}
 				}
 
 				for _, p := range g.runInReadloopSetters {
 					for _, w := range p.WhereSet() {
-						errStr += "\n\t" + w
+						errStr.WriteString("\n\t" + w)
 					}
 				}
 
-				return errors.New(errStr)
+				return errors.New(errStr.String())
 			}
 
 			return nil

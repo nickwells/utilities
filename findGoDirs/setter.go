@@ -97,7 +97,7 @@ func (chk ContChkSetter) AllowedValues() string {
 
 // CurrentValue returns the current setting of the parameter value
 func (chk ContChkSetter) CurrentValue() string {
-	rval := ""
+	var cval strings.Builder
 
 	var checks []string
 
@@ -110,11 +110,13 @@ func (chk ContChkSetter) CurrentValue() string {
 	sep := ""
 
 	for _, k := range checks {
-		rval += sep + (*chk.Value)[k].String()
+		cval.WriteString(sep)
+		cval.WriteString((*chk.Value)[k].String())
+
 		sep = "\n"
 	}
 
-	return rval
+	return cval.String()
 }
 
 // CheckSetter panics if the setter has not been properly created - if the

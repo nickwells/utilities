@@ -111,7 +111,8 @@ func (prog *prog) makeGroupSuffix() string {
 		return ""
 	}
 
-	groupSuffix := "ForGroup"
+	var groupSuffix strings.Builder
+	groupSuffix.WriteString("ForGroup")
 
 	localGroupName := prog.groupName
 	// Now split the group name into words and Titleise each word, adding it
@@ -122,10 +123,11 @@ func (prog *prog) makeGroupSuffix() string {
 	for part := range groupParts {
 		r := []rune(part)
 		r[0] = unicode.ToUpper(r[0])
-		groupSuffix += string(r)
+
+		groupSuffix.WriteString(string(r))
 	}
 
-	return groupSuffix
+	return groupSuffix.String()
 }
 
 // makeAddCFName generates the function name called to add the config file to

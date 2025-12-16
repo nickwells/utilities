@@ -3,6 +3,8 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/nickwells/col.mod/v5/col"
 	"github.com/nickwells/col.mod/v5/colfmt"
 
@@ -48,17 +50,19 @@ func (prog *prog) addFieldInfo() {
 	}
 	prog.fiMap[flagsStr] = fieldInfo{
 		fieldVal: func(_ string, s *unix.Statfs_t) any {
-			rval := ""
+			var rval strings.Builder
+
 			sep := ""
 
 			for f, flagName := range mountFlags {
 				if (s.Flags & f) != 0 {
-					rval += sep + flagName
+					rval.WriteString(sep + flagName)
+
 					sep = ", "
 				}
 			}
 
-			return rval
+			return rval.String()
 		},
 		format:   func() string { return "%s" },
 		shortFmt: func() string { return "%s" },

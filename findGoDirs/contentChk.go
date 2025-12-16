@@ -259,21 +259,20 @@ func checkerPartsHelpText() string {
 
 	partNames := checkerPartNames()
 	for _, k := range partNames {
-		if len(k) > maxNameLen {
-			maxNameLen = len(k)
-		}
+		maxNameLen = max(len(k), maxNameLen)
 	}
 
-	rval := ""
+	var helpText strings.Builder
+
 	sep := "  "
 
 	for _, k := range partNames {
-		rval += fmt.Sprintf("%s%-*s: %s",
+		fmt.Fprintf(&helpText, "%s%-*s: %s",
 			sep, maxNameLen, k, checkerParts[k].desc)
 		sep = "\n  "
 	}
 
-	return rval
+	return helpText.String()
 }
 
 // StatusCheck contains a check and an associated status. it is used to

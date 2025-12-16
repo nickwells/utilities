@@ -66,16 +66,18 @@ func (s ModuleMapSetter) ValDescribe() string {
 
 // CurrentValue returns the current setting of the parameter value
 func (s ModuleMapSetter) CurrentValue() string {
-	cv := ""
+	var cv strings.Builder
+
 	keys := slices.Sorted(maps.Keys(*s.Value))
 	sep := ""
 
 	for _, k := range keys {
-		cv += sep + fmt.Sprintf("%s%s%v", k, moduleMapSeparator, (*s.Value)[k])
+		fmt.Fprintf(&cv, "%s%s%s%v", sep, k, moduleMapSeparator, (*s.Value)[k])
+
 		sep = "\n"
 	}
 
-	return cv
+	return cv.String()
 }
 
 // CheckSetter panics if the setter has not been properly created - if the

@@ -177,7 +177,7 @@ func main() {
 }
 
 // shortNames returns a list of filenames with the search directory name
-// removed. It also returns the maximum length of the names
+// removed. It also returns the length of the longest such name.
 func (prog prog) shortNames(filenames []string) ([]string, int) {
 	shortNames := make([]string, 0, len(filenames))
 	maxLen := 0
@@ -185,9 +185,8 @@ func (prog prog) shortNames(filenames []string) ([]string, int) {
 	for _, fn := range filenames {
 		shortName := strings.TrimPrefix(fn,
 			prog.searchDir+string(os.PathSeparator))
-		if len(shortName) > maxLen {
-			maxLen = len(shortName)
-		}
+
+		maxLen = max(len(shortName), maxLen)
 
 		shortNames = append(shortNames, shortName)
 	}

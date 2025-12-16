@@ -437,21 +437,23 @@ func addNotes(prog *prog) func(ps *param.PSet) error {
 
 // makePartsNote generates the text describing the extra text files available
 func makePartsNote(parts []partParams) string {
-	var text string
+	var text strings.Builder
 
 	sep := ""
 
 	for _, pp := range parts {
-		text += sep
+		text.WriteString(sep)
+
 		sep = "\n\n"
-		text += fmt.Sprintf("The text from the %q section of", pp.partName)
-		text += fmt.Sprintf(" the help message is written to a file ending %q.",
+
+		fmt.Fprintf(&text, "The text from the %q section of", pp.partName)
+		fmt.Fprintf(&text, " the help message is written to a file ending %q.",
 			pp.suffix)
-		text += fmt.Sprintf(" Text to come before this is in a file called %q",
+		fmt.Fprintf(&text, " Text to come before this is in a file called %q",
 			pp.headFile)
-		text += fmt.Sprintf(" and any text to come after in a file called %q.",
+		fmt.Fprintf(&text, " and any text to come after in a file called %q.",
 			pp.tailFile)
 	}
 
-	return text
+	return text.String()
 }

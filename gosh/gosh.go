@@ -395,7 +395,8 @@ func (g *gosh) gDecl(name, initVal, tag string) {
 // makeKnownVarList will format the entries in knownVarMap into a form
 // suitable for the usage message
 func makeKnownVarList() string {
-	kvl := ""
+	var kvl strings.Builder
+
 	keys := make([]string, 0, len(knownVarMap))
 	maxVarNameLen := 0
 	maxTypeNameLen := 0
@@ -403,13 +404,8 @@ func makeKnownVarList() string {
 	for k, vi := range knownVarMap {
 		keys = append(keys, k)
 
-		if len(k) > maxVarNameLen {
-			maxVarNameLen = len(k)
-		}
-
-		if len(vi.typeName) > maxTypeNameLen {
-			maxTypeNameLen = len(vi.typeName)
-		}
+		maxVarNameLen = max(len(k), maxVarNameLen)
+		maxTypeNameLen = max(len(vi.typeName), maxTypeNameLen)
 	}
 
 	sort.Strings(keys)
@@ -418,15 +414,16 @@ func makeKnownVarList() string {
 
 	for _, k := range keys {
 		vi := knownVarMap[k]
-		kvl += fmt.Sprintf("%s%-*.*s %-*.*s  %s",
+		fmt.Fprintf(&kvl, "%s%-*.*s %-*.*s  %s",
 			sep,
 			maxVarNameLen, maxVarNameLen, k,
 			maxTypeNameLen, maxTypeNameLen, vi.typeName,
 			vi.desc)
+
 		sep = "\n"
 	}
 
-	return kvl
+	return kvl.String()
 }
 
 // gPrint prints the text with the appropriate indent and the Gosh comment
