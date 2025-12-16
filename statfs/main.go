@@ -75,6 +75,7 @@ func newProg() *prog {
 					U: prog.baseUnit,
 					V: float64(s.Bfree * uint64(s.Bsize)), //nolint:gosec
 				}
+
 				return vu.ConvertOrPanic(prog.displayUnits).V
 			},
 			format: func() string {
@@ -83,6 +84,7 @@ func newProg() *prog {
 			shortFmt: func() string { return "%.0f" },
 			col: func(_ uint) *col.Col {
 				units := "Units: " + prog.displayUnits.Name()
+
 				return col.New(&colfmt.Float{W: spaceColWidth}, units,
 					"space", "free")
 			},
@@ -93,6 +95,7 @@ func newProg() *prog {
 					U: prog.baseUnit,
 					V: float64(s.Bavail * uint64(s.Bsize)), //nolint:gosec
 				}
+
 				return vu.ConvertOrPanic(prog.displayUnits).V
 			},
 			format: func() string {
@@ -101,6 +104,7 @@ func newProg() *prog {
 			shortFmt: func() string { return "%.0f" },
 			col: func(_ uint) *col.Col {
 				units := "Units: " + prog.displayUnits.Name()
+
 				return col.New(&colfmt.Float{W: spaceColWidth}, units,
 					"space", "available")
 			},
@@ -111,6 +115,7 @@ func newProg() *prog {
 					U: prog.baseUnit,
 					V: float64(s.Blocks * uint64(s.Bsize)), //nolint:gosec
 				}
+
 				return vu.ConvertOrPanic(prog.displayUnits).V
 			},
 			format: func() string {
@@ -119,6 +124,7 @@ func newProg() *prog {
 			shortFmt: func() string { return "%.0f" },
 			col: func(_ uint) *col.Col {
 				units := "Units: " + prog.displayUnits.Name()
+
 				return col.New(&colfmt.Float{W: spaceColWidth}, units,
 					"space", "total")
 			},
@@ -130,6 +136,7 @@ func newProg() *prog {
 					V: float64((s.Blocks - s.Bfree) *
 						uint64(s.Bsize)), //nolint:gosec
 				}
+
 				return vu.ConvertOrPanic(prog.displayUnits).V
 			},
 			format: func() string {
@@ -138,6 +145,7 @@ func newProg() *prog {
 			shortFmt: func() string { return "%.0f" },
 			col: func(_ uint) *col.Col {
 				units := "Units: " + prog.displayUnits.Name()
+
 				return col.New(&colfmt.Float{W: spaceColWidth}, units,
 					"space", "used")
 			},

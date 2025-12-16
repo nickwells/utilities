@@ -50,12 +50,14 @@ func (prog *prog) addFieldInfo() {
 		fieldVal: func(_ string, s *unix.Statfs_t) any {
 			rval := ""
 			sep := ""
+
 			for f, flagName := range mountFlags {
 				if (s.Flags & f) != 0 {
 					rval += sep + flagName
 					sep = ", "
 				}
 			}
+
 			return rval
 		},
 		format:   func() string { return "%s" },
