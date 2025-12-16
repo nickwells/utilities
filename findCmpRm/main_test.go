@@ -335,6 +335,7 @@ func TestGetFiles(t *testing.T) {
 			setProg: func(prog *prog) error {
 				prog.searchDir = tempTestDir
 				prog.searchSubDirs = false
+
 				return nil
 			},
 			pre: func(prog *prog) error {
@@ -620,6 +621,7 @@ func TestProcessComparableFiles(t *testing.T) {
 			expProg: func() *prog {
 				prog := newProg()
 				prog.status.cmpFile.total = len(cmpFiles)
+
 				return prog
 			}(),
 			expFileCount: len(cmpFiles),
@@ -635,6 +637,7 @@ func TestProcessComparableFiles(t *testing.T) {
 				prog.status.cmpFile.total = len(cmpFiles)
 				prog.status.cmpFile.deleted = len(cmpFiles)
 				prog.cmpAction = caDeleteAll
+
 				return prog
 			}(),
 			expStdout: "    (1 / 3) f1.orig: \n\n",
@@ -647,6 +650,7 @@ func TestProcessComparableFiles(t *testing.T) {
 				prog.status.cmpFile.total = len(cmpFiles)
 				prog.status.cmpFile.reverted = len(cmpFiles)
 				prog.cmpAction = caRevertAll
+
 				return prog
 			}(),
 			expStdout: "    (1 / 3) f1.orig: \n\n",
@@ -658,6 +662,7 @@ func TestProcessComparableFiles(t *testing.T) {
 				prog := newProg()
 				prog.status.cmpFile.total = len(cmpFiles)
 				prog.cmpAction = caKeepAll
+
 				return prog
 			}(),
 			expFileCount: len(cmpFiles),
@@ -676,6 +681,7 @@ func TestProcessComparableFiles(t *testing.T) {
 				prog.status.cmpFile.total = len(cmpFiles)
 				prog.status.cmpFile.cmpErrs = len(cmpFiles)
 				prog.diff.name = nosuchDiff
+
 				return prog
 			}(),
 			expFileCount: len(cmpFiles),
