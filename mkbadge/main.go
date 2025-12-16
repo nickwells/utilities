@@ -51,11 +51,9 @@ func main() {
 		"(https://goreportcard.com/badge/" + module + ")]" +
 		"(https://goreportcard.com/report/" + module + ")")
 
-	if strings.HasPrefix(repo, githubPfx) {
+	if s, trimmed := strings.CutPrefix(repo, githubPfx); trimmed {
 		fmt.Println("![GitHub License]" +
-			"(https://img.shields.io/github/license/" +
-			strings.TrimPrefix(repo, githubPfx) +
-			")")
+			"(https://img.shields.io/github/license/" + s + ")")
 	}
 
 	if prog.twitterAC != "" {
