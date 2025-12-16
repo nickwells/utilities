@@ -51,6 +51,7 @@ var webPrintMap = map[string]string{
 // paramVal will generate an error.
 func (ap addPrint) Edit(paramName, paramVal string) (string, error) {
 	fullParamName := paramName
+	paramVal = strings.TrimSpace(paramVal)
 
 	for _, pfx := range ap.prefixes {
 		s := strings.TrimPrefix(paramName, pfx)
