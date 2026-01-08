@@ -203,9 +203,7 @@ func (prog *prog) makeReport(dirs ...string) *col.Report {
 	var maxDirNameLen uint
 
 	for _, d := range dirs {
-		if uint(len(d)) > maxDirNameLen {
-			maxDirNameLen = uint(len(d))
-		}
+		maxDirNameLen = max(uint(len(d)), maxDirNameLen)
 	}
 
 	cols := make([]*col.Col, 0, len(fields))
