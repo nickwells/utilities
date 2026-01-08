@@ -3,8 +3,8 @@
 package main
 
 import (
-	"github.com/nickwells/col.mod/v5/col"
-	"github.com/nickwells/col.mod/v5/colfmt"
+	"github.com/nickwells/col.mod/v6/col"
+	"github.com/nickwells/col.mod/v6/colfmt"
 
 	"golang.org/x/sys/unix"
 )

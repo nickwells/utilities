@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/nickwells/col.mod/v5/col"
-	"github.com/nickwells/col.mod/v5/colfmt"
+	"github.com/nickwells/col.mod/v6/col"
+	"github.com/nickwells/col.mod/v6/colfmt"
 	"github.com/nickwells/param.mod/v6/psetter"
 	"github.com/nickwells/units.mod/v2/units"
 
@@ -33,7 +33,7 @@ type fieldInfo struct {
 	fieldVal valFunc
 	format   func() string
 	shortFmt func() string
-	col      func(uint) *col.Col
+	col      func(int) *col.Col
 }
 
 // prog holds program parameters and status
@@ -65,7 +65,7 @@ func newProg() *prog {
 			},
 			format:   func() string { return "%s" },
 			shortFmt: func() string { return "%s" },
-			col: func(w uint) *col.Col {
+			col: func(w int) *col.Col {
 				return col.New(&colfmt.String{W: w}, "Name")
 			},
 		},
@@ -82,7 +82,7 @@ func newProg() *prog {
 				return "%.0f " + prog.displayUnits.NamePlural()
 			},
 			shortFmt: func() string { return "%.0f" },
-			col: func(_ uint) *col.Col {
+			col: func(_ int) *col.Col {
 				units := "Units: " + prog.displayUnits.Name()
 
 				return col.New(&colfmt.Float{W: spaceColWidth}, units,
@@ -102,7 +102,7 @@ func newProg() *prog {
 				return "%.0f " + prog.displayUnits.NamePlural()
 			},
 			shortFmt: func() string { return "%.0f" },
-			col: func(_ uint) *col.Col {
+			col: func(_ int) *col.Col {
 				units := "Units: " + prog.displayUnits.Name()
 
 				return col.New(&colfmt.Float{W: spaceColWidth}, units,
@@ -122,7 +122,7 @@ func newProg() *prog {
 				return "%.0f " + prog.displayUnits.NamePlural()
 			},
 			shortFmt: func() string { return "%.0f" },
-			col: func(_ uint) *col.Col {
+			col: func(_ int) *col.Col {
 				units := "Units: " + prog.displayUnits.Name()
 
 				return col.New(&colfmt.Float{W: spaceColWidth}, units,
@@ -143,7 +143,7 @@ func newProg() *prog {
 				return "%.0f " + prog.displayUnits.NamePlural()
 			},
 			shortFmt: func() string { return "%.0f" },
-			col: func(_ uint) *col.Col {
+			col: func(_ int) *col.Col {
 				units := "Units: " + prog.displayUnits.Name()
 
 				return col.New(&colfmt.Float{W: spaceColWidth}, units,
@@ -156,7 +156,7 @@ func newProg() *prog {
 			},
 			format:   func() string { return "%d" },
 			shortFmt: func() string { return "%d" },
-			col: func(_ uint) *col.Col {
+			col: func(_ int) *col.Col {
 				return col.New(&colfmt.Int{W: countColWidth},
 					"files", "available")
 			},
@@ -167,7 +167,7 @@ func newProg() *prog {
 			},
 			format:   func() string { return "%d" },
 			shortFmt: func() string { return "%d" },
-			col: func(_ uint) *col.Col {
+			col: func(_ int) *col.Col {
 				return col.New(&colfmt.Int{W: countColWidth},
 					"files", "remaining")
 			},
@@ -200,10 +200,10 @@ var (
 )
 
 func (prog *prog) makeReport(dirs ...string) *col.Report {
-	var maxDirNameLen uint
+	var maxDirNameLen int
 
 	for _, d := range dirs {
-		maxDirNameLen = max(uint(len(d)), maxDirNameLen)
+		maxDirNameLen = max(len(d), maxDirNameLen)
 	}
 
 	cols := make([]*col.Col, 0, len(fields))

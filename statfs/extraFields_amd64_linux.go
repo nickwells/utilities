@@ -5,8 +5,8 @@ package main
 import (
 	"strings"
 
-	"github.com/nickwells/col.mod/v5/col"
-	"github.com/nickwells/col.mod/v5/colfmt"
+	"github.com/nickwells/col.mod/v6/col"
+	"github.com/nickwells/col.mod/v6/colfmt"
 
 	"golang.org/x/sys/unix"
 )
@@ -44,7 +44,7 @@ func (prog *prog) addFieldInfo() {
 		},
 		format:   func() string { return "%d" },
 		shortFmt: func() string { return "%d" },
-		col: func(_ uint) *col.Col {
+		col: func(_ int) *col.Col {
 			return col.New(&colfmt.Int{W: 4}, "max file", "name length")
 		},
 	}
@@ -66,7 +66,7 @@ func (prog *prog) addFieldInfo() {
 		},
 		format:   func() string { return "%s" },
 		shortFmt: func() string { return "%s" },
-		col: func(_ uint) *col.Col {
+		col: func(_ int) *col.Col {
 			return col.New(&colfmt.String{W: 30}, "FS", "flags")
 		},
 	}
