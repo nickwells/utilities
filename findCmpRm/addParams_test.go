@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/nickwells/errutil.mod/errutil"
-	"github.com/nickwells/param.mod/v6/paramset"
-	"github.com/nickwells/param.mod/v6/paramtest"
+	"github.com/nickwells/param.mod/v7/paramset"
+	"github.com/nickwells/param.mod/v7/paramtest"
 	"github.com/nickwells/testhelper.mod/v2/testhelper"
 )
 
@@ -36,7 +36,7 @@ func mkTestParser(
 	args ...string,
 ) paramtest.Parser {
 	actVal := newProg()
-	ps := paramset.NewNoHelpNoExitNoErrRptOrPanic(
+	ps := paramset.NewNoHelpNoExitNoErrRpt(
 		addParams(actVal),
 	)
 

@@ -1,6 +1,6 @@
 package main
 
-import "github.com/nickwells/param.mod/v6/param"
+import "github.com/nickwells/param.mod/v7/param"
 
 func addExamples(ps *param.PSet) error {
 	const snipDir = "snipDir=$HOME/.config/" +

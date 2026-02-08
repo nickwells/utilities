@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/nickwells/check.mod/v2/check"
-	"github.com/nickwells/param.mod/v6/param"
-	"github.com/nickwells/param.mod/v6/psetter"
+	"github.com/nickwells/param.mod/v7/param"
+	"github.com/nickwells/param.mod/v7/psetter"
 	"github.com/nickwells/unitsetter.mod/v4/unitsetter"
 )
 
@@ -40,11 +40,6 @@ func addParams(prog *prog) param.PSetOptFunc {
 				},
 			},
 			"choose which information to show about the file system")
-
-		err := ps.SetRemHandler(param.NullRemHandler{}) // allow trailing params
-		if err != nil {
-			return err
-		}
 
 		return nil
 	}

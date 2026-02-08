@@ -1,6 +1,6 @@
 package main
 
-import "github.com/nickwells/param.mod/v6/param"
+import "github.com/nickwells/param.mod/v7/param"
 
 // addExamples will add examples to the program help message
 func addExamples(ps *param.PSet) error {

@@ -2,15 +2,15 @@ package main
 
 import (
 	"github.com/nickwells/gogen.mod/gogen"
-	"github.com/nickwells/param.mod/v6/param"
-	"github.com/nickwells/param.mod/v6/paramset"
+	"github.com/nickwells/param.mod/v7/param"
+	"github.com/nickwells/param.mod/v7/paramset"
 	"github.com/nickwells/verbose.mod/verbose"
 	"github.com/nickwells/versionparams.mod/versionparams"
 )
 
 // makeParamSet returns an initialised PSet
 func makeParamSet(prog *prog) *param.PSet {
-	return paramset.NewOrPanic(
+	return paramset.New(
 		gogen.AddParams(&prog.outputFileName, &prog.makeFile),
 		verbose.AddParams,
 		versionparams.AddParams,

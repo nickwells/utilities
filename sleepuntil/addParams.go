@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/nickwells/check.mod/v2/check"
-	"github.com/nickwells/param.mod/v6/paction"
-	"github.com/nickwells/param.mod/v6/param"
-	"github.com/nickwells/param.mod/v6/psetter"
+	"github.com/nickwells/param.mod/v7/paction"
+	"github.com/nickwells/param.mod/v7/param"
+	"github.com/nickwells/param.mod/v7/psetter"
 	"github.com/nickwells/tempus.mod/tempus"
 )
 

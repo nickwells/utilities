@@ -3,8 +3,8 @@ package main
 import (
 	"testing"
 
-	"github.com/nickwells/param.mod/v6/param"
-	"github.com/nickwells/param.mod/v6/paramset"
+	"github.com/nickwells/param.mod/v7/param"
+	"github.com/nickwells/param.mod/v7/paramset"
 	"github.com/nickwells/testhelper.mod/v2/testhelper"
 	"github.com/nickwells/versionparams.mod/versionparams"
 )
@@ -16,7 +16,7 @@ func TestAllParams(t *testing.T) {
 	g := newGosh()
 	slp := &snippetListParams{}
 
-	ps := paramset.NewNoHelpNoExitNoErrRptOrPanic(
+	ps := paramset.NewNoHelpNoExitNoErrRpt(
 		paramOptFuncs(g, slp)...)
 
 	skipParams := map[string]bool{}
@@ -48,7 +48,7 @@ func TestAllParams(t *testing.T) {
 				panicked, panicVal := testhelper.PanicSafe(func() {
 					localG := newGosh()
 					localSLP := &snippetListParams{}
-					localPS := paramset.NewNoHelpNoExitNoErrRptOrPanic(
+					localPS := paramset.NewNoHelpNoExitNoErrRpt(
 						paramOptFuncs(localG, localSLP)...)
 					localPS.Parse(args)
 				})

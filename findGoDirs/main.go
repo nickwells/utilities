@@ -13,6 +13,7 @@ import (
 
 	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/dirsearch.mod/v2/dirsearch"
+	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/verbose.mod/verbose"
@@ -107,11 +108,28 @@ func (fgd *prog) doGoCommand(name, command string, cmdArgs []string) {
 	gogen.ExecGoCmd(gogen.ShowCmdIO, args...)
 }
 
+// gatherDirs will process all the directories from the command line and
+// check them for existence. It will report any problems found.
+func (fgd *prog) gatherDirs(dirs []string) {
+	dirProvisos := filecheck.DirExists()
+
+	for _, dirName := range dirs {
+		if err := dirProvisos.StatusCheck(dirName); err != nil {
+			fmt.Fprintf(os.Stderr, "bad directory: %s\n", err)
+			continue
+		}
+
+		fgd.baseDirs = append(fgd.baseDirs, dirName)
+	}
+}
+
 func main() {
 	prog := newProg()
 	ps := makeParamSet(prog)
 
 	ps.Parse()
+
+	prog.gatherDirs(ps.TrailingParams())
 
 	defer prog.dbgStack.Start("main", os.Args[0])()
 

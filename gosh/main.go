@@ -24,6 +24,7 @@ func main() {
 	ps := makeParamSet(g, slp)
 
 	ps.Parse()
+	g.HandleRemainder(ps.TrailingParams())
 
 	preCheck(g)
 

@@ -13,9 +13,9 @@ import (
 	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/gogen.mod/gogen"
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v6/paction"
-	"github.com/nickwells/param.mod/v6/param"
-	"github.com/nickwells/param.mod/v6/psetter"
+	"github.com/nickwells/param.mod/v7/paction"
+	"github.com/nickwells/param.mod/v7/param"
+	"github.com/nickwells/param.mod/v7/psetter"
 )
 
 const (
@@ -183,7 +183,7 @@ func makeShebangFileHelpText(sect string) string {
 // PAF is being generated not at the point where the parameter value is
 // given.
 func snippetPAF(g *gosh, sName *string, scriptName string) param.ActionFunc {
-	return func(_ location.L, _ *param.ByName, _ []string) error {
+	return func(_ location.L, _ *param.BaseParam, _ []string) error {
 		err := g.CacheSnippet(*sName)
 		if err != nil {
 			return err
@@ -203,7 +203,7 @@ func snippetPAF(g *gosh, sName *string, scriptName string) param.ActionFunc {
 // the PAF is being generated not at the point where the parameter value is
 // given.
 func scriptPAF(g *gosh, text *string, scriptName string) param.ActionFunc {
-	return func(_ location.L, _ *param.ByName, _ []string) error {
+	return func(_ location.L, _ *param.BaseParam, _ []string) error {
 		g.AddScriptEntry(scriptName, *text, verbatim)
 		return nil
 	}
@@ -212,7 +212,7 @@ func scriptPAF(g *gosh, text *string, scriptName string) param.ActionFunc {
 // stdinPAF generates the Post-Action func (PAF) that reads from os.Stdin and
 // adds the resulting text into the named script.
 func stdinPAF(g *gosh, scriptName string) param.ActionFunc {
-	return func(_ location.L, _ *param.ByName, _ []string) error {
+	return func(_ location.L, _ *param.BaseParam, _ []string) error {
 		g.AddScriptEntry(scriptName, "", readFromStdin)
 		return nil
 	}
@@ -220,7 +220,7 @@ func stdinPAF(g *gosh, scriptName string) param.ActionFunc {
 
 // parseShebangConfig creates a temporary config file, populates it with the
 // supplied config and passes it to be read as a config file
-func parseShebangConfig(loc location.L, p *param.ByName, config []byte) error {
+func parseShebangConfig(loc location.L, p *param.BaseParam, config []byte) error {
 	f, err := os.CreateTemp("", "gosh-shebang-*.cfg")
 	if err != nil {
 		return fmt.Errorf(
@@ -249,7 +249,7 @@ func parseShebangConfig(loc location.L, p *param.ByName, config []byte) error {
 // the PAF is being generated not at the point where the parameter value is
 // given.
 func shebangFilePAF(g *gosh, text *string, scriptName string) param.ActionFunc {
-	return func(loc location.L, p *param.ByName, _ []string) error {
+	return func(loc location.L, p *param.BaseParam, _ []string) error {
 		script, config, err := shebangFileContents(*text)
 		if err != nil {
 			return err
@@ -274,7 +274,7 @@ func shebangFilePAF(g *gosh, text *string, scriptName string) param.ActionFunc {
 // the PAF is being generated not at the point where the parameter value is
 // given.
 func packageFilePAF(g *gosh, text *string, scriptName string) param.ActionFunc {
-	return func(_ location.L, _ *param.ByName, _ []string) error {
+	return func(_ location.L, _ *param.BaseParam, _ []string) error {
 		contents, err := packageFileContents(*text)
 		if err != nil {
 			return err
@@ -298,7 +298,7 @@ func copyMultiFilePAF(g *gosh) param.ActionFunc {
 	provisos := filecheck.FileExists()
 	namecheck := check.StringHasSuffix[string](".go")
 
-	return func(_ location.L, _ *param.ByName, paramParts []string) error {
+	return func(_ location.L, _ *param.BaseParam, paramParts []string) error {
 		for fname := range strings.SplitSeq(paramParts[1], " ") {
 			if err := provisos.StatusCheck(fname); err != nil {
 				return err
@@ -379,6 +379,7 @@ func addSnippetParams(g *gosh) func(ps *param.PSet) error {
 			},
 			makeSnippetHelpText(execSect),
 			param.AltNames("snippet", "e-s", "es"),
+			param.ValueName("filename"),
 			param.PostAction(snippetPAF(g, &snippetName, execSect)),
 			param.SeeAlso(paramNameSnippetDir, paramNameSnippetList),
 		)
@@ -390,6 +391,7 @@ func addSnippetParams(g *gosh) func(ps *param.PSet) error {
 			},
 			makeSnippetHelpText(beforeSect),
 			param.AltNames("b-s", "bs"),
+			param.ValueName("filename"),
 			param.PostAction(snippetPAF(g, &snippetName, beforeSect)),
 		)
 
@@ -401,6 +403,7 @@ func addSnippetParams(g *gosh) func(ps *param.PSet) error {
 			makeSnippetHelpText(beforeInnerSect),
 			param.AltNames("before-inner-snippet",
 				"ib-s", "bi-s", "ibs", "bis"),
+			param.ValueName("filename"),
 			param.PostAction(snippetPAF(g, &snippetName, beforeInnerSect)),
 		)
 
@@ -411,6 +414,7 @@ func addSnippetParams(g *gosh) func(ps *param.PSet) error {
 			},
 			makeSnippetHelpText(afterInnerSect),
 			param.AltNames("after-inner-snippet", "ia-s", "ai-s", "ias", "ais"),
+			param.ValueName("filename"),
 			param.PostAction(snippetPAF(g, &snippetName, afterInnerSect)),
 		)
 
@@ -431,6 +435,7 @@ func addSnippetParams(g *gosh) func(ps *param.PSet) error {
 			},
 			makeSnippetHelpText(globalSect),
 			param.AltNames("g-s", "gs"),
+			param.ValueName("filename"),
 			param.PostAction(snippetPAF(g, &snippetName, globalSect)),
 		)
 
@@ -644,12 +649,8 @@ func addReadloopParams(g *gosh) func(ps *param.PSet) error {
 			param.SeeAlso(paramNameInPlaceEdit),
 		)
 
-		if err := ps.SetNamedRemHandler(g, "filenames"); err != nil {
-			return err
-		}
-
 		ps.AddFinalCheck(func() error {
-			if len(ps.Remainder()) == 0 && g.inPlaceEdit {
+			if len(ps.TrailingParams()) == 0 && g.inPlaceEdit {
 				return fmt.Errorf(
 					"you have given the %q parameter but no filenames have"+
 						" been given (they should be supplied following %q)",
@@ -680,7 +681,7 @@ func addReadloopParams(g *gosh) func(ps *param.PSet) error {
 func addStdinParams(g *gosh) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		stdinCount := paction.Counter{}
-		commonOpts := []param.OptFunc{
+		commonOpts := []param.ByNameOptFunc{
 			param.Attrs(param.CommandLineOnly),
 			param.SeeAlso(stdinParamNames...),
 			param.PostAction(
@@ -1170,7 +1171,7 @@ func addParams(g *gosh) func(ps *param.PSet) error {
 				" passed to the generated program. From the commant line"+
 				" this is more conveniently achieved by given the"+
 				" standard terminal parameter"+
-				" ('"+param.DfltTerminalParam+"') but in shebang scripts"+
+				" ('"+ps.TerminalParam()+"') but in shebang scripts"+
 				" this parameter can be given as a script parameter at"+
 				" the start of the shebang file. Then any parameters"+
 				" to the script will be used as parameters to the"+
@@ -1286,7 +1287,7 @@ func addGoshParams(g *gosh) func(ps *param.PSet) error {
 				" Note that it must be an executable program either"+
 				" in your PATH or else as a pathname",
 			param.PostAction(
-				func(_ location.L, _ *param.ByName, _ []string) error {
+				func(_ location.L, _ *param.BaseParam, _ []string) error {
 					return gogen.SetGoCmdName(goCmdName)
 				}),
 			param.Attrs(param.DontShowInStdUsage),
@@ -1295,7 +1296,8 @@ func addGoshParams(g *gosh) func(ps *param.PSet) error {
 
 		// Import-populator params
 
-		ps.Add(paramNameImporter, psetter.String[string]{Value: &g.importPopulator},
+		ps.Add(paramNameImporter,
+			psetter.String[string]{Value: &g.importPopulator},
 			"the name of the command to run in order to populate the"+
 				" import statements. If no"+
 				" value is given then one of "+importerCmds()+

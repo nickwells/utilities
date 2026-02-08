@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/nickwells/check.mod/v2/check"
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v6/param"
-	"github.com/nickwells/param.mod/v6/psetter"
+	"github.com/nickwells/param.mod/v7/param"
+	"github.com/nickwells/param.mod/v7/psetter"
 )
 
 // addParams will add parameters to the passed ParamSet
@@ -27,7 +27,7 @@ func addParams(prog *prog) param.PSetOptFunc {
 				" group name.",
 			param.AltNames("g"),
 			param.PostAction(
-				func(_ location.L, _ *param.ByName, _ []string) error {
+				func(_ location.L, _ *param.BaseParam, _ []string) error {
 					if prog.outputFileName == dfltFileName {
 						prog.outputFileName = groupFileNameBase +
 							prog.makeGroupSuffix() + ".go"

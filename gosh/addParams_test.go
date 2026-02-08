@@ -9,9 +9,9 @@ import (
 
 	"github.com/nickwells/errutil.mod/errutil"
 	"github.com/nickwells/filecheck.mod/filecheck"
-	"github.com/nickwells/param.mod/v6/param"
-	"github.com/nickwells/param.mod/v6/paramset"
-	"github.com/nickwells/param.mod/v6/paramtest"
+	"github.com/nickwells/param.mod/v7/param"
+	"github.com/nickwells/param.mod/v7/paramset"
+	"github.com/nickwells/param.mod/v7/paramtest"
 	"github.com/nickwells/testhelper.mod/v2/testhelper"
 )
 
@@ -55,7 +55,7 @@ func cmpGoshStruct(iVal, iExpVal any) error {
 // makePSet returns a param set with the gosh params set up
 func makePSet(g *gosh) *param.PSet {
 	slp := &snippetListParams{}
-	return paramset.NewNoHelpNoExitNoErrRptOrPanic(paramOptFuncs(g, slp)...)
+	return paramset.NewNoHelpNoExitNoErrRpt(paramOptFuncs(g, slp)...)
 }
 
 // mkTestGosh makes a new Gosh and calls the goshSetters on it which are
@@ -72,20 +72,28 @@ func mkTestGosh(goshSetter ...func(g *gosh)) *gosh {
 // mkTestParser populates and returns a paramtest.Parser ready to be added to
 // the testcases.
 func mkTestParser(
-	errs errutil.ErrMap, id testhelper.ID, gs func(g *gosh), args ...string,
+	errs errutil.ErrMap,
+	id testhelper.ID,
+	gs func(g *gosh),
+	args ...string,
 ) paramtest.Parser {
 	actVal := mkTestGosh()
 
 	expVal := mkTestGosh(gs)
 
 	return paramtest.Parser{
-		ID:             id,
+		ID: id,
+
 		ExpParseErrors: errs,
-		Val:            actVal,
 		Ps:             makePSet(actVal),
-		ExpVal:         expVal,
-		Args:           args,
-		CheckFunc:      cmpGoshStruct,
+
+		Val:       actVal,
+		ExpVal:    expVal,
+		CheckFunc: cmpGoshStruct,
+
+		PostParse: goshPostParse,
+
+		Args: args,
 	}
 }
 
@@ -196,6 +204,18 @@ func populatePrintScriptEntries() (map[int]string, map[int]scriptEntry) {
 	return printVal, printValSE
 }
 
+func goshPostParse(ps *param.PSet, v any) error {
+	g, ok := v.(*gosh)
+	if !ok {
+		return fmt.Errorf(
+			"goshPostParse called with a value not castable to a *gosh: %T", v)
+	}
+
+	g.HandleRemainder(ps.TrailingParams())
+
+	return nil
+}
+
 // TestParseParamsCmdGosh will use the paramtest.Parser to make sure the
 // behaviour of the parameter setting is as expected. This tests just the
 // parameters in the 'cmd-gosh' group.
@@ -209,15 +229,16 @@ func TestParseParamsCmdGosh(t *testing.T) {
 			func(_ *gosh) {}))
 
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID("add-comments"), func(g *gosh) {
-			g.addComments = true
-		}, "-add-comments"))
+		mkTestParser(nil,
+			testhelper.MkID("add-comments"),
+			func(g *gosh) { g.addComments = true },
+			"-add-comments"))
 
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID("base-temp-dir with good dir"),
-			func(g *gosh) {
-				g.baseTempDir = "testdata/baseTempDir"
-			}, "-base-temp-dir", "testdata/baseTempDir"))
+		mkTestParser(nil,
+			testhelper.MkID("base-temp-dir with good dir"),
+			func(g *gosh) { g.baseTempDir = "testdata/baseTempDir" },
+			"-base-temp-dir", "testdata/baseTempDir"))
 
 	{
 		parseErrs := errutil.ErrMap{}
@@ -238,9 +259,11 @@ func TestParseParamsCmdGosh(t *testing.T) {
 	}
 
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID(""), func(g *gosh) {
-			g.buildArgs = []string{"-a", "-b", "-c", "-d", "-e"}
-		},
+		mkTestParser(nil,
+			testhelper.MkID("build-args"),
+			func(g *gosh) {
+				g.buildArgs = []string{"-a", "-b", "-c", "-d", "-e"}
+			},
 			"-build-arg", "-a",
 			"-build-args", "-b",
 			"-args-build", "-c",
@@ -254,7 +277,8 @@ func TestParseParamsCmdGosh(t *testing.T) {
 		"-no-run",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(p),
+			mkTestParser(nil,
+				testhelper.MkID("suppress execution: "+p),
 				func(g *gosh) {
 					g.dontRun = true
 					g.dontCleanupUserChoice = true
@@ -267,9 +291,10 @@ func TestParseParamsCmdGosh(t *testing.T) {
 		"-dont-auto-import",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(p), func(g *gosh) {
-				g.dontPopulateImports = true
-			}, p))
+			mkTestParser(nil,
+				testhelper.MkID("suppress import generation: "+p),
+				func(g *gosh) { g.dontPopulateImports = true },
+				p))
 	}
 
 	for _, p := range []string{
@@ -278,11 +303,14 @@ func TestParseParamsCmdGosh(t *testing.T) {
 	} {
 		testCases = append(testCases,
 			mkTestParser(nil,
-				testhelper.MkID(p), func(g *gosh) { g.edit = true }, p))
+				testhelper.MkID("edit generated program: "+p),
+				func(g *gosh) { g.edit = true },
+				p))
 	}
 
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID("edit-repeat"),
+		mkTestParser(nil,
+			testhelper.MkID("edit-repeat"),
 			func(g *gosh) {
 				g.edit = true
 				g.editRepeat = true
@@ -291,14 +319,13 @@ func TestParseParamsCmdGosh(t *testing.T) {
 
 	testCases = append(testCases,
 		mkTestParser(nil,
-			testhelper.MkID(paramNameScriptEditor),
-			func(g *gosh) {
-				g.editorParam = "xxx"
-			},
+			testhelper.MkID("editor: "+paramNameScriptEditor),
+			func(g *gosh) { g.editorParam = "xxx" },
 			"-"+paramNameScriptEditor, "xxx"))
 
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID("formatter"),
+		mkTestParser(nil,
+			testhelper.MkID("formatter"),
 			func(g *gosh) {
 				g.formatter = "xxx"
 				g.formatterSet = true
@@ -306,12 +333,14 @@ func TestParseParamsCmdGosh(t *testing.T) {
 			"-formatter", "xxx"))
 
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID("formatter-args"),
+		mkTestParser(nil,
+			testhelper.MkID("formatter-args"),
 			func(g *gosh) { g.formatterArgs = []string{"-a", "-b", "-c"} },
 			"-formatter-args", "-a,-b,-c"))
 
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID("importer"),
+		mkTestParser(nil,
+			testhelper.MkID("importer"),
 			func(g *gosh) {
 				g.importPopulator = "xxx"
 				g.importPopulatorSet = true
@@ -319,7 +348,8 @@ func TestParseParamsCmdGosh(t *testing.T) {
 			"-importer", "xxx"))
 
 	testCases = append(testCases,
-		mkTestParser(nil, testhelper.MkID("importer-args"),
+		mkTestParser(nil,
+			testhelper.MkID("importer-args"),
 			func(g *gosh) {
 				g.importPopulatorArgs = []string{"-a", "-b", "-c"}
 			},
@@ -332,10 +362,12 @@ func TestParseParamsCmdGosh(t *testing.T) {
 		"-program-name",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(p), func(g *gosh) {
-				g.execName = "TestGosh"
-				g.dontCleanupUserChoice = true
-			},
+			mkTestParser(nil,
+				testhelper.MkID("program name override: "+p),
+				func(g *gosh) {
+					g.execName = "TestGosh"
+					g.dontCleanupUserChoice = true
+				},
 				p, "TestGosh"))
 	}
 
@@ -345,10 +377,9 @@ func TestParseParamsCmdGosh(t *testing.T) {
 		"-keep",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(p),
-				func(g *gosh) {
-					g.dontCleanupUserChoice = true
-				},
+			mkTestParser(nil,
+				testhelper.MkID("retain code: "+p),
+				func(g *gosh) { g.dontCleanupUserChoice = true },
 				p))
 	}
 
@@ -359,8 +390,10 @@ func TestParseParamsCmdGosh(t *testing.T) {
 		"-show-time",
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(p),
-				func(g *gosh) { g.dbgStack.ShowTimings = true }, p))
+			mkTestParser(nil,
+				testhelper.MkID("report timings: "+p),
+				func(g *gosh) { g.dbgStack.ShowTimings = true },
+				p))
 	}
 
 	for _, tc := range testCases {
@@ -399,7 +432,8 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 				func(g *gosh) {
 					g.runInReadLoop = true
 					g.inPlaceEdit = true
-				}, p))
+				},
+				p))
 
 		testCases = append(testCases,
 			mkTestParser(nil,
@@ -408,7 +442,8 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 					g.runInReadLoop = true
 					g.inPlaceEdit = true
 					g.errMap.AddError("file check", shouldExistErr)
-				}, p, "--", testNoSuchFile))
+				},
+				p, "--", testNoSuchFile))
 
 		testCases = append(testCases,
 			mkTestParser(nil,
@@ -417,7 +452,8 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 					g.runInReadLoop = true
 					g.inPlaceEdit = true
 					g.errMap.AddError("original file check", shouldNotExistErr)
-				}, p, "--", testHasOrigFile))
+				},
+				p, "--", testHasOrigFile))
 
 		testCases = append(testCases,
 			mkTestParser(nil,
@@ -427,7 +463,8 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 					g.inPlaceEdit = true
 					g.filesToRead = true
 					g.args = []string{testDataFile1, testDataFile2}
-				}, p, "--", testDataFile1, testDataFile2))
+				},
+				p, "--", testDataFile1, testDataFile2))
 	}
 
 	for _, p := range []string{
@@ -440,7 +477,8 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 				func(g *gosh) {
 					g.runInReadLoop = true
 					g.errMap.AddError("file check", shouldExistErr)
-				}, p, "--", testNoSuchFile))
+				},
+				p, "--", testNoSuchFile))
 
 		testCases = append(testCases,
 			mkTestParser(nil,
@@ -449,7 +487,8 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 					g.runInReadLoop = true
 					g.filesToRead = true
 					g.args = []string{testDataFile1, testDataFile2}
-				}, p, "--", testDataFile1, testDataFile2))
+				},
+				p, "--", testDataFile1, testDataFile2))
 
 		testCases = append(testCases,
 			mkTestParser(nil,
@@ -463,7 +502,8 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 							testDataFile1+
 							`" has been given more than once,`+
 							` first at 0 and again at 1`))
-				}, p, "--", testDataFile1, testDataFile1))
+				},
+				p, "--", testDataFile1, testDataFile1))
 	}
 
 	for _, p := range []string{
@@ -475,7 +515,8 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 				func(g *gosh) {
 					g.splitLine = true
 					g.runInReadLoop = true
-				}, p))
+				},
+				p))
 	}
 
 	for _, p := range []string{
@@ -488,7 +529,8 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 					g.splitLine = true
 					g.runInReadLoop = true
 					g.splitPattern = "[,.;:]"
-				}, p, "[,.;:]"))
+				},
+				p, "[,.;:]"))
 	}
 
 	for _, p := range []struct {
@@ -514,13 +556,16 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 					` standard output with a different printing parameter`))
 
 		testCases = append(testCases,
-			mkTestParser(parseErrs, testhelper.MkID(""), func(g *gosh) {
-				g.imports = []string{"fmt"}
-				g.scripts[execSect] = []scriptEntry{printValSE[p.idx]}
-			}, p.param, printVal[p.idx]))
+			mkTestParser(parseErrs,
+				testhelper.MkID("printing: "+p.param),
+				func(g *gosh) {
+					g.imports = []string{"fmt"}
+					g.scripts[execSect] = []scriptEntry{printValSE[p.idx]}
+				},
+				p.param, printVal[p.idx]))
 
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(""),
+			mkTestParser(nil, testhelper.MkID("printing: "+p.param),
 				func(g *gosh) {
 					g.imports = []string{"fmt"}
 					g.inPlaceEdit = true
@@ -528,7 +573,8 @@ func TestParseParamsCmdReadloop(t *testing.T) {
 					g.filesToRead = true
 					g.args = []string{testDataFile1}
 					g.scripts[execSect] = []scriptEntry{printValSE[p.idx]}
-				}, p.param, printVal[p.idx],
+				},
+				p.param, printVal[p.idx],
 				"-"+paramNameInPlaceEdit, "--", testDataFile1))
 	}
 
@@ -557,12 +603,13 @@ func TestParseParamsCmdWeb(t *testing.T) {
 		{"-web-pf", printTypeWebPf},
 	} {
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(""),
+			mkTestParser(nil, testhelper.MkID("web printing: "+p.param),
 				func(g *gosh) {
 					g.imports = []string{"fmt"}
 					g.runAsWebserver = true
 					g.scripts[execSect] = []scriptEntry{printValSE[p.idx]}
-				}, p.param, printVal[p.idx]))
+				},
+				p.param, printVal[p.idx]))
 	}
 
 	for _, p := range []string{
@@ -572,18 +619,19 @@ func TestParseParamsCmdWeb(t *testing.T) {
 		const handlerName = "HTTPHandler"
 
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(""),
+			mkTestParser(nil, testhelper.MkID("http: "+p),
 				func(g *gosh) {
 					g.runAsWebserver = true
 					g.httpHandler = handlerName
-				}, p, handlerName))
+				},
+				p, handlerName))
 	}
 
 	{
 		const pathName = "HTTP-Path"
 
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(""),
+			mkTestParser(nil, testhelper.MkID("http path"),
 				func(g *gosh) {
 					g.runAsWebserver = true
 					g.httpPath = pathName
@@ -594,21 +642,23 @@ func TestParseParamsCmdWeb(t *testing.T) {
 		const httpPortNum = 8001
 
 		testCases = append(testCases,
-			mkTestParser(nil, testhelper.MkID(""),
+			mkTestParser(nil, testhelper.MkID("http port"),
 				func(g *gosh) {
 					g.runAsWebserver = true
 					g.httpPort = httpPortNum
 				}, "-http-port", fmt.Sprintf("%d", httpPortNum)))
 	}
 
-	testCases = append(testCases,
-		mkTestParser(nil,
-			testhelper.MkID(""), func(g *gosh) { g.runAsWebserver = true },
-			"-http-server"))
-	testCases = append(testCases,
-		mkTestParser(nil,
-			testhelper.MkID(""), func(g *gosh) { g.runAsWebserver = true },
-			"-http"))
+	for _, p := range []string{
+		"-http-server",
+		"-http",
+	} {
+		testCases = append(testCases,
+			mkTestParser(nil,
+				testhelper.MkID("run as web server: "+p),
+				func(g *gosh) { g.runAsWebserver = true },
+				p))
+	}
 
 	for _, tc := range testCases {
 		_ = tc.Test(t)

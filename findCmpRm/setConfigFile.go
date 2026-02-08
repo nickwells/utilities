@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/nickwells/filecheck.mod/filecheck"
-	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v7/param"
 	"github.com/nickwells/xdg.mod/xdg"
 )
 

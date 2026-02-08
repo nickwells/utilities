@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	"github.com/nickwells/filecheck.mod/filecheck"
-	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v6/param"
 )
 
 const origExt = ".orig"
@@ -17,15 +15,15 @@ var fileProvisos = filecheck.FileExists()
 // extension '.orig'
 var origFileProvisos = filecheck.IsNew()
 
-// HandleRemainder processes the trailing parameters . If gosh has the
+// HandleRemainder processes the trailing parameters. If gosh has the
 // 'runInReadLoop' flag set then they are treated as files and added to the
 // filesToRead. Otherwise they are added to the list of args and that is
 // looped over instead.
-func (g *gosh) HandleRemainder(ps *param.PSet, _ *location.L) {
+func (g *gosh) HandleRemainder(rem []string) {
 	if g.runInReadLoop && !g.skipArgLoop {
-		g.populateFilesToRead(ps.Remainder())
+		g.populateFilesToRead(rem)
 	} else {
-		g.args = append(g.args, ps.Remainder()...)
+		g.args = append(g.args, rem...)
 	}
 }
 

@@ -5,9 +5,9 @@ import (
 
 	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v6/paction"
-	"github.com/nickwells/param.mod/v6/param"
-	"github.com/nickwells/param.mod/v6/psetter"
+	"github.com/nickwells/param.mod/v7/paction"
+	"github.com/nickwells/param.mod/v7/param"
+	"github.com/nickwells/param.mod/v7/psetter"
 )
 
 const (
@@ -18,41 +18,10 @@ const (
 	noteNameContentChecks = "Content Checks"
 )
 
-// remHandler handles any directory names passed at the end of the parameters
-// (after the terminal parameter, which is '--' by default)
-type remHandler struct {
-	dirs     *[]string
-	provisos filecheck.Provisos
-}
-
-// HandleRemainder checks that each trailing argument is a directory and adds
-// them to the directory list. It records an error if any parameter is not a
-// directory.
-func (rh remHandler) HandleRemainder(ps *param.PSet, _ *location.L) {
-	for _, dirName := range ps.Remainder() {
-		if err := rh.provisos.StatusCheck(dirName); err != nil {
-			ps.AddErr("bad directory", err)
-			continue
-		}
-
-		*rh.dirs = append(*rh.dirs, dirName)
-	}
-}
-
 // addParams will add parameters to the passed ParamSet
 func addParams(fgd *prog) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		dirProvisos := filecheck.DirExists()
-
-		rh := remHandler{
-			dirs:     &fgd.baseDirs,
-			provisos: dirProvisos,
-		}
-
-		err := ps.SetNamedRemHandler(rh, "directory")
-		if err != nil {
-			return err
-		}
 
 		var dir string
 
@@ -169,7 +138,7 @@ func addParams(fgd *prog) func(ps *param.PSet) error {
 				"with-build-tags", "with-build-tag"),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 			param.PostAction(
-				func(_ location.L, _ *param.ByName, _ []string) error {
+				func(_ location.L, _ *param.BaseParam, _ []string) error {
 					fgd.contentChecks[buildTagChecks.name] = buildTagChecks
 					return nil
 				}),
@@ -187,7 +156,7 @@ func addParams(fgd *prog) func(ps *param.PSet) error {
 				"with-go-generate", "with-go-gen"),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 			param.PostAction(
-				func(_ location.L, _ *param.ByName, _ []string) error {
+				func(_ location.L, _ *param.BaseParam, _ []string) error {
 					fgd.contentChecks[gogenChecks.name] = gogenChecks
 					return nil
 				}),

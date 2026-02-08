@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/nickwells/location.mod/location"
-	"github.com/nickwells/param.mod/v6/paction"
-	"github.com/nickwells/param.mod/v6/param"
-	"github.com/nickwells/param.mod/v6/psetter"
+	"github.com/nickwells/param.mod/v7/paction"
+	"github.com/nickwells/param.mod/v7/param"
+	"github.com/nickwells/param.mod/v7/psetter"
 	"github.com/nickwells/tempus.mod/tempus"
 )
 
@@ -25,7 +25,7 @@ const (
 // setFormat returns an action func that will set the output format (and, if
 // zone is not nil, the toZone)
 func setFormat(prog *prog, fmt string, zone *time.Location) param.ActionFunc {
-	return func(_ location.L, _ *param.ByName, _ []string) error {
+	return func(_ location.L, _ *param.BaseParam, _ []string) error {
 		prog.outFormat = fmt
 		if zone != nil {
 			prog.toZone = zone

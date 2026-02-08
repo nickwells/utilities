@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/nickwells/gogen.mod/gogen"
-	"github.com/nickwells/param.mod/v6/param"
-	"github.com/nickwells/param.mod/v6/psetter"
+	"github.com/nickwells/param.mod/v7/param"
+	"github.com/nickwells/param.mod/v7/psetter"
 )
 
 // Created: Wed Jun 10 11:29:28 2020

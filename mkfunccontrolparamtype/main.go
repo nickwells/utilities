@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/nickwells/gogen.mod/gogen"
-	"github.com/nickwells/param.mod/v6/param"
+	"github.com/nickwells/param.mod/v7/param"
 	"github.com/nickwells/twrap.mod/twrap"
 )
 
