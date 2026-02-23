@@ -233,7 +233,7 @@ func (prog *prog) getModuleSnippets(cmd string) []string {
 			modName+"@"+vsn,
 			snippetFile)
 
-		if _, err := os.Stat(filename); err == nil {
+		if _, err := os.Stat(filename); err == nil { //nolint:gosec
 			snippetFiles = append(snippetFiles, filename)
 		}
 	}

@@ -195,7 +195,7 @@ func (prog *prog) printFuncPersonal(f io.Writer) {
 	fmt.Fprint(f, "\n\tbaseDir := ")
 
 	if prog.baseDirPersonal != "" {
-		fmt.Fprintf(f, "%q\n", prog.baseDirPersonal)
+		fmt.Fprintf(f, "%q\n", prog.baseDirPersonal) //nolint:gosec
 	} else {
 		fmt.Fprintln(f, "xdg.ConfigHome()")
 	}
@@ -217,7 +217,7 @@ func (prog *prog) printFuncGlobal(f io.Writer) {
 	prog.printFuncIntro(f, prog.makeFuncNameGlobal())
 
 	if prog.baseDirGlobal != "" {
-		fmt.Fprintf(f, "\n\tbaseDir := %q\n", prog.baseDirGlobal)
+		fmt.Fprintf(f, "\n\tbaseDir := %q\n", prog.baseDirGlobal) //nolint:gosec
 	} else {
 		fmt.Fprint(f, `
 	dirs := xdg.ConfigDirs()
@@ -238,18 +238,21 @@ func (prog *prog) printFuncGlobal(f io.Writer) {
 
 // printAddCF prints the lines of code that will call filepath.Join(...)
 // with the base directory name and the strings from paramFileParts
-func (prog *prog) printAddCF(f io.Writer, dirs []string, funcName, cfgFName string, mustExist bool) {
-	fmt.Fprint(f, `
+func (prog *prog) printAddCF(
+	f io.Writer, dirs []string, funcName, cfgFName string, mustExist bool,
+) {
+	fmt.Fprint(f, //nolint:gosec
+		`
 	`+funcName+`
 		filepath.Join(baseDir`)
 
 	const sep = ",\n\t\t\t"
 
 	for _, p := range dirs {
-		fmt.Fprintf(f, "%s%q", sep, p)
+		fmt.Fprintf(f, "%s%q", sep, p) //nolint:gosec
 	}
 
-	fmt.Fprintf(f, "%s%q),", sep, cfgFName)
+	fmt.Fprintf(f, "%s%q),", sep, cfgFName) //nolint:gosec
 
 	if mustExist {
 		fmt.Fprint(f, `
