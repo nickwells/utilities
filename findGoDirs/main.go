@@ -27,8 +27,8 @@ func reportNoAction(actionName, dirName string) {
 }
 
 // doPrint will print the name
-func doPrint(fgd *prog, dirName string) {
-	if fgd.noAction {
+func doPrint(prog *prog, dirName string) {
+	if prog.noAction {
 		reportNoAction("print", dirName)
 		return
 	}
@@ -38,20 +38,20 @@ func doPrint(fgd *prog, dirName string) {
 
 // doContent will show the lines in the files in the directory that match
 // the content checks
-func doContent(fgd *prog, dirName string) {
-	defer fgd.dbgStack.Start("doContent",
+func doContent(prog *prog, dirName string) {
+	defer prog.dbgStack.Start("doContent",
 		"Print matching content in : "+dirName)()
 
-	if fgd.noAction {
+	if prog.noAction {
 		reportNoAction("content", dirName)
 		return
 	}
 
-	keys := slices.Sorted(maps.Keys(fgd.dirContent[dirName]))
+	keys := slices.Sorted(maps.Keys(prog.dirContent[dirName]))
 
 	maxKeyLen := 0
 
-	if fgd.showCheckName {
+	if prog.showCheckName {
 		for _, k := range keys {
 			maxKeyLen = max(len(k), maxKeyLen)
 		}
@@ -60,9 +60,9 @@ func doContent(fgd *prog, dirName string) {
 	for _, k := range keys {
 		prevSource := ""
 
-		for _, match := range fgd.dirContent[dirName][k] {
+		for _, match := range prog.dirContent[dirName][k] {
 			source := match.Source()
-			if fgd.showCheckName {
+			if prog.showCheckName {
 				source = fmt.Sprintf("%*.*s: %s",
 					maxKeyLen, maxKeyLen, k, source)
 			}
@@ -83,51 +83,51 @@ func doContent(fgd *prog, dirName string) {
 
 // doFilenames will show the names of the files in the directories that match
 // the content checks
-func doFilenames(fgd *prog, dirName string) {
-	defer fgd.dbgStack.Start("doFilenames",
+func doFilenames(prog *prog, dirName string) {
+	defer prog.dbgStack.Start("doFilenames",
 		"Print files with matching content in : "+dirName)()
 
-	if fgd.noAction {
+	if prog.noAction {
 		reportNoAction("filenames", dirName)
 		return
 	}
 
-	keys := slices.Sorted(maps.Keys(fgd.dirContent[dirName]))
+	keys := slices.Sorted(maps.Keys(prog.dirContent[dirName]))
 
 	for _, k := range keys {
-		for _, match := range fgd.dirContent[dirName][k] {
+		for _, match := range prog.dirContent[dirName][k] {
 			fmt.Println(match.Source())
 		}
 	}
 }
 
 // doBuild will run go build
-func doBuild(fgd *prog, dirName string) {
-	fgd.doGoCommand(dirName, "build", fgd.buildArgs)
+func doBuild(prog *prog, dirName string) {
+	prog.doGoCommand(dirName, "build", prog.buildArgs)
 }
 
 // doTest will run go test
-func doTest(fgd *prog, dirName string) {
-	fgd.doGoCommand(dirName, "test", fgd.testArgs)
+func doTest(prog *prog, dirName string) {
+	prog.doGoCommand(dirName, "test", prog.testArgs)
 }
 
 // doInstall will run go install
-func doInstall(fgd *prog, dirName string) {
-	fgd.doGoCommand(dirName, "install", fgd.installArgs)
+func doInstall(prog *prog, dirName string) {
+	prog.doGoCommand(dirName, "install", prog.installArgs)
 }
 
 // doGenerate will run go generate
-func doGenerate(fgd *prog, dirName string) {
-	fgd.doGoCommand(dirName, "generate", fgd.generateArgs)
+func doGenerate(prog *prog, dirName string) {
+	prog.doGoCommand(dirName, "generate", prog.generateArgs)
 }
 
 // doGoCommand will run the Go subcommand with the passed args
-func (fgd *prog) doGoCommand(dirName, command string, cmdArgs []string) {
-	defer fgd.dbgStack.Start("doGoCommand", "In : "+dirName)()
+func (prog *prog) doGoCommand(dirName, command string, cmdArgs []string) {
+	defer prog.dbgStack.Start("doGoCommand", "In : "+dirName)()
 
-	intro := fgd.dbgStack.Tag()
+	intro := prog.dbgStack.Tag()
 
-	if fgd.noAction {
+	if prog.noAction {
 		reportNoAction("go "+command, dirName)
 		return
 	}
@@ -141,7 +141,7 @@ func (fgd *prog) doGoCommand(dirName, command string, cmdArgs []string) {
 
 // gatherDirs will process all the directories from the command line and
 // check them for existence. It will report any problems found.
-func (fgd *prog) gatherDirs(dirs []string) {
+func (prog *prog) gatherDirs(dirs []string) {
 	dirProvisos := filecheck.DirExists()
 
 	for _, dirName := range dirs {
@@ -150,7 +150,7 @@ func (fgd *prog) gatherDirs(dirs []string) {
 			continue
 		}
 
-		fgd.baseDirs = append(fgd.baseDirs, dirName)
+		prog.baseDirs = append(prog.baseDirs, dirName)
 	}
 }
 
@@ -179,8 +179,8 @@ func main() {
 //
 // It does not perform any of the other tests, on package names, file
 // presence etc.
-func (fgd *prog) findMatchingDirs() []string {
-	defer fgd.dbgStack.Start("findMatchingDirs",
+func (prog *prog) findMatchingDirs() []string {
+	defer prog.dbgStack.Start("findMatchingDirs",
 		"Find dirs matching criteria")()
 
 	var dirs []string
@@ -202,7 +202,7 @@ func (fgd *prog) findMatchingDirs() []string {
 			)),
 	}
 
-	for _, skipDir := range fgd.skipDirs {
+	for _, skipDir := range prog.skipDirs {
 		dirChecks = append(dirChecks, check.FileInfoName(check.Not(
 			check.ValEQ(skipDir),
 			"Ignore any directory called "+skipDir)))
@@ -211,11 +211,11 @@ func (fgd *prog) findMatchingDirs() []string {
 	fileChecks := []check.FileInfo{check.FileInfoIsDir}
 	fileChecks = append(fileChecks, dirChecks...)
 
-	if len(fgd.baseDirs) == 0 {
-		fgd.baseDirs = []string{"."}
+	if len(prog.baseDirs) == 0 {
+		prog.baseDirs = []string{"."}
 	}
 
-	for _, dir := range fgd.baseDirs {
+	for _, dir := range prog.baseDirs {
 		matches, errs := dirsearch.FindRecursePrune(dir, -1,
 			dirChecks,
 			fileChecks...)
@@ -235,10 +235,10 @@ func (fgd *prog) findMatchingDirs() []string {
 
 // onMatchDo performs the actions if the directory is a go package directory
 // meeting the criteria
-func (fgd *prog) onMatchDo(dir string) {
-	defer fgd.dbgStack.Start("onMatchDo", "Act on matching dir: "+dir)()
+func (prog *prog) onMatchDo(dir string) {
+	defer prog.dbgStack.Start("onMatchDo", "Act on matching dir: "+dir)()
 
-	intro := fgd.dbgStack.Tag()
+	intro := prog.dbgStack.Tag()
 
 	undo, err := cd(dir)
 	if err != nil {
@@ -253,23 +253,23 @@ func (fgd *prog) onMatchDo(dir string) {
 		return
 	}
 
-	if !fgd.pkgMatches(pkg) {
+	if !prog.pkgMatches(pkg) {
 		verbose.Println(intro, " Skipping: Wrong package")
 		return
 	}
 
-	if !hasEntries(fgd.filesWanted) {
+	if !hasEntries(prog.filesWanted) {
 		verbose.Println(intro, " Skipping: missing files")
 		return
 	}
 
-	if len(fgd.filesMissing) > 0 && hasEntries(fgd.filesMissing) {
+	if len(prog.filesMissing) > 0 && hasEntries(prog.filesMissing) {
 		verbose.Println(intro, " Skipping: has unwanted files")
 		return
 	}
 
-	if !fgd.hasRequiredContent(dir) {
-		delete(fgd.dirContent, dir)
+	if !prog.hasRequiredContent(dir) {
+		delete(prog.dirContent, dir)
 		verbose.Println(intro, " Skipping: missing required content")
 
 		return
@@ -281,9 +281,9 @@ func (fgd *prog) onMatchDo(dir string) {
 		printAct, contentAct, filenameAct,
 		generateAct, testAct, buildAct, installAct,
 	} {
-		if fgd.actions[a] {
+		if prog.actions[a] {
 			verbose.Println(intro, " Doing: "+a)
-			fgd.actionFuncs[a](fgd, dir)
+			prog.actionFuncs[a](prog, dir)
 		}
 	}
 }
@@ -311,12 +311,12 @@ func cd(dir string) (func(), error) {
 // pkgMatches will compare the package name against the list of target
 // packages, if any, and return true only if any of them match. If there are
 // no names to match then any name will match.
-func (fgd *prog) pkgMatches(pkg string) bool {
-	if len(fgd.pkgNames) == 0 { // any name matches
+func (prog *prog) pkgMatches(pkg string) bool {
+	if len(prog.pkgNames) == 0 { // any name matches
 		return true
 	}
 
-	if slices.Contains(fgd.pkgNames, pkg) {
+	if slices.Contains(prog.pkgNames, pkg) {
 		return true
 	}
 
@@ -364,10 +364,10 @@ func entryFound(name string, entries []fs.DirEntry) bool {
 // content is present in at least one of the files in the directory. In any
 // case the map of content discovered for the given directory will have been
 // populated.
-func (fgd *prog) hasRequiredContent(dir string) bool {
-	fgd.dirContent[dir] = contentMap{}
+func (prog *prog) hasRequiredContent(dir string) bool {
+	prog.dirContent[dir] = contentMap{}
 
-	if len(fgd.contentChecks) == 0 {
+	if len(prog.contentChecks) == 0 {
 		return true
 	}
 
@@ -382,22 +382,22 @@ func (fgd *prog) hasRequiredContent(dir string) bool {
 			continue
 		}
 
-		err := fgd.checkContent(dir, entry.Name())
+		err := prog.checkContent(dir, entry.Name())
 		if err != nil {
 			break
 		}
 	}
 
-	return len(fgd.dirContent[dir]) == len(fgd.contentChecks)
+	return len(prog.dirContent[dir]) == len(prog.contentChecks)
 }
 
 // checkContent opens the file and finds any content matching the checks,
 // writing it into the contentMap. It returns a non-nil error if the file
 // cannot be opened.
-func (fgd *prog) checkContent(dir, fname string) error {
+func (prog *prog) checkContent(dir, fname string) error {
 	statusChecks := []StatusCheck{}
 
-	for _, c := range fgd.contentChecks {
+	for _, c := range prog.contentChecks {
 		if c.FileNameOK(fname) {
 			statusChecks = append(statusChecks, StatusCheck{chk: &c})
 		}
@@ -434,8 +434,8 @@ func (fgd *prog) checkContent(dir, fname string) error {
 			if sc.CheckLine(s.Text()) {
 				locCopy := *loc
 				locCopy.SetContent(s.Text())
-				fgd.dirContent[dir][sc.chk.name] = append(
-					fgd.dirContent[dir][sc.chk.name], locCopy)
+				prog.dirContent[dir][sc.chk.name] = append(
+					prog.dirContent[dir][sc.chk.name], locCopy)
 			}
 
 			if !sc.stopped {

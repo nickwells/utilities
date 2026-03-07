@@ -20,7 +20,7 @@ const (
 )
 
 // makeCheckSetter creates a param Setter for a ContentCheck
-func makeCheckSetter(fgd *prog) *groupsetter.List[ContentCheck] {
+func makeCheckSetter(prog *prog) *groupsetter.List[ContentCheck] {
 	const (
 		paramNameMatch   = "match"
 		paramNameName    = "name"
@@ -30,7 +30,7 @@ func makeCheckSetter(fgd *prog) *groupsetter.List[ContentCheck] {
 		paramNameStop    = "stop-if-matches"
 	)
 
-	s := groupsetter.NewList(&fgd.contentChecks)
+	s := groupsetter.NewList(&prog.contentChecks)
 
 	s.AddByPosParam(
 		paramNameMatch,
@@ -90,13 +90,13 @@ func makeCheckSetter(fgd *prog) *groupsetter.List[ContentCheck] {
 }
 
 // addParams will add parameters to the passed ParamSet
-func addParams(fgd *prog) func(ps *param.PSet) error {
+func addParams(prog *prog) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		dirProvisos := filecheck.DirExists()
 
 		ps.Add(paramNameDir,
 			psetter.PathnameListAppender{
-				Value:       &fgd.baseDirs,
+				Value:       &prog.baseDirs,
 				Expectation: dirProvisos,
 			},
 			"set the name of the directory to search from."+
@@ -108,20 +108,20 @@ func addParams(fgd *prog) func(ps *param.PSet) error {
 			param.Attrs(param.CommandLineOnly),
 		)
 
-		checkSetter := makeCheckSetter(fgd)
+		checkSetter := makeCheckSetter(prog)
 		ps.Add(paramNameCheck, checkSetter,
 			"set the additional checks to perform.",
 			param.Attrs(param.CommandLineOnly),
 		)
 
 		ps.Add(paramNameShowCheckName,
-			psetter.Bool{Value: &fgd.showCheckName},
+			psetter.Bool{Value: &prog.showCheckName},
 			"When reporting the checks that have passed"+
 				" also show the named check ")
 
 		ps.Add("actions",
 			psetter.EnumMap[string]{
-				Value: &fgd.actions,
+				Value: &prog.actions,
 				AllowedVals: psetter.AllowedVals[string]{
 					buildAct:    "run 'go build' in the directory",
 					installAct:  "run 'go install' in the directory",
@@ -139,58 +139,58 @@ func addParams(fgd *prog) func(ps *param.PSet) error {
 		)
 
 		ps.Add("generate-arg",
-			psetter.StrListAppender[string]{Value: &fgd.generateArgs},
+			psetter.StrListAppender[string]{Value: &prog.generateArgs},
 			"set the arguments to be given to the go generate command",
 			param.AltNames("generate-args", "args-generate",
 				"gen-args", "g-args", "g-arg"),
 			param.PostAction(
-				paction.SetMapValIf(fgd.actions, generateAct, true,
+				paction.SetMapValIf(prog.actions, generateAct, true,
 					paction.IsACommandLineParam)),
 			param.Attrs(param.DontShowInStdUsage),
 		)
 
 		ps.Add("install-arg",
-			psetter.StrListAppender[string]{Value: &fgd.installArgs},
+			psetter.StrListAppender[string]{Value: &prog.installArgs},
 			"set the arguments to be given to the go install command",
 			param.AltNames("install-args", "args-install",
 				"inst-args", "i-args", "i-arg"),
 			param.PostAction(
-				paction.SetMapValIf(fgd.actions, installAct, true,
+				paction.SetMapValIf(prog.actions, installAct, true,
 					paction.IsACommandLineParam)),
 			param.Attrs(param.DontShowInStdUsage),
 		)
 
 		ps.Add("test-arg",
-			psetter.StrListAppender[string]{Value: &fgd.testArgs},
+			psetter.StrListAppender[string]{Value: &prog.testArgs},
 			"set the arguments to be given to the go test command",
 			param.AltNames("test-args", "args-test",
 				"t-args", "t-arg"),
 			param.PostAction(
-				paction.SetMapValIf(fgd.actions, testAct, true,
+				paction.SetMapValIf(prog.actions, testAct, true,
 					paction.IsACommandLineParam)),
 			param.Attrs(param.DontShowInStdUsage),
 		)
 
 		ps.Add("build-arg",
-			psetter.StrListAppender[string]{Value: &fgd.buildArgs},
+			psetter.StrListAppender[string]{Value: &prog.buildArgs},
 			"set the arguments to be given to the go build command",
 			param.AltNames("build-args", "args-build",
 				"b-args", "b-arg"),
 			param.PostAction(
-				paction.SetMapValIf(fgd.actions, buildAct, true,
+				paction.SetMapValIf(prog.actions, buildAct, true,
 					paction.IsACommandLineParam)),
 			param.Attrs(param.DontShowInStdUsage),
 		)
 
 		ps.Add("package-names",
-			psetter.StrList[string]{Value: &fgd.pkgNames},
+			psetter.StrList[string]{Value: &prog.pkgNames},
 			"set the names of packages to be matched. If this is not set then"+
 				" any package name will be matched",
 			param.AltNames("package", "pkg"),
 		)
 
 		ps.Add("having-files",
-			psetter.StrList[string]{Value: &fgd.filesWanted},
+			psetter.StrList[string]{Value: &prog.filesWanted},
 			"give a list of files that the directory must contain. All the"+
 				" listed files must be present for the directory to be"+
 				" matched.",
@@ -199,7 +199,7 @@ func addParams(fgd *prog) func(ps *param.PSet) error {
 		)
 
 		ps.Add("missing-files",
-			psetter.StrList[string]{Value: &fgd.filesMissing},
+			psetter.StrList[string]{Value: &prog.filesMissing},
 			"give a list of files that the directory may not contain. Any of"+
 				" the listed files may be absent for the directory to be"+
 				" matched.",
@@ -216,7 +216,7 @@ func addParams(fgd *prog) func(ps *param.PSet) error {
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 			param.PostAction(
 				func(_ location.L, _ *param.BaseParam, _ []string) error {
-					fgd.contentChecks = append(fgd.contentChecks, buildTagChecks)
+					prog.contentChecks = append(prog.contentChecks, buildTagChecks)
 					return nil
 				}),
 			param.SeeAlso(paramNameCheck, paramNameHavingGoGenerate),
@@ -232,14 +232,14 @@ func addParams(fgd *prog) func(ps *param.PSet) error {
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 			param.PostAction(
 				func(_ location.L, _ *param.BaseParam, _ []string) error {
-					fgd.contentChecks = append(fgd.contentChecks, gogenChecks)
+					prog.contentChecks = append(prog.contentChecks, gogenChecks)
 					return nil
 				}),
 			param.SeeAlso(paramNameCheck, paramNameHavingBuildTag),
 			param.SeeNote(noteNameContentChecks),
 		)
 
-		ps.Add("no-action", psetter.Bool{Value: &fgd.noAction},
+		ps.Add("no-action", psetter.Bool{Value: &prog.noAction},
 			"this will stop any action from happening. Instead the action"+
 				" functions will just report what they would have done.",
 			param.AltNames("do-nothing"),
@@ -253,12 +253,12 @@ func addParams(fgd *prog) func(ps *param.PSet) error {
 				" This parameter may be given more than once, each"+
 				" time it is used the name will be added to the"+
 				" list of directories to skip.",
-			param.PostAction(paction.AppendStringVal(&fgd.skipDirs, &skipDir)),
+			param.PostAction(paction.AppendStringVal(&prog.skipDirs, &skipDir)),
 		)
 
 		ps.AddFinalCheck(func() error {
-			if len(fgd.actions) == 0 {
-				fgd.actions[printAct] = true
+			if len(prog.actions) == 0 {
+				prog.actions[printAct] = true
 			}
 
 			return nil
@@ -294,49 +294,15 @@ func addExamples(ps *param.PSet) error {
 	ps.AddExample(`findGoDirs -having-go-generate -do content`,
 		"This will find all the Go directories with go:generate comments"+
 			" and prints the matching lines.")
-	ps.AddExample(`findGoDirs -having-content 'nolint=//nolint:' -do content`,
+	ps.AddExample(`findGoDirs -check '//nolint:;name=nolint' -do content`,
 		"This will find all the Go directories with"+
 			" some file having a nolint comment"+
 			" and prints the matching lines.")
-	ps.AddExample(`findGoDirs -having-content 'nolint=//nolint:'`+
-		` -having-content 'nolint.skip=errcheck' -do content`,
+	ps.AddExample(`findGoDirs -check '//nolint:;skip=errcheck' -do content`,
 		"This will find all the Go directories with"+
 			" some file having a nolint comment but where"+
 			" the line matching //nolint doesn't also match errcheck"+
 			" and prints the matching lines.")
-
-	return nil
-}
-
-// addNotes adds some notes to the help message
-func addNotes(ps *param.PSet) error {
-	ps.AddNote(noteNameContentChecks,
-		"You can constrain the Go directories this command will find"+
-			" by checking that a matching directory has at least one"+
-			" file containing certain content."+
-			"\n\n"+
-			"This feature can by useful, for instance, to find directories"+
-			" having files with go:generate comments so you know if you"+
-			" need to run 'go generate' in them."+
-			"\n\n"+
-			"There are some common searches which have dedicated parameters"+
-			" for setting them:"+
-			" '"+paramNameHavingBuildTag+"' and"+
-			" '"+paramNameHavingGoGenerate+"'."+
-			" These have all the correct patterns preset and"+
-			" it is recommended that you use these."+
-			"\n\n"+
-			"A content checker has at least a pattern for matching lines"+
-			" but it can be extended to only check files matching a"+
-			" pattern, to stop matching after a certain pattern is matched"+
-			" and to skip otherwise matching lines if they match a pattern"+
-			"\n\n"+
-			"You can add these additional features using the"+
-			" '"+paramNameCheck+"' parameter. ",
-		param.NoteSeeParam(
-			paramNameHavingBuildTag,
-			paramNameHavingGoGenerate,
-			paramNameCheck))
 
 	return nil
 }
