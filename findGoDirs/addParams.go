@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/nickwells/filecheck.mod/filecheck"
 	"github.com/nickwells/groupsetter.mod/groupsetter"
 	"github.com/nickwells/location.mod/location"
@@ -256,9 +258,23 @@ func addParams(prog *prog) func(ps *param.PSet) error {
 			param.PostAction(paction.AppendStringVal(&prog.skipDirs, &skipDir)),
 		)
 
+		// set the default program action to print if no other action is
+		// specified
 		ps.AddFinalCheck(func() error {
 			if len(prog.actions) == 0 {
 				prog.actions[printAct] = true
+			}
+
+			return nil
+		})
+
+		// set the default ContentCheck names
+		ps.AddFinalCheck(func() error {
+			for i, cc := range prog.contentChecks {
+				if cc.name == "" {
+					cc.name = fmt.Sprintf("check-%d", i+1)
+					prog.contentChecks[i] = cc
+				}
 			}
 
 			return nil
