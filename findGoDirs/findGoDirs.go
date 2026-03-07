@@ -24,10 +24,11 @@ type prog struct {
 	pkgNames      []string
 	filesWanted   []string
 	filesMissing  []string
-	contentChecks checkMap
+	contentChecks []ContentCheck
 	dirContent    dirToContentMap
 
-	noAction bool
+	noAction      bool
+	showCheckName bool
 
 	actions map[string]bool
 
@@ -44,9 +45,8 @@ type prog struct {
 // newProg returns a properly initialised prog structure
 func newProg() *prog {
 	return &prog{
-		contentChecks: make(checkMap),
-		dirContent:    make(dirToContentMap),
-		actions:       make(map[string]bool),
+		dirContent: make(dirToContentMap),
+		actions:    make(map[string]bool),
 		actionFuncs: map[string]actionFunc{
 			printAct:    doPrint,
 			buildAct:    doBuild,

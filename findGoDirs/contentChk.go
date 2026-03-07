@@ -1,10 +1,7 @@
 package main
 
 import (
-	"errors"
-	"fmt"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/nickwells/location.mod/location"
@@ -13,7 +10,7 @@ import (
 // ContentCheck contains the parameters used to check the contents of a
 // file.
 type ContentCheck struct {
-	// A tag used to update the ContentCheck.
+	// an optional tag to identify the check that has matched the content
 	name string
 	// A pattern that must be matched for success.
 	matchPattern *regexp.Regexp
@@ -25,33 +22,49 @@ type ContentCheck struct {
 	stopPattern *regexp.Regexp
 	// The ContentCheck will only be applied to files matching this pattern.
 	filenamePattern *regexp.Regexp
+	// The ContentCheck will only be applied to files not matching this pattern.
+	filenameSkipPattern *regexp.Regexp
 }
 
 // String returns a string describing the ContentCheck
 func (cc ContentCheck) String() string {
-	rval := cc.name + ":\n"
-	partPrefix := strings.Repeat(" ", len(cc.name)+1)
-	valPrefix := partPrefix + "    "
+	var (
+		rval       string
+		valPrefix  = "    "
+		namePrefix = ""
+	)
+	if cc.name != "" {
+		rval = cc.name + ": "
+		namePrefix = strings.Repeat(" ", len(rval))
+		valPrefix += namePrefix
+	}
 
-	rval += partPrefix + "A file has a line matching pattern:\n"
+	rval += "\n" +
+		namePrefix + "A file has a line matching the pattern:\n"
 	rval += valPrefix + cc.matchPattern.String()
 
 	if cc.skipPattern != nil {
 		rval += "\n" +
-			partPrefix + "Skip if line also matches pattern:\n" +
+			namePrefix + "Skip if line also matches the pattern:\n" +
 			valPrefix + cc.skipPattern.String()
 	}
 
 	if cc.stopPattern != nil {
 		rval += "\n" +
-			partPrefix + "Stop looking after a line matching pattern:\n" +
+			namePrefix + "Stop looking after a line matching the pattern:\n" +
 			valPrefix + cc.stopPattern.String()
 	}
 
 	if cc.filenamePattern != nil {
 		rval += "\n" +
-			partPrefix + "Only search files matching pattern:\n" +
+			namePrefix + "Only search files matching the pattern:\n" +
 			valPrefix + cc.filenamePattern.String()
+	}
+
+	if cc.filenameSkipPattern != nil {
+		rval += "\n" +
+			namePrefix + "Don't search files matching the pattern:\n" +
+			valPrefix + cc.filenameSkipPattern.String()
 	}
 
 	return rval
@@ -59,11 +72,19 @@ func (cc ContentCheck) String() string {
 
 // FileNameOK returns true if the filename matches the filenamePattern (if any)
 func (cc ContentCheck) FileNameOK(fn string) bool {
-	if cc.filenamePattern == nil {
-		return true
+	if cc.filenamePattern != nil {
+		if !cc.filenamePattern.MatchString(fn) {
+			return false
+		}
 	}
 
-	return cc.filenamePattern.MatchString(fn)
+	if cc.filenameSkipPattern != nil {
+		if cc.filenameSkipPattern.MatchString(fn) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // Stop returns true if the line matches the stopPattern (if any)
@@ -93,189 +114,7 @@ func (cc ContentCheck) Match(s string) bool {
 	return !cc.skipPattern.MatchString(s)
 }
 
-// setMatchPattern sets the matchPattern in the supplied ContentCheck value. It
-// will return an error if the ContentCheck pointer is nil, if the
-// matchPattern is already set or if the string doesn't compile into a valid
-// regular expression.
-func setMatchPattern(chk *ContentCheck, s string) error {
-	errPfx := "Could not set the match pattern"
-	if chk == nil {
-		return errors.New(errPfx + " - the ContentCheck value is nil")
-	}
-
-	errPfx += " for " + chk.name
-
-	if chk.matchPattern != nil {
-		return errors.New(errPfx + " - the match pattern is already set")
-	}
-
-	re, err := regexp.Compile(s)
-	if err != nil {
-		return fmt.Errorf("%s - bad pattern: %w", errPfx, err)
-	}
-
-	chk.matchPattern = re
-
-	return nil
-}
-
-// setSkipPattern sets the skipPattern in the supplied ContentCheck value. It
-// will return an error if the ContentCheck pointer is nil, if the
-// skipPattern is already set or if the string doesn't compile into a valid
-// regular expression.
-func setSkipPattern(chk *ContentCheck, s string) error {
-	errPfx := "Could not set the skip pattern"
-	if chk == nil {
-		return errors.New(errPfx + " - the ContentCheck value is nil")
-	}
-
-	errPfx += " for " + chk.name
-
-	if chk.skipPattern != nil {
-		return errors.New(errPfx + " - the skip pattern is already set")
-	}
-
-	re, err := regexp.Compile(s)
-	if err != nil {
-		return fmt.Errorf("%s - bad pattern: %w", errPfx, err)
-	}
-
-	chk.skipPattern = re
-
-	return nil
-}
-
-// setStopPattern sets the stopPattern in the supplied ContentCheck value. It
-// will return an error if the ContentCheck pointer is nil, if the
-// stopPattern is already set or if the string doesn't compile into a valid
-// regular expression.
-func setStopPattern(chk *ContentCheck, s string) error {
-	errPfx := "Could not set the stop pattern"
-	if chk == nil {
-		return errors.New(errPfx + " - the ContentCheck value is nil")
-	}
-
-	errPfx += " for " + chk.name
-
-	if chk.stopPattern != nil {
-		return errors.New(errPfx + " - the stop pattern is already set")
-	}
-
-	re, err := regexp.Compile(s)
-	if err != nil {
-		return fmt.Errorf("%s - bad pattern: %w", errPfx, err)
-	}
-
-	chk.stopPattern = re
-
-	return nil
-}
-
-// setFilenamePattern sets the filenamePattern in the supplied ContentCheck
-// value. It will return an error if the ContentCheck pointer is nil, if the
-// filenamePattern is already set or if the string doesn't compile into a
-// valid regular expression.
-func setFilenamePattern(chk *ContentCheck, s string) error {
-	errPfx := "Could not set the filename pattern"
-	if chk == nil {
-		return errors.New(errPfx + " - the ContentCheck value is nil")
-	}
-
-	errPfx += " for " + chk.name
-
-	if chk.filenamePattern != nil {
-		return errors.New(errPfx + " - the filename pattern is already set")
-	}
-
-	re, err := regexp.Compile(s)
-	if err != nil {
-		return fmt.Errorf("%s - bad pattern: %w", errPfx, err)
-	}
-
-	chk.filenamePattern = re
-
-	return nil
-}
-
-// setterFunc is the type of a func for setting the value of some part of a
-// ContentCheck object
-type setterFunc func(*ContentCheck, string) error
-
-// checkerPart records the settable details of a ContentCheck along with some
-// descriptive text and a function to set just that part.
-type checkerPart struct {
-	desc   string
-	setter setterFunc
-}
-
-const dfltCheckerPart = "match"
-
-var checkerParts = map[string]checkerPart{
-	dfltCheckerPart: {
-		desc:   "match file content",
-		setter: setMatchPattern,
-	},
-	"stop": {
-		desc: "stop further checking." +
-			" Once a line is found matching this pattern" +
-			" no more lines in the file will be checked" +
-			" by this checker.",
-		setter: setStopPattern,
-	},
-	"skip": {
-		desc: "skip otherwise matching lines." +
-			" If a line matches the match pattern" +
-			" but also matches this skip pattern then" +
-			" it is taken as not being a matching line.",
-		setter: setSkipPattern,
-	},
-	"filename": {
-		desc: "limit the files to check. This check will" +
-			" only be applied to files with names matching this pattern.",
-		setter: setFilenamePattern,
-	},
-}
-
-// checkerPartNames returns a sorted list of the named parts of a checker
-// excluding the default part.
-func checkerPartNames() []string {
-	var partNames []string
-
-	for k := range checkerParts {
-		if k != dfltCheckerPart {
-			partNames = append(partNames, k)
-		}
-	}
-
-	sort.Strings(partNames)
-
-	return partNames
-}
-
-// checkerPartsHelpText returns a formatted string describing the named parts
-// of a checker. Note that the default, 'match', is excluded.
-func checkerPartsHelpText() string {
-	maxNameLen := 0
-
-	partNames := checkerPartNames()
-	for _, k := range partNames {
-		maxNameLen = max(len(k), maxNameLen)
-	}
-
-	var helpText strings.Builder
-
-	sep := "  "
-
-	for _, k := range partNames {
-		fmt.Fprintf(&helpText, "%s%-*s: %s",
-			sep, maxNameLen, k, checkerParts[k].desc)
-		sep = "\n  "
-	}
-
-	return helpText.String()
-}
-
-// StatusCheck contains a check and an associated status. it is used to
+// StatusCheck contains a check and an associated status. It is used to
 // record whether the stopPattern has been matched
 type StatusCheck struct {
 	chk     *ContentCheck
@@ -298,15 +137,15 @@ func (sc *StatusCheck) CheckLine(s string) bool {
 }
 
 var (
-	buildTagChecks = &ContentCheck{
+	buildTagChecks = ContentCheck{
 		name:            "build-tag",
-		matchPattern:    regexp.MustCompile(`^//\s*\+build\s+`),
+		matchPattern:    regexp.MustCompile(`^//(\s*\+build\b|go:build\b)`),
 		stopPattern:     regexp.MustCompile(`^\s*package\s+`),
 		filenamePattern: regexp.MustCompile(`.*\.go`),
 	}
 
-	gogenChecks = &ContentCheck{
-		name:            "go-gen",
+	gogenChecks = ContentCheck{
+		name:            "go-generate",
 		matchPattern:    regexp.MustCompile(`^//go:generate\s+`),
 		filenamePattern: regexp.MustCompile(`.*\.go`),
 	}
@@ -314,5 +153,4 @@ var (
 
 type (
 	contentMap map[string][]location.L
-	checkMap   map[string]*ContentCheck
 )

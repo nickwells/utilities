@@ -22,33 +22,15 @@ all the correct patterns preset and it is recommended that you use these\.
 
 A content checker has at least a pattern for matching lines but it can be
 extended to only check files matching a pattern, to stop matching after a
-sertain pattern is matched and to skip otherwise matching lines if they match an
-additional pattern
+certain pattern is matched and to skip otherwise matching lines if they match a
+pattern
 
 
 
-You can add these additional features using the &apos;having\-content&apos;
-parameter\. You repeat the checker name and add
-
-    a period \(&apos;\.&apos;\),
-
-    a part name,
-
-    an equals \(&apos;=&apos;\)
-
-    and the pattern for that part\.
-
-Valid part names are:
-
-filename, skip, stop
-
-
-
-Before you can add a part you must first create the checker by giving a checker
-name and the match pattern \(no &apos;\.part&apos; is needed\)
+You can add these additional features using the &apos;check&apos; parameter\.
 ### See Parameters
+* check
 * having\-build\-tag
-* having\-content
 * having\-go\-generate
 
 

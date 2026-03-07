@@ -21,83 +21,114 @@ import (
 
 // Created: Thu Jun 11 12:43:33 2020
 
+// reportNoAction reports the action being skipped in a common format
+func reportNoAction(actionName, dirName string) {
+	fmt.Printf("%-20.20s : %s (no-action: skipping)\n", actionName, dirName)
+}
+
 // doPrint will print the name
-func doPrint(fgd *prog, name string) {
+func doPrint(fgd *prog, dirName string) {
 	if fgd.noAction {
-		fmt.Printf("%-20.20s : %s\n", "print", name)
+		reportNoAction("print", dirName)
 		return
 	}
 
-	fmt.Println(name)
+	fmt.Println(dirName)
 }
 
 // doContent will show the lines in the files in the directory that match
 // the content checks
-func doContent(fgd *prog, name string) {
-	defer fgd.dbgStack.Start("doContent", "Print matching content in : "+name)()
+func doContent(fgd *prog, dirName string) {
+	defer fgd.dbgStack.Start("doContent",
+		"Print matching content in : "+dirName)()
 
 	if fgd.noAction {
-		fmt.Printf("%-20.20s : %s\n", "content", name)
+		reportNoAction("content", dirName)
 		return
 	}
 
-	keys := slices.Sorted(maps.Keys(fgd.dirContent[name]))
+	keys := slices.Sorted(maps.Keys(fgd.dirContent[dirName]))
+
+	maxKeyLen := 0
+
+	if fgd.showCheckName {
+		for _, k := range keys {
+			maxKeyLen = max(len(k), maxKeyLen)
+		}
+	}
 
 	for _, k := range keys {
-		for _, match := range fgd.dirContent[name][k] {
-			fmt.Println(match.String())
+		prevSource := ""
+
+		for _, match := range fgd.dirContent[dirName][k] {
+			source := match.Source()
+			if fgd.showCheckName {
+				source = fmt.Sprintf("%*.*s: %s",
+					maxKeyLen, maxKeyLen, k, source)
+			}
+
+			if source != prevSource {
+				fmt.Printf("%s:", source)
+			} else {
+				fmt.Printf("%s:", strings.Repeat(" ", len(prevSource)))
+			}
+
+			content, _ := match.Content()
+			fmt.Printf("%d:%s\n", match.Idx(), content)
+
+			prevSource = source
 		}
 	}
 }
 
 // doFilenames will show the names of the files in the directories that match
 // the content checks
-func doFilenames(fgd *prog, name string) {
+func doFilenames(fgd *prog, dirName string) {
 	defer fgd.dbgStack.Start("doFilenames",
-		"Print files with matching content in : "+name)()
+		"Print files with matching content in : "+dirName)()
 
 	if fgd.noAction {
-		fmt.Printf("%-20.20s : %s\n", "filenames", name)
+		reportNoAction("filenames", dirName)
 		return
 	}
 
-	keys := slices.Sorted(maps.Keys(fgd.dirContent[name]))
+	keys := slices.Sorted(maps.Keys(fgd.dirContent[dirName]))
 
 	for _, k := range keys {
-		for _, match := range fgd.dirContent[name][k] {
+		for _, match := range fgd.dirContent[dirName][k] {
 			fmt.Println(match.Source())
 		}
 	}
 }
 
 // doBuild will run go build
-func doBuild(fgd *prog, name string) {
-	fgd.doGoCommand(name, "build", fgd.buildArgs)
+func doBuild(fgd *prog, dirName string) {
+	fgd.doGoCommand(dirName, "build", fgd.buildArgs)
 }
 
 // doTest will run go test
-func doTest(fgd *prog, name string) {
-	fgd.doGoCommand(name, "test", fgd.testArgs)
+func doTest(fgd *prog, dirName string) {
+	fgd.doGoCommand(dirName, "test", fgd.testArgs)
 }
 
 // doInstall will run go install
-func doInstall(fgd *prog, name string) {
-	fgd.doGoCommand(name, "install", fgd.installArgs)
+func doInstall(fgd *prog, dirName string) {
+	fgd.doGoCommand(dirName, "install", fgd.installArgs)
 }
 
 // doGenerate will run go generate
-func doGenerate(fgd *prog, name string) {
-	fgd.doGoCommand(name, "generate", fgd.generateArgs)
+func doGenerate(fgd *prog, dirName string) {
+	fgd.doGoCommand(dirName, "generate", fgd.generateArgs)
 }
 
 // doGoCommand will run the Go subcommand with the passed args
-func (fgd *prog) doGoCommand(name, command string, cmdArgs []string) {
-	defer fgd.dbgStack.Start("doGoCommand", "In : "+name)()
+func (fgd *prog) doGoCommand(dirName, command string, cmdArgs []string) {
+	defer fgd.dbgStack.Start("doGoCommand", "In : "+dirName)()
 
 	intro := fgd.dbgStack.Tag()
 
 	if fgd.noAction {
-		fmt.Printf("%-20.20s : %s\n", "go "+command, name)
+		reportNoAction("go "+command, dirName)
 		return
 	}
 
@@ -361,13 +392,14 @@ func (fgd *prog) hasRequiredContent(dir string) bool {
 }
 
 // checkContent opens the file and finds any content matching the checks,
-// writing it into the contentMap
+// writing it into the contentMap. It returns a non-nil error if the file
+// cannot be opened.
 func (fgd *prog) checkContent(dir, fname string) error {
 	statusChecks := []StatusCheck{}
 
 	for _, c := range fgd.contentChecks {
 		if c.FileNameOK(fname) {
-			statusChecks = append(statusChecks, StatusCheck{chk: c})
+			statusChecks = append(statusChecks, StatusCheck{chk: &c})
 		}
 	}
 

@@ -1,9 +1,8 @@
 package main
 
 import (
-	"strings"
-
 	"github.com/nickwells/filecheck.mod/filecheck"
+	"github.com/nickwells/groupsetter.mod/groupsetter"
 	"github.com/nickwells/location.mod/location"
 	"github.com/nickwells/param.mod/v7/paction"
 	"github.com/nickwells/param.mod/v7/param"
@@ -11,23 +10,93 @@ import (
 )
 
 const (
-	paramNameHavingContent    = "having-content"
 	paramNameHavingBuildTag   = "having-build-tag"
 	paramNameHavingGoGenerate = "having-go-generate"
+	paramNameShowCheckName    = "show-check-name"
+	paramNameCheck            = "check"
+	paramNameDir              = "dir"
 
 	noteNameContentChecks = "Content Checks"
 )
+
+// makeCheckSetter creates a param Setter for a ContentCheck
+func makeCheckSetter(fgd *prog) *groupsetter.List[ContentCheck] {
+	const (
+		paramNameMatch   = "match"
+		paramNameName    = "name"
+		paramNameFile    = "filename-matches"
+		paramNameNotFile = "filename-does-not-match"
+		paramNameSkip    = "skip-if-matches"
+		paramNameStop    = "stop-if-matches"
+	)
+
+	s := groupsetter.NewList(&fgd.contentChecks)
+
+	s.AddByPosParam(
+		paramNameMatch,
+		psetter.Regexp{
+			Value: &s.InterimVal.matchPattern,
+		},
+		"the pattern to search files for."+
+			" If a file is found matching this pattern")
+
+	s.AddByNameParam(
+		paramNameName,
+		psetter.String[string]{
+			Value: &s.InterimVal.name,
+		},
+		"a name to give to the check")
+
+	s.AddByNameParam(
+		paramNameFile,
+		psetter.Regexp{
+			Value: &s.InterimVal.filenamePattern,
+		},
+		"limit the files to be checked."+
+			" Only files whose name matches this pattern will be checked",
+		param.AltNames("filename", "file"))
+
+	s.AddByNameParam(
+		paramNameNotFile,
+		psetter.Regexp{
+			Value: &s.InterimVal.filenameSkipPattern,
+		},
+		"limit the files to be checked."+
+			" Only files whose name does not match"+
+			" this pattern will be checked",
+		param.AltNames("not-filename", "not-file"))
+
+	s.AddByNameParam(
+		paramNameSkip,
+		psetter.Regexp{
+			Value: &s.InterimVal.skipPattern,
+		},
+		"lines matching this pattern are ignored"+
+			" regardless of whether they would otherwise match.",
+		param.AltNames("skip"))
+
+	s.AddByNameParam(
+		paramNameStop,
+		psetter.Regexp{
+			Value: &s.InterimVal.stopPattern,
+		},
+		"stop further checking."+
+			" Once a line is found matching this pattern"+
+			" no more lines in the file will be checked"+
+			" by this checker.",
+		param.AltNames("stop"))
+
+	return s
+}
 
 // addParams will add parameters to the passed ParamSet
 func addParams(fgd *prog) func(ps *param.PSet) error {
 	return func(ps *param.PSet) error {
 		dirProvisos := filecheck.DirExists()
 
-		var dir string
-
-		ps.Add("dir",
-			psetter.Pathname{
-				Value:       &dir,
+		ps.Add(paramNameDir,
+			psetter.PathnameListAppender{
+				Value:       &fgd.baseDirs,
 				Expectation: dirProvisos,
 			},
 			"set the name of the directory to search from."+
@@ -36,9 +105,19 @@ func addParams(fgd *prog) func(ps *param.PSet) error {
 				" time it is used the directory will be added to the"+
 				" list of directories to search.",
 			param.AltNames("dirs", "d"),
-			param.PostAction(paction.AppendStringVal(&fgd.baseDirs, &dir)),
 			param.Attrs(param.CommandLineOnly),
 		)
+
+		checkSetter := makeCheckSetter(fgd)
+		ps.Add(paramNameCheck, checkSetter,
+			"set the additional checks to perform.",
+			param.Attrs(param.CommandLineOnly),
+		)
+
+		ps.Add(paramNameShowCheckName,
+			psetter.Bool{Value: &fgd.showCheckName},
+			"When reporting the checks that have passed"+
+				" also show the named check ")
 
 		ps.Add("actions",
 			psetter.EnumMap[string]{
@@ -130,47 +209,33 @@ func addParams(fgd *prog) func(ps *param.PSet) error {
 
 		ps.Add(paramNameHavingBuildTag, psetter.Nil{},
 			"the directory must contain at least one file with"+
-				" a build-tag."+
-				" This adds a content"+
-				" check with tag name: "+buildTagChecks.name,
+				" a Go build-tag.",
 			param.AltNames(
 				"having-build-tags",
 				"with-build-tags", "with-build-tag"),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 			param.PostAction(
 				func(_ location.L, _ *param.BaseParam, _ []string) error {
-					fgd.contentChecks[buildTagChecks.name] = buildTagChecks
+					fgd.contentChecks = append(fgd.contentChecks, buildTagChecks)
 					return nil
 				}),
-			param.SeeAlso(paramNameHavingContent, paramNameHavingGoGenerate),
+			param.SeeAlso(paramNameCheck, paramNameHavingGoGenerate),
 			param.SeeNote(noteNameContentChecks),
 		)
 
 		ps.Add(paramNameHavingGoGenerate, psetter.Nil{},
 			"the directory must contain at least one file with"+
-				" a go:generate comment."+
-				" This adds a content"+
-				" check with tag name: "+gogenChecks.name,
+				" a go:generate comment.",
 			param.AltNames(
 				"having-go-gen",
 				"with-go-generate", "with-go-gen"),
 			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
 			param.PostAction(
 				func(_ location.L, _ *param.BaseParam, _ []string) error {
-					fgd.contentChecks[gogenChecks.name] = gogenChecks
+					fgd.contentChecks = append(fgd.contentChecks, gogenChecks)
 					return nil
 				}),
-			param.SeeAlso(paramNameHavingContent, paramNameHavingBuildTag),
-			param.SeeNote(noteNameContentChecks),
-		)
-
-		ps.Add(paramNameHavingContent, ContChkSetter{Value: &fgd.contentChecks},
-			"the directory must contain at least one file with the following"+
-				" content. Extra criteria can be set by adding"+
-				" a period to the tag name and a part name.",
-			param.AltNames("containing", "contains", "with-content"),
-			param.Attrs(param.CommandLineOnly|param.DontShowInStdUsage),
-			param.SeeAlso(paramNameHavingBuildTag, paramNameHavingGoGenerate),
+			param.SeeAlso(paramNameCheck, paramNameHavingBuildTag),
 			param.SeeNote(noteNameContentChecks),
 		)
 
@@ -263,26 +328,15 @@ func addNotes(ps *param.PSet) error {
 			"\n\n"+
 			"A content checker has at least a pattern for matching lines"+
 			" but it can be extended to only check files matching a"+
-			" pattern, to stop matching after a sertain pattern is matched"+
-			" and to skip otherwise matching lines if they match an"+
-			" additional pattern"+
+			" pattern, to stop matching after a certain pattern is matched"+
+			" and to skip otherwise matching lines if they match a pattern"+
 			"\n\n"+
 			"You can add these additional features using the"+
-			" '"+paramNameHavingContent+"' parameter. You repeat the"+
-			" checker name and add\n"+
-			"    a period ('.'),\n"+
-			"    a part name,\n"+
-			"    an equals ('=')\n"+
-			"    and the pattern for that part.\n"+
-			"Valid part names are:\n"+strings.Join(checkerPartNames(), ", ")+
-			"\n\n"+
-			"Before you can add a part you must first create the checker"+
-			" by giving a checker name and the match pattern"+
-			" (no '.part' is needed)",
+			" '"+paramNameCheck+"' parameter. ",
 		param.NoteSeeParam(
 			paramNameHavingBuildTag,
 			paramNameHavingGoGenerate,
-			paramNameHavingContent))
+			paramNameCheck))
 
 	return nil
 }

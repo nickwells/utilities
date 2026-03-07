@@ -16,6 +16,8 @@ github.com/nickwells/fileparse.mod v1.1.37 h1:0FneqID4aDjYlb7FtrPB6JnA4O4Mx1X3ne
 github.com/nickwells/fileparse.mod v1.1.37/go.mod h1:oaz6k0dGm/mzYOtczpLuO61FVN1Mic3ZnnB7acWzNlI=
 github.com/nickwells/gogen.mod v1.11.35 h1:fVatDVh8vrLCXee/NggjJ1g9Pz6JDRig2C38UFIYe50=
 github.com/nickwells/gogen.mod v1.11.35/go.mod h1:2owzaTgy7My/xIrcJRtRpp9/J5w9fiNCPyb03jzEUh4=
+github.com/nickwells/groupsetter.mod v1.0.0 h1:GqGBh7Bqzd44M8ju/XFc+BZzMr9IBKSErvAEp8ebYO0=
+github.com/nickwells/groupsetter.mod v1.0.0/go.mod h1:Lb9QGbeHYfN09BIqQmVneECxJnqz+/OAeBuKoQ/nWvE=
 github.com/nickwells/location.mod v1.2.34 h1:aiJg4eH4+oPNzE8De3jKRevyP3xGUOiCM0aGLi/QAfw=
 github.com/nickwells/location.mod v1.2.34/go.mod h1:bf/UqMYE6/0hsP+RM2iH2sYl0YxwMd9dvMvVNyRpBWg=
 github.com/nickwells/mathutil.mod/v2 v2.5.8 h1:XwJJAykrxl8mBex7I+58qz2IWvo1U1EMwtLrmk69bfs=

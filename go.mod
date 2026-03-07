@@ -26,6 +26,7 @@ require (
 
 require (
 	github.com/nickwells/col.mod/v6 v6.0.1
+	github.com/nickwells/groupsetter.mod v1.0.0
 	github.com/nickwells/param.mod/v7 v7.0.0
 	github.com/nickwells/tempus.mod v1.2.9
 )
