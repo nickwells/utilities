@@ -6,8 +6,8 @@ Report on the status of file systems\.
 
 By default the file system to be reported will be that of the current directory
 &apos;\.&apos; but you can specify a list of alternative directories by passing
-them after the terminating parameter \(&apos;\-\-&apos;\)\. The value reported
-will be the available space\.
+them after the terminating parameter\. The value reported will be the available
+space\.
 
 
 
