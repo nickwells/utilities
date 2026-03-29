@@ -112,11 +112,12 @@ func main() {
 
 	prog.parts[0].extraFiles = prog.getModuleSnippets(cmd)
 
-	var docText string
+	var txtBldr strings.Builder
 	for _, pp := range prog.parts {
-		docText += pp.generate(cmd)
+		txtBldr.WriteString(pp.generate(cmd))
 	}
 
+	docText := txtBldr.String()
 	if docText == "" {
 		fmt.Println("No Documentation!")
 		return
@@ -265,17 +266,19 @@ func (pp partParams) filename(cmd string) string {
 // fragment of Markdown referencing this subsidiary file. Otherwise it
 // returns the text generated.
 func (pp partParams) generate(cmd string) string {
-	text := ""
-	text += getText(pp.headFile)
-	text += getDocPart(cmd, pp.partName)
+	var txtBldr strings.Builder
+	txtBldr.WriteString(getText(pp.headFile))
+	txtBldr.WriteString(getDocPart(cmd, pp.partName))
 
 	for _, extraFile := range pp.extraFiles {
 		if extraText := getText(extraFile); extraText != "" {
-			text += "\n\n" + extraText
+			txtBldr.WriteString("\n\n" + extraText)
 		}
 	}
 
-	text += getText(pp.tailFile)
+	txtBldr.WriteString(getText(pp.tailFile))
+
+	text := txtBldr.String()
 	if text == "" {
 		_ = os.Remove(pp.filename(cmd))
 		return ""
