@@ -470,6 +470,8 @@ func (g *gosh) initWorkspace() {
 
 // reportFatalError will report the failure of the action if the err is
 // non-nil and will exit.
+//
+// nolint:gosec
 func (g *gosh) reportFatalError(action, name string, err error) {
 	if err == nil {
 		return
