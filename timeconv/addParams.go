@@ -9,7 +9,7 @@ import (
 	"github.com/nickwells/param.mod/v7/paction"
 	"github.com/nickwells/param.mod/v7/param"
 	"github.com/nickwells/param.mod/v7/psetter"
-	"github.com/nickwells/tempus.mod/tempus"
+	"github.com/nickwells/tempus.mod/v2/tempus"
 )
 
 const (

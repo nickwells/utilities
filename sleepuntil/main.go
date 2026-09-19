@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/nickwells/tempus.mod/tempus"
+	"github.com/nickwells/tempus.mod/v2/tempus"
 	"github.com/nickwells/verbose.mod/verbose"
 )
 

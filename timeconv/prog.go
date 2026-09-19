@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/nickwells/tempus.mod/tempus"
+	"github.com/nickwells/tempus.mod/v2/tempus"
 )
 
 const (
